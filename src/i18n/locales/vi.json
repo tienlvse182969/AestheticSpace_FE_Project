@@ -1,0 +1,270 @@
+{
+  "nav": {
+    "home": "Trang chủ",
+    "aboutUs": "Về chúng tôi",
+    "contact": "Liên hệ",
+    "login": "Đăng nhập"
+  },
+  "footer": {
+    "tagline": "Môi trường đẹp, không xao nhãng được thiết kế để giúp bạn tập trung, học hỏi và phát triển mỗi ngày.",
+    "product": "Sản phẩm",
+    "features": "Tính năng",
+    "scenes": "Cảnh nền",
+    "sounds": "Âm thanh",
+    "timer": "Đồng hồ",
+    "studyRooms": "Phòng học nhóm",
+    "company": "Công ty",
+    "aboutUs": "Về chúng tôi",
+    "blog": "Blog",
+    "press": "Báo chí",
+    "contact": "Liên hệ",
+    "support": "Hỗ trợ",
+    "faq": "FAQ",
+    "community": "Cộng đồng",
+    "privacyPolicy": "Chính sách bảo mật",
+    "termsOfService": "Điều khoản dịch vụ",
+    "copyright": "© {{year}} Aēsthetic Group. Được làm với tình yêu dành cho các bạn học sinh."
+  },
+  "hero": {
+    "description": "Tùy chỉnh không gian làm việc kỹ thuật số cá nhân theo nhu cầu và quy trình làm việc của bạn. Tạo môi trường phù hợp với phong cách của bạn, dù bạn thích sự tập trung tối giản hay sáng tạo đắm chìm. Làm việc thông minh hơn, luôn được truyền cảm hứng.",
+    "readyText": "Sẵn sàng tạo không gian làm việc cá nhân của bạn?",
+    "cta": "THAM GIA NGAY!",
+    "scroll": "Cuộn"
+  },
+  "stats": {
+    "activeUsers": "Người dùng hoạt động",
+    "studySessions": "Phiên học",
+    "aestheticScenes": "Cảnh nền thẩm mỹ",
+    "satisfactionRate": "Tỷ lệ hài lòng"
+  },
+  "features": {
+    "sectionLabel": "MỌI THỨ BẠN CẦN",
+    "title": "Trợ Lý Học Tập Toàn Diện",
+    "subtitle": "Mỗi tính năng được thiết kế để giúp bạn đạt trạng thái tập trung sâu và duy trì nó xuyên suốt phiên học.",
+    "pomodoro": { "title": "Đồng Hồ Pomodoro", "desc": "Bộ đếm giờ tích hợp với các phiên Pomodoro tùy chỉnh. Làm việc theo từng đợt tập trung và phục hồi với những giờ nghỉ có mục đích." },
+    "ambient":   { "title": "Âm Thanh Môi Trường", "desc": "Chọn từ tiếng mưa, quán cà phê, rừng, nhạc lo-fi và nhiều hơn nữa. Môi trường âm thanh giúp bạn luôn trong trạng thái tập trung." },
+    "backgrounds": { "title": "Hình Nền Thẩm Mỹ", "desc": "Phong cảnh nhẹ nhàng, nội thất ấm cúng và khung cảnh tối giản. Tùy chỉnh môi trường hình ảnh phù hợp với tâm trạng." },
+    "tasks":     { "title": "Bảng Nhiệm Vụ & Ghi Chú", "desc": "Giữ mục tiêu luôn hiện diện. Ghi lại nhiệm vụ và ý tưởng ngay trong không gian làm việc mà không cần chuyển ứng dụng." },
+    "focus":     { "title": "Chế Độ Tập Trung", "desc": "Giao diện tối giản không xao nhãng biến mất khi bạn cần tập trung hoàn toàn." },
+    "together":  { "title": "Học Cùng Nhau", "desc": "Tham gia phòng học ảo với bạn bè hoặc người lạ. Giữ động lực với cảm giác có cộng đồng bên cạnh." }
+  },
+  "howItWorks": {
+    "sectionLabel": "BẮT ĐẦU",
+    "title": "Cách Thức Hoạt Động",
+    "subtitle": "Bắt đầu chỉ mất chưa đến 2 phút. Đây là con đường đến phiên học tốt hơn của bạn.",
+    "step1": { "title": "Tạo Tài Khoản", "desc": "Đăng ký miễn phí trong vài giây. Không cần thẻ tín dụng. Bắt đầu cá nhân hóa không gian ngay lập tức." },
+    "step2": { "title": "Thiết Lập Không Gian", "desc": "Chọn hình nền, chọn âm thanh và cấu hình đồng hồ Pomodoro theo nhịp điệu của bạn." },
+    "step3": { "title": "Bắt Đầu Tập Trung", "desc": "Vào chế độ làm việc sâu. Môi trường cá nhân hóa đã sẵn sàng — mở nhiệm vụ, khởi động đồng hồ và bắt đầu." },
+    "cta": "BẮT ĐẦU HÀNH TRÌNH →"
+  },
+  "spacePreview": {
+    "sectionLabel": "KHÁM PHÁ CẢNH NỀN",
+    "title": "Tạo Không Gian Cho Sự Tập Trung",
+    "subtitle": "Khám phá hàng chục hình nền thẩm mỹ được tuyển chọn — từ rừng sương mù đến góc quán cà phê ấm cúng. Thay đổi cảnh quan, thay đổi năng lượng.",
+    "forest": "Rừng",
+    "cozyRoom": "Phòng Ấm Cúng",
+    "zenGarden": "Vườn Zen",
+    "useScene": "Dùng Cảnh Này →"
+  },
+  "testimonials": {
+    "sectionLabel": "ĐƯỢC YÊU THÍCH BỞI HỌC SINH",
+    "title": "Cộng Đồng Nói Gì",
+    "t1text": "Aesthetic Study Space đã thay đổi hoàn toàn các phiên học của tôi. Đồng hồ Pomodoro kết hợp với hình nền lo-fi giúp tôi tập trung hàng giờ mà không bị kiệt sức.",
+    "t1role": "Sinh viên đại học",
+    "t2text": "Tôi dùng cái này cho các buổi làm việc sâu mỗi sáng. Tiếng mưa môi trường và giao diện tối giản giúp tôi đạt trạng thái flow nhanh hơn nhiều. Thực sự yêu thích!",
+    "t2role": "Nhà thiết kế đồ họa",
+    "t3text": "Cuối cùng cũng tìm được công cụ năng suất thực sự đẹp. Hình nền tùy chỉnh tạo ra sự khác biệt lớn. Rất khuyến khích cho người làm việc từ xa.",
+    "t3role": "Kỹ sư phần mềm",
+    "t4text": "Phòng học ảo là tính năng yêu thích của tôi. Biết rằng người khác đang học cùng cho tôi thêm động lực để tiếp tục.",
+    "t4role": "Người tạo nội dung"
+  },
+  "whyChooseUs": {
+    "sectionLabel": "THIẾT KẾ CHO SỰ TẬP TRUNG",
+    "title": "Tại Sao Bạn Nên",
+    "titleHighlight": "Chọn Chúng Tôi?",
+    "mixAtmosphere": "TẠO BẦU KHÔNG KHÍ HOÀN HẢO",
+    "nowMixing": "Đang phát: Cà phê + Đại dương + Rừng",
+    "layersActive": "3 lớp âm thanh",
+    "curatedScenes": "{{count}} cảnh được tuyển chọn · cập nhật hàng tuần",
+    "sessionInfo": "HIỆP 2 / 4 · TẬP TRUNG",
+    "remaining": "CÒN LẠI",
+    "slide1title": "Phiên Pomodoro",
+    "slide1desc": "Các khối tập trung 25 phút có cấu trúc với nhắc nhở nghỉ tự động để giữ bạn luôn tỉnh táo.",
+    "slide2title": "Âm Thanh Được Tuyển Chọn",
+    "slide2desc": "Kết hợp tiếng cà phê, sóng biển, mưa rừng và nhạc lo-fi thành bản mix hoàn hảo.",
+    "slide3title": "Không Gian Của Bạn, Tâm Trạng Của Bạn",
+    "slide3desc": "Chọn từ các cảnh được tuyển chọn — núi sương mù, thư viện ấm cúng, vườn zen và nhiều hơn nữa.",
+    "focusTimer": "Đồng Hồ",
+    "soundscapes": "Âm Thanh",
+    "backgrounds": "Hình Nền"
+  },
+  "cta": {
+    "badge": "MIỄN PHÍ ĐỂ BẮT ĐẦU",
+    "title1": "Không Gian Học Tập Hoàn Hảo",
+    "title2": "Đang Chờ Bạn",
+    "subtitle": "Tham gia cùng hàng nghìn học sinh và nhà sáng tạo đã khám phá niềm vui học tập trong môi trường đẹp, không xao nhãng. Bắt đầu phiên miễn phí ngay — không cần thẻ tín dụng.",
+    "joinNow": "THAM GIA NGAY",
+    "seeDemo": "Xem Demo →"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "signUp": "Đăng ký",
+    "identifierPlaceholder": "Email hoặc tên người dùng",
+    "usernamePlaceholder": "Tên người dùng",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Mật khẩu",
+    "rememberMe": "Ghi nhớ đăng nhập",
+    "forgotPassword": "Quên mật khẩu?",
+    "noAccount": "Chưa có tài khoản?",
+    "alreadyMember": "Đã là thành viên?",
+    "register": "Đăng ký",
+    "errors": {
+      "identifierRequired": "Vui lòng nhập email hoặc tên người dùng.",
+      "invalidEmail": "Email không đúng định dạng.",
+      "usernameRequired": "Vui lòng nhập tên người dùng.",
+      "usernameTooShort": "Tên người dùng phải có ít nhất 3 ký tự.",
+      "emailRequired": "Vui lòng nhập email.",
+      "invalidEmailFormat": "Vui lòng nhập email hợp lệ.",
+      "passwordRequired": "Vui lòng nhập mật khẩu.",
+      "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự."
+    }
+  },
+  "space": {
+    "widgets": "Widget",
+    "stickers": "Nhãn dán",
+    "backgrounds": "Hình nền",
+    "themes": "Giao diện",
+    "ambientSounds": "Âm thanh",
+    "guestTooltip": "Khách — nhấn để đăng nhập"
+  },
+  "account": {
+    "settings": "Cài đặt",
+    "help": "Trợ giúp",
+    "home": "Trang chủ",
+    "about": "Giới thiệu",
+    "signOut": "Đăng xuất",
+    "guest": "Khách",
+    "demoMode": "Chế độ Demo",
+    "signInPrompt": "Đăng nhập để lưu không gian, đồng bộ tùy chọn và nhiều hơn nữa.",
+    "signIn": "Đăng nhập",
+    "language": "Ngôn ngữ"
+  },
+  "widgetPicker": {
+    "title": "WIDGET",
+    "musicPlayer": "Nhạc",
+    "pomodoro": "Pomodoro",
+    "todo": "Việc cần làm",
+    "clock": "Đồng hồ",
+    "quote": "Trích dẫn",
+    "soon": "SẮP RA",
+    "added": "ĐÃ THÊM",
+    "comingSoon": "Sắp ra mắt…",
+    "addToSpace": "Thêm vào không gian",
+    "remove": "Xóa",
+    "stickyNotes": "Ghi chú dán",
+    "unlimited": "Không giới hạn",
+    "addNote": "Thêm ghi chú",
+    "unlimitedInstances": "Không giới hạn số lượng",
+    "hint": "Kéo widget đến bất kỳ đâu trên màn hình"
+  },
+  "ambient": {
+    "title": "ÂM THANH MÔI TRƯỜNG",
+    "subtitle": "TẠO BẦU KHÔNG KHÍ HOÀN HẢO",
+    "cafe": "Cà phê",
+    "rain": "Mưa",
+    "ocean": "Đại dương",
+    "forest": "Rừng",
+    "wind": "Gió",
+    "fireplace": "Lò sưởi",
+    "lofi": "Lo-fi",
+    "whiteNoise": "Tiếng ồn trắng",
+    "nowMixing": "Đang phát: {{label}}",
+    "layersActive": "{{count}} lớp âm thanh",
+    "noSounds": "Chưa có âm thanh — nhấn thẻ để bắt đầu"
+  },
+  "backgrounds": {
+    "discover": "Khám phá",
+    "favorites": "Yêu thích",
+    "favoritesCount": "Yêu thích ({{count}})",
+    "themes": "Giao diện",
+    "searchPlaceholder": "Tìm kiếm trên Unsplash…",
+    "loadMore": "Tải thêm",
+    "photosVia": "Ảnh từ Unsplash",
+    "noFavorites": "Chưa có ảnh yêu thích",
+    "noFavoritesHint": "Rê chuột lên ảnh và nhấn ♡ để lưu",
+    "removeFromFavorites": "Xóa khỏi yêu thích",
+    "addToFavorites": "Thêm vào yêu thích",
+    "inDevelopment": "Đang phát triển",
+    "themesTitle": "Hình Nền Theo Giao Diện",
+    "themesDesc": "Bộ hình nền theo chủ đề — Lofi Night, Cottagecore, Tokyo Rain và nhiều hơn nữa. Sắp ra mắt trong Theme Store.",
+    "missingKey": "Thêm {{key}} vào {{file}} để bật tìm kiếm. Đang hiển thị ảnh được tuyển chọn.",
+    "invalidKey": "API key không hợp lệ — kiểm tra VITE_UNSPLASH_ACCESS_KEY",
+    "rateLimit": "Đã đạt giới hạn. Thử lại sau.",
+    "errorCode": "Lỗi {{code}}"
+  },
+  "themeStore": {
+    "title": "GIAO DIỆN",
+    "comingSoon": "Cửa hàng giao diện sắp ra mắt",
+    "subtitle": "Bộ màu và giao diện được tuyển chọn đang trên đường đến ✦"
+  },
+  "stickerPicker": {
+    "title": "NHÃN DÁN",
+    "hint": "Nhấn để đặt vào không gian",
+    "comingSoon": "Sẽ có thêm nhãn dán sớm ✦"
+  },
+  "about": {
+    "label": "GIỚI THIỆU",
+    "appName": "Aēsthetic Space",
+    "desc": "Môi trường không xao nhãng được tạo ra để giúp bạn tập trung, luôn được truyền cảm hứng và làm cho mỗi phiên học trở nên dễ dàng.",
+    "contributors": "ĐÓNG GÓP",
+    "copyright": "© AESTHETIC GROUP",
+    "version": "Phiên bản Dev"
+  },
+  "pomodoroSettings": {
+    "title": "Cài đặt Pomodoro",
+    "focusTime": "Thời gian tập trung",
+    "focusTimeSub": "Thời gian tập trung mỗi hiệp",
+    "breakTime": "Thời gian nghỉ",
+    "breakTimeSub": "Thời gian nghỉ giữa các hiệp",
+    "totalSessions": "Tổng số hiệp",
+    "totalSessionsSub": "Số hiệp tập trung",
+    "summary": "TỔNG KẾT",
+    "breakdown": "{{sessions}} × {{focus}}m tập trung + {{breaks}} × {{break}}m nghỉ",
+    "totalTime": "≈ {{time}} tổng thời gian"
+  },
+  "clockSettings": {
+    "title": "Cài đặt đồng hồ",
+    "clockType": "Kiểu đồng hồ",
+    "digital": "Số",
+    "analog": "Kim",
+    "layout": "Bố cục",
+    "horizontal": "↔ Ngang",
+    "vertical": "↕ Dọc",
+    "showSeconds": "Hiển thị giây",
+    "showDate": "Hiển thị ngày",
+    "lunarCalendar": "Lịch âm"
+  },
+  "todo": {
+    "title": "VIỆC CẦN LÀM",
+    "placeholder": "Thêm nhiệm vụ...",
+    "empty": "Chưa có nhiệm vụ ✦"
+  },
+  "stickyNote": {
+    "settingsTooltip": "Cài đặt ghi chú",
+    "removeTooltip": "Xóa ghi chú",
+    "placeholder": "Viết gì đó...",
+    "settingsTitle": "Cài Đặt Ghi Chú",
+    "size": "Kích cỡ",
+    "small": "Nhỏ",
+    "medium": "Vừa",
+    "large": "Lớn",
+    "color": "Màu sắc"
+  },
+  "colors": {
+    "vanilla": "Vani",
+    "mint": "Bạc hà",
+    "blossom": "Hoa anh đào",
+    "lavender": "Oải hương",
+    "sky": "Bầu trời"
+  }
+}

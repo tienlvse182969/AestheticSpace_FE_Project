@@ -1,0 +1,270 @@
+{
+  "nav": {
+    "home": "Home",
+    "aboutUs": "About Us",
+    "contact": "Contact",
+    "login": "Login"
+  },
+  "footer": {
+    "tagline": "A beautiful, distraction-free environment designed to help you focus, learn, and grow every single day.",
+    "product": "Product",
+    "features": "Features",
+    "scenes": "Scenes",
+    "sounds": "Sounds",
+    "timer": "Timer",
+    "studyRooms": "Study Rooms",
+    "company": "Company",
+    "aboutUs": "About Us",
+    "blog": "Blog",
+    "press": "Press",
+    "contact": "Contact",
+    "support": "Support",
+    "faq": "FAQ",
+    "community": "Community",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "copyright": "© {{year}} Aēsthetic Group. Made with love for students everywhere."
+  },
+  "hero": {
+    "description": "Customize your own personal digital working space designed around your needs and workflow. Create an environment that matches your style, whether you prefer minimal focus or immersive creativity. Work smarter, stay inspired, and build a space that truly feels like yours.",
+    "readyText": "Ready to create your own personal working space?",
+    "cta": "JOIN NOW!",
+    "scroll": "Scroll"
+  },
+  "stats": {
+    "activeUsers": "Active Users",
+    "studySessions": "Study Sessions",
+    "aestheticScenes": "Aesthetic Scenes",
+    "satisfactionRate": "Satisfaction Rate"
+  },
+  "features": {
+    "sectionLabel": "EVERYTHING YOU NEED",
+    "title": "Your Ultimate Study Companion",
+    "subtitle": "Every feature is thoughtfully designed to help you enter a state of deep focus and maintain it throughout your study session.",
+    "pomodoro": { "title": "Pomodoro Timer", "desc": "Built-in focus timer with customizable Pomodoro sessions. Work in focused sprints and recover with purposeful breaks." },
+    "ambient":   { "title": "Ambient Soundscapes", "desc": "Choose from rain, café, forest, lo-fi beats and more. Curated audio environments that keep you in the zone." },
+    "backgrounds": { "title": "Aesthetic Backgrounds", "desc": "Soft landscapes, cozy interiors, and minimalist scenes. Customize your visual environment to match your mood." },
+    "tasks":     { "title": "Task & Notes Board", "desc": "Keep your goals visible. Jot down tasks, ideas, and notes directly in your workspace without switching apps." },
+    "focus":     { "title": "Focus Mode", "desc": "Distraction-free dark mode and minimal UI that disappears when you need pure concentration." },
+    "together":  { "title": "Study Together", "desc": "Join virtual study rooms with friends or strangers. Stay motivated with a sense of community presence." }
+  },
+  "howItWorks": {
+    "sectionLabel": "GET STARTED",
+    "title": "How It Works",
+    "subtitle": "Getting started takes less than 2 minutes. Here's your path to a better study session.",
+    "step1": { "title": "Create Your Account", "desc": "Sign up for free in seconds. No credit card required. Start personalizing your space right away." },
+    "step2": { "title": "Set Up Your Space", "desc": "Choose your background, pick your soundscape, and configure your Pomodoro timer to match your rhythm." },
+    "step3": { "title": "Start Focusing", "desc": "Enter deep work mode. Your personalized environment is ready — open your tasks, start the timer, and flow." },
+    "cta": "START YOUR JOURNEY →"
+  },
+  "spacePreview": {
+    "sectionLabel": "EXPLORE SCENES",
+    "title": "Set the Scene for Deep Focus",
+    "subtitle": "Browse dozens of hand-curated aesthetic backgrounds — from misty forests to cozy café corners. Change your scenery, change your energy.",
+    "forest": "Forest",
+    "cozyRoom": "Cozy Room",
+    "zenGarden": "Zen Garden",
+    "useScene": "Use This Scene →"
+  },
+  "testimonials": {
+    "sectionLabel": "LOVED BY STUDENTS",
+    "title": "What Our Community Says",
+    "t1text": "Aesthetic Study Space completely transformed my study sessions. The Pomodoro timer combined with lo-fi backgrounds kept me focused for hours without feeling burnt out.",
+    "t1role": "University Student",
+    "t2text": "I use this for deep work blocks every morning. The ambient rain sounds and minimal UI let me get into flow state so much faster. Absolutely love it!",
+    "t2role": "Graphic Designer",
+    "t3text": "Finally found a productivity tool that's actually beautiful to look at. The customizable backgrounds make such a difference. Highly recommend for remote workers.",
+    "t3role": "Software Engineer",
+    "t4text": "The virtual study rooms are my favorite feature. Knowing others are studying alongside me gives me the push I need to stay on track.",
+    "t4role": "Content Creator"
+  },
+  "whyChooseUs": {
+    "sectionLabel": "DESIGNED FOR YOUR FOCUS",
+    "title": "Why Should You",
+    "titleHighlight": "Choose Us?",
+    "mixAtmosphere": "MIX YOUR PERFECT ATMOSPHERE",
+    "nowMixing": "Now mixing: Café + Ocean + Forest",
+    "layersActive": "3 layers active",
+    "curatedScenes": "{{count}} curated scenes · updated weekly",
+    "sessionInfo": "SESSION 2 OF 4 · FOCUS",
+    "remaining": "REMAINING",
+    "slide1title": "Pomodoro Sessions",
+    "slide1desc": "Structured 25-minute focus blocks with automatic break reminders to keep you sharp.",
+    "slide2title": "Curated Soundscapes",
+    "slide2desc": "Layer café chatter, ocean waves, forest rain and lo-fi beats into your perfect audio mix.",
+    "slide3title": "Your Space, Your Mood",
+    "slide3desc": "Choose from handpicked scenes — misty mountains, cozy libraries, zen gardens and more.",
+    "focusTimer": "Focus Timer",
+    "soundscapes": "Soundscapes",
+    "backgrounds": "Backgrounds"
+  },
+  "cta": {
+    "badge": "FREE TO START",
+    "title1": "Your Perfect Study Space",
+    "title2": "Awaits You",
+    "subtitle": "Join thousands of students and creators who have already discovered the joy of studying in a beautiful, distraction-free environment. Start your free session today — no credit card needed.",
+    "joinNow": "JOIN NOW",
+    "seeDemo": "See a Demo →"
+  },
+  "auth": {
+    "login": "Login",
+    "signUp": "Sign Up",
+    "identifierPlaceholder": "Email or Username",
+    "usernamePlaceholder": "Username",
+    "emailPlaceholder": "Email",
+    "passwordPlaceholder": "Password",
+    "rememberMe": "Remember me",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "alreadyMember": "Already a member?",
+    "register": "Register",
+    "errors": {
+      "identifierRequired": "Please enter your email or username.",
+      "invalidEmail": "That doesn't look like a valid email.",
+      "usernameRequired": "Username is required.",
+      "usernameTooShort": "Username must be at least 3 characters.",
+      "emailRequired": "Email is required.",
+      "invalidEmailFormat": "Please enter a valid email.",
+      "passwordRequired": "Password is required.",
+      "passwordTooShort": "Password must be at least 6 characters."
+    }
+  },
+  "space": {
+    "widgets": "Widgets",
+    "stickers": "Stickers",
+    "backgrounds": "Backgrounds",
+    "themes": "Themes",
+    "ambientSounds": "Ambient Sounds",
+    "guestTooltip": "Guest — click to sign in"
+  },
+  "account": {
+    "settings": "Settings",
+    "help": "Help",
+    "home": "Home",
+    "about": "About",
+    "signOut": "Sign out",
+    "guest": "Guest",
+    "demoMode": "Demo mode",
+    "signInPrompt": "Sign in to save your space, sync preferences, and more.",
+    "signIn": "Sign in",
+    "language": "Language"
+  },
+  "widgetPicker": {
+    "title": "WIDGETS",
+    "musicPlayer": "Music Player",
+    "pomodoro": "Pomodoro",
+    "todo": "To-Do",
+    "clock": "Clock",
+    "quote": "Quote",
+    "soon": "SOON",
+    "added": "ADDED",
+    "comingSoon": "Coming soon…",
+    "addToSpace": "Add to Space",
+    "remove": "Remove",
+    "stickyNotes": "Sticky Notes",
+    "unlimited": "Unlimited",
+    "addNote": "Add Note",
+    "unlimitedInstances": "Unlimited instances",
+    "hint": "Drag widgets anywhere on screen"
+  },
+  "ambient": {
+    "title": "AMBIENT SOUNDS",
+    "subtitle": "MIX YOUR PERFECT ATMOSPHERE",
+    "cafe": "Café",
+    "rain": "Rain",
+    "ocean": "Ocean",
+    "forest": "Forest",
+    "wind": "Wind",
+    "fireplace": "Fireplace",
+    "lofi": "Lo-fi",
+    "whiteNoise": "White Noise",
+    "nowMixing": "Now mixing: {{label}}",
+    "layersActive": "{{count}} layer(s) active",
+    "noSounds": "No sounds active — tap a card to start"
+  },
+  "backgrounds": {
+    "discover": "Discover",
+    "favorites": "Favorites",
+    "favoritesCount": "Favorites ({{count}})",
+    "themes": "Themes",
+    "searchPlaceholder": "Search on Unsplash…",
+    "loadMore": "Load more",
+    "photosVia": "Photos via Unsplash",
+    "noFavorites": "No favorites yet",
+    "noFavoritesHint": "Hover over an image and click ♡ to save",
+    "removeFromFavorites": "Remove from favorites",
+    "addToFavorites": "Add to favorites",
+    "inDevelopment": "In Development",
+    "themesTitle": "Theme Backgrounds",
+    "themesDesc": "Curated background packs tied to themes — Lofi Night, Cottagecore, Tokyo Rain and more. Coming soon as part of the Theme Store.",
+    "missingKey": "Add {{key}} to {{file}} to enable live search. Showing curated picks for now.",
+    "invalidKey": "Invalid API key — check VITE_UNSPLASH_ACCESS_KEY",
+    "rateLimit": "Rate limit reached. Try again in a moment.",
+    "errorCode": "Error {{code}}"
+  },
+  "themeStore": {
+    "title": "THEMES",
+    "comingSoon": "Theme store will be available soon",
+    "subtitle": "Curated color palettes & UI themes are on the way ✦"
+  },
+  "stickerPicker": {
+    "title": "STICKERS",
+    "hint": "Click to place on your space",
+    "comingSoon": "More stickers will be available soon ✦"
+  },
+  "about": {
+    "label": "ABOUT",
+    "appName": "Aēsthetic Space",
+    "desc": "A distraction-free environment crafted to help you focus, stay inspired, and make every study session feel effortless.",
+    "contributors": "CONTRIBUTORS",
+    "copyright": "© AESTHETIC GROUP",
+    "version": "Version Dev"
+  },
+  "pomodoroSettings": {
+    "title": "Pomodoro Settings",
+    "focusTime": "Focus time",
+    "focusTimeSub": "Focus duration per session",
+    "breakTime": "Break time",
+    "breakTimeSub": "Break between sessions",
+    "totalSessions": "Total sessions",
+    "totalSessionsSub": "Number of focus sessions",
+    "summary": "SUMMARY",
+    "breakdown": "{{sessions}} × {{focus}}m focus + {{breaks}} × {{break}}m break",
+    "totalTime": "≈ {{time}} total time"
+  },
+  "clockSettings": {
+    "title": "Clock Settings",
+    "clockType": "Clock type",
+    "digital": "Digital",
+    "analog": "Analog",
+    "layout": "Layout",
+    "horizontal": "↔ Horizontal",
+    "vertical": "↕ Vertical",
+    "showSeconds": "Show seconds",
+    "showDate": "Show date",
+    "lunarCalendar": "Lunar calendar"
+  },
+  "todo": {
+    "title": "TO-DO LIST",
+    "placeholder": "Add a task...",
+    "empty": "No tasks yet ✦"
+  },
+  "stickyNote": {
+    "settingsTooltip": "Note settings",
+    "removeTooltip": "Remove note",
+    "placeholder": "Write something...",
+    "settingsTitle": "Note Settings",
+    "size": "Size",
+    "small": "Small",
+    "medium": "Medium",
+    "large": "Large",
+    "color": "Color"
+  },
+  "colors": {
+    "vanilla": "Vanilla",
+    "mint": "Mint",
+    "blossom": "Blossom",
+    "lavender": "Lavender",
+    "sky": "Sky"
+  }
+}
