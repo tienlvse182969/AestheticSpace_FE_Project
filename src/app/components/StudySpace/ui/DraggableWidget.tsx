@@ -12,7 +12,7 @@ interface DraggableWidgetProps {
   onRemove: () => void;
   extraControls?: React.ReactNode;
   floatingPanel?: React.ReactNode;
-  containerRef?: React.RefObject<HTMLDivElement>;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
 export function DraggableWidget({ children, initialX, initialY, onRemove, extraControls, floatingPanel, containerRef }: DraggableWidgetProps) {

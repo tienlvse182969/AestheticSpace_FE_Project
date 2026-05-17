@@ -1,30 +1,34 @@
-import type { WidgetId, PlacedSticker, ClockMode, DigitalLayout, StickyNote, BackgroundItem } from "../components/StudySpace/types";
+import type { BackgroundItem } from "../components/StudySpace/types";
 import { useState, useRef } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronUp, ChevronDown, Image as ImageIcon, LayoutGrid, Sparkles, Palette, AudioWaveform, Settings } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
-import { AccountPanel, AvatarCircle, type UserInfo } from "../components/StudySpace/AccountPanel";
+import { AccountPanel, AvatarCircle, type UserInfo } from "../components/StudySpace/panels/AccountPanel";
 
-import { PomodoroWidget }        from "../components/StudySpace/PomodoroWidget";
-import { PomodoroSettingsPanel } from "../components/StudySpace/PomodoroSettingsPanel";
-import { MusicPlayerWidget }     from "../components/StudySpace/MusicPlayerWidget";
-import { TodoListWidget }        from "../components/StudySpace/TodoListWidget";
-import { ClockWidget }           from "../components/StudySpace/ClockWidget";
-import { ClockSettingsPanel }    from "../components/StudySpace/ClockSettingsPanel";
-import { DraggableWidget }       from "../components/StudySpace/DraggableWidget";
-import { DraggableSticker }      from "../components/StudySpace/DraggableSticker";
-import { StickyNoteWidget }      from "../components/StudySpace/StickyNoteWidget";
-import { QuoteWidget }           from "../components/StudySpace/QuoteWidget";
-import { WidgetPickerPanel }     from "../components/StudySpace/WidgetPickerPanel";
-import { BackgroundPickerPanel } from "../components/StudySpace/BackgroundPickerPanel";
-import { StickerPickerPanel }    from "../components/StudySpace/StickerPickerPanel";
-import { ThemeStorePanel }       from "../components/StudySpace/ThemeStorePanel";
-import { AmbientSoundPanel }     from "../components/StudySpace/AmbientSoundPanel";
-import { AboutModal }            from "../components/StudySpace/AboutModal";
-import { ToolbarBtn }            from "../components/StudySpace/ToolbarBtn";
+import { PomodoroWidget }        from "../components/StudySpace/widgets/Pomodoro/PomodoroWidget";
+import { PomodoroSettingsPanel } from "../components/StudySpace/widgets/Pomodoro/PomodoroSettingsPanel";
+import { MusicPlayerWidget }     from "../components/StudySpace/widgets/MusicPlayer/MusicPlayerWidget";
+import { TodoListWidget }        from "../components/StudySpace/widgets/TodoList/TodoListWidget";
+import { ClockWidget }           from "../components/StudySpace/widgets/Clock/ClockWidget";
+import { ClockSettingsPanel }    from "../components/StudySpace/widgets/Clock/ClockSettingsPanel";
+import { DraggableWidget }       from "../components/StudySpace/ui/DraggableWidget";
+import { DraggableSticker }      from "../components/StudySpace/ui/DraggableSticker";
+import { StickyNoteWidget }      from "../components/StudySpace/widgets/StickyNote/StickyNoteWidget";
+import { QuoteWidget }           from "../components/StudySpace/widgets/Quote/QuoteWidget";
+import { WidgetPickerPanel }     from "../components/StudySpace/panels/WidgetPickerPanel";
+import { BackgroundPickerPanel } from "../components/StudySpace/panels/BackgroundPickerPanel";
+import { StickerPickerPanel }    from "../components/StudySpace/panels/StickerPickerPanel";
+import { ThemeStorePanel }       from "../components/StudySpace/panels/ThemeStorePanel";
+import { AmbientSoundPanel }     from "../components/StudySpace/panels/AmbientSoundPanel";
+import { AboutModal }            from "../components/StudySpace/ui/AboutModal";
+import { ToolbarBtn }            from "../components/StudySpace/ui/ToolbarBtn";
 import { BACKGROUNDS }           from "../components/StudySpace/constants";
+
+import { useClockSettings }    from "../hooks/studyspace/useClockSettings";
+import { usePomodoroSettings } from "../hooks/studyspace/usePomodoroSettings";
+import { useSpaceItems }       from "../hooks/studyspace/useSpaceItems";
 
 const MotionBox = motion.create(Box);
 
@@ -36,10 +40,11 @@ export function StudySpacePage() {
 
   /* ── UI state ── */
   const [toolbarVisible, setToolbarVisible] = useState(true);
-  const [activePanel, setActivePanel] = useState<ActivePanel>(null);
-  const [aboutOpen, setAboutOpen] = useState(false);
-  const [accountOpen, setAccountOpen] = useState(false);
-  const avatarBtnRef = useRef<HTMLDivElement>(null);
+  const [activePanel, setActivePanel]       = useState<ActivePanel>(null);
+  const [aboutOpen, setAboutOpen]           = useState(false);
+  const [accountOpen, setAccountOpen]       = useState(false);
+  const [currentBg, setCurrentBg]           = useState<BackgroundItem>(BACKGROUNDS[3]);
+  const avatarBtnRef    = useRef<HTMLDivElement>(null);
   const accountPanelRef = useRef<HTMLDivElement>(null);
 
   const storedUser = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("user") : null;
@@ -49,65 +54,19 @@ export function StudySpacePage() {
     sessionStorage.removeItem("user");
     navigate("/");
   };
-  const [clockSettingsOpen, setClockSettingsOpen] = useState(false);
-  const clockContainerRef = useRef<HTMLDivElement>(null);
 
-  // Clock widget settings (lifted up so ClockWidget + ClockSettingsPanel share state)
-  const [clockMode, setClockMode]               = useState<ClockMode>("digital");
-  const [clockLayout, setClockLayout]           = useState<DigitalLayout>("horizontal");
-  const [clockShowSeconds, setClockShowSeconds] = useState(true);
-  const [clockShowLunar, setClockShowLunar]     = useState(false);
-  const [clockShowDate, setClockShowDate]       = useState(true);
-
-  // Pomodoro settings (lifted up so PomodoroWidget + PomodoroSettingsPanel share state)
-  const [pomodoroSettingsOpen, setPomodoroSettingsOpen] = useState(false);
-  const pomodoroContainerRef = useRef<HTMLDivElement>(null);
-  const [pomodoroFocusMin,    setPomodoroFocusMin]    = useState(25);
-  const [pomodoroBreakMin,    setPomodoroBreakMin]    = useState(5);
-  const [pomodoroTotalSes,    setPomodoroTotalSes]    = useState(4);
-
-  /* ── Background ── */
-  const [currentBg, setCurrentBg] = useState<BackgroundItem>(BACKGROUNDS[3]);
-
-  /* ── Widgets ── */
-  const [activeWidgets, setActiveWidgets] = useState<Set<WidgetId>>(
-    new Set(["clock", "pomodoro"])
-  );
-
-  /* ── Stickers ── */
-  const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
-
-  /* ── Sticky Notes ── */
-  const [stickyNotes, setStickyNotes] = useState<StickyNote[]>([]);
-
-  const addStickyNote = () => {
-    const sw = typeof window !== "undefined" ? window.innerWidth  : 1440;
-    const sh = typeof window !== "undefined" ? window.innerHeight : 900;
-    setStickyNotes(prev => [
-      ...prev,
-      {
-        id: `sticky-${Date.now()}`,
-        text: "",
-        color: "yellow",
-        x: Math.round(sw / 2 - 108 + (Math.random() - 0.5) * 200),
-        y: Math.round(sh / 2 - 120 + (Math.random() - 0.5) * 140),
-      },
-    ]);
-  };
-
-  const removeStickyNote = (id: string) =>
-    setStickyNotes(prev => prev.filter(n => n.id !== id));
-
-  const updateStickyNote = (id: string, patch: Partial<Pick<StickyNote, "text" | "color" | "w" | "h">>) =>
-    setStickyNotes(prev => prev.map(n => n.id === id ? { ...n, ...patch } : n));
+  /* ── Domain hooks ── */
+  const clock    = useClockSettings();
+  const pomodoro = usePomodoroSettings();
+  const space    = useSpaceItems();
 
   /* ── Helpers ── */
   const screen = {
-    w: typeof window !== "undefined" ? window.innerWidth : 1440,
+    w: typeof window !== "undefined" ? window.innerWidth  : 1440,
     h: typeof window !== "undefined" ? window.innerHeight : 900,
   };
 
-  const WIDGET_POSITIONS: Record<WidgetId, { x: number; y: number }> = {
+  const WIDGET_POSITIONS = {
     music:    { x: screen.w - 260, y: Math.round(screen.h * 0.12) },
     pomodoro: { x: screen.w - 260, y: Math.round(screen.h * 0.12) + 130 },
     todo:     { x: screen.w - 260, y: Math.round(screen.h * 0.12) + 390 },
@@ -115,43 +74,8 @@ export function StudySpacePage() {
     quote:    { x: 32,             y: Math.round(screen.h * 0.12) + 210 },
   };
 
-  const toggleWidget = (id: WidgetId) => {
-    setActiveWidgets((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  const removeWidget = (id: WidgetId) => {
-    setActiveWidgets((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-  };
-
-  const placeSticker = (src: string) => {
-    const sw = typeof window !== "undefined" ? window.innerWidth : 1440;
-    const sh = typeof window !== "undefined" ? window.innerHeight : 900;
-    setPlacedStickers((prev) => [
-      ...prev,
-      {
-        id: `sticker-${Date.now()}`,
-        src,
-        x: Math.round(sw / 2 - 70 + (Math.random() - 0.5) * 160),
-        y: Math.round(sh / 2 - 70 + (Math.random() - 0.5) * 120),
-        size: 140,
-      },
-    ]);
-  };
-
-  const removeSticker = (id: string) =>
-    setPlacedStickers((prev) => prev.filter((s) => s.id !== id));
-
   const togglePanel = (panel: ActivePanel) =>
-    setActivePanel((p) => (p === panel ? null : panel));
+    setActivePanel(p => p === panel ? null : panel);
 
   /* ── Render ── */
   return (
@@ -184,30 +108,29 @@ export function StudySpacePage() {
         }}
       />
 
-
       {/* ── Floating Panels ── */}
       <AnimatePresence>
         {activePanel === "image" && (
           <BackgroundPickerPanel
             key="bg-panel"
             currentBgId={currentBg.id}
-            onSelect={(bg) => setCurrentBg(bg)}
+            onSelect={bg => setCurrentBg(bg)}
             onClose={() => setActivePanel(null)}
           />
         )}
         {activePanel === "widget" && (
           <WidgetPickerPanel
             key="widget-panel"
-            activeWidgets={activeWidgets}
-            onToggle={toggleWidget}
-            onAddStickyNote={() => { addStickyNote(); setActivePanel(null); }}
+            activeWidgets={space.activeWidgets}
+            onToggle={space.toggleWidget}
+            onAddStickyNote={() => { space.addStickyNote(); setActivePanel(null); }}
             onClose={() => setActivePanel(null)}
           />
         )}
         {activePanel === "sticker" && (
           <StickerPickerPanel
             key="sticker-panel"
-            onPlace={(src) => placeSticker(src)}
+            onPlace={space.placeSticker}
             onClose={() => setActivePanel(null)}
           />
         )}
@@ -233,27 +156,27 @@ export function StudySpacePage() {
 
       {/* ── Active Widgets ── */}
       <AnimatePresence>
-        {activeWidgets.has("music") && (
-          <DraggableWidget key="music" initialX={WIDGET_POSITIONS.music.x} initialY={WIDGET_POSITIONS.music.y} onRemove={() => removeWidget("music")}>
+        {space.activeWidgets.has("music") && (
+          <DraggableWidget key="music" initialX={WIDGET_POSITIONS.music.x} initialY={WIDGET_POSITIONS.music.y} onRemove={() => space.removeWidget("music")}>
             <MusicPlayerWidget />
           </DraggableWidget>
         )}
-        {activeWidgets.has("pomodoro") && (
+        {space.activeWidgets.has("pomodoro") && (
           <DraggableWidget
             key="pomodoro"
             initialX={WIDGET_POSITIONS.pomodoro.x}
             initialY={WIDGET_POSITIONS.pomodoro.y}
-            containerRef={pomodoroContainerRef}
-            onRemove={() => { removeWidget("pomodoro"); setPomodoroSettingsOpen(false); }}
+            containerRef={pomodoro.containerRef}
+            onRemove={() => { space.removeWidget("pomodoro"); pomodoro.setSettingsOpen(false); }}
             extraControls={
               <Box
                 as="button"
-                onClick={(e: React.MouseEvent) => { e.stopPropagation(); setPomodoroSettingsOpen(v => !v); }}
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); pomodoro.setSettingsOpen(v => !v); }}
                 display="flex" alignItems="center" justifyContent="center"
                 w="18px" h="18px" borderRadius="full" border="none" cursor="pointer"
                 style={{
-                  background: pomodoroSettingsOpen ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.07)",
-                  color: pomodoroSettingsOpen ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.45)",
+                  background: pomodoro.settingsOpen ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.07)",
+                  color: pomodoro.settingsOpen ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.45)",
                   transition: "all 0.15s",
                 }}
                 title="Pomodoro settings"
@@ -263,46 +186,46 @@ export function StudySpacePage() {
             }
             floatingPanel={
               <PomodoroSettingsPanel
-                show={pomodoroSettingsOpen}
-                containerRef={pomodoroContainerRef}
-                focusMinutes={pomodoroFocusMin}
-                breakMinutes={pomodoroBreakMin}
-                totalSessions={pomodoroTotalSes}
-                onFocusMinutes={setPomodoroFocusMin}
-                onBreakMinutes={setPomodoroBreakMin}
-                onTotalSessions={setPomodoroTotalSes}
-                onClose={() => setPomodoroSettingsOpen(false)}
+                show={pomodoro.settingsOpen}
+                containerRef={pomodoro.containerRef}
+                focusMinutes={pomodoro.focusMin}
+                breakMinutes={pomodoro.breakMin}
+                totalSessions={pomodoro.totalSes}
+                onFocusMinutes={pomodoro.setFocusMin}
+                onBreakMinutes={pomodoro.setBreakMin}
+                onTotalSessions={pomodoro.setTotalSes}
+                onClose={() => pomodoro.setSettingsOpen(false)}
               />
             }
           >
             <PomodoroWidget
-              focusMinutes={pomodoroFocusMin}
-              breakMinutes={pomodoroBreakMin}
-              totalSessions={pomodoroTotalSes}
+              focusMinutes={pomodoro.focusMin}
+              breakMinutes={pomodoro.breakMin}
+              totalSessions={pomodoro.totalSes}
             />
           </DraggableWidget>
         )}
-        {activeWidgets.has("todo") && (
-          <DraggableWidget key="todo" initialX={WIDGET_POSITIONS.todo.x} initialY={WIDGET_POSITIONS.todo.y} onRemove={() => removeWidget("todo")}>
+        {space.activeWidgets.has("todo") && (
+          <DraggableWidget key="todo" initialX={WIDGET_POSITIONS.todo.x} initialY={WIDGET_POSITIONS.todo.y} onRemove={() => space.removeWidget("todo")}>
             <TodoListWidget />
           </DraggableWidget>
         )}
-        {activeWidgets.has("clock") && (
+        {space.activeWidgets.has("clock") && (
           <DraggableWidget
             key="clock"
             initialX={WIDGET_POSITIONS.clock.x}
             initialY={WIDGET_POSITIONS.clock.y}
-            containerRef={clockContainerRef}
-            onRemove={() => { removeWidget("clock"); setClockSettingsOpen(false); }}
+            containerRef={clock.containerRef}
+            onRemove={() => { space.removeWidget("clock"); clock.setSettingsOpen(false); }}
             extraControls={
               <Box
                 as="button"
-                onClick={(e: React.MouseEvent) => { e.stopPropagation(); setClockSettingsOpen(v => !v); }}
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); clock.setSettingsOpen(v => !v); }}
                 display="flex" alignItems="center" justifyContent="center"
                 w="18px" h="18px" borderRadius="full" border="none" cursor="pointer"
                 style={{
-                  background: clockSettingsOpen ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.07)",
-                  color: clockSettingsOpen ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.45)",
+                  background: clock.settingsOpen ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.07)",
+                  color: clock.settingsOpen ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.45)",
                   transition: "all 0.15s",
                 }}
                 title="Clock settings"
@@ -312,33 +235,33 @@ export function StudySpacePage() {
             }
             floatingPanel={
               <ClockSettingsPanel
-                show={clockSettingsOpen}
-                containerRef={clockContainerRef}
-                mode={clockMode}
-                layout={clockLayout}
-                showSeconds={clockShowSeconds}
-                showLunar={clockShowLunar}
-                showDate={clockShowDate}
-                onMode={setClockMode}
-                onLayout={setClockLayout}
-                onShowSeconds={setClockShowSeconds}
-                onShowLunar={setClockShowLunar}
-                onShowDate={setClockShowDate}
-                onClose={() => setClockSettingsOpen(false)}
+                show={clock.settingsOpen}
+                containerRef={clock.containerRef}
+                mode={clock.mode}
+                layout={clock.layout}
+                showSeconds={clock.showSeconds}
+                showLunar={clock.showLunar}
+                showDate={clock.showDate}
+                onMode={clock.setMode}
+                onLayout={clock.setLayout}
+                onShowSeconds={clock.setShowSeconds}
+                onShowLunar={clock.setShowLunar}
+                onShowDate={clock.setShowDate}
+                onClose={() => clock.setSettingsOpen(false)}
               />
             }
           >
             <ClockWidget
-              mode={clockMode}
-              layout={clockLayout}
-              showSeconds={clockShowSeconds}
-              showLunar={clockShowLunar}
-              showDate={clockShowDate}
+              mode={clock.mode}
+              layout={clock.layout}
+              showSeconds={clock.showSeconds}
+              showLunar={clock.showLunar}
+              showDate={clock.showDate}
             />
           </DraggableWidget>
         )}
-        {activeWidgets.has("quote") && (
-          <DraggableWidget key="quote" initialX={WIDGET_POSITIONS.quote.x} initialY={WIDGET_POSITIONS.quote.y} onRemove={() => removeWidget("quote")}>
+        {space.activeWidgets.has("quote") && (
+          <DraggableWidget key="quote" initialX={WIDGET_POSITIONS.quote.x} initialY={WIDGET_POSITIONS.quote.y} onRemove={() => space.removeWidget("quote")}>
             <QuoteWidget />
           </DraggableWidget>
         )}
@@ -346,19 +269,19 @@ export function StudySpacePage() {
 
       {/* ── Placed Stickers ── */}
       <AnimatePresence>
-        {placedStickers.map((s) => (
-          <DraggableSticker key={s.id} sticker={s} onRemove={() => removeSticker(s.id)} />
+        {space.placedStickers.map(s => (
+          <DraggableSticker key={s.id} sticker={s} onRemove={() => space.removeSticker(s.id)} />
         ))}
       </AnimatePresence>
 
       {/* ── Sticky Notes ── */}
       <AnimatePresence>
-        {stickyNotes.map((note) => (
+        {space.stickyNotes.map(note => (
           <StickyNoteWidget
             key={note.id}
             note={note}
-            onRemove={() => removeStickyNote(note.id)}
-            onUpdate={(patch) => updateStickyNote(note.id, patch)}
+            onRemove={() => space.removeStickyNote(note.id)}
+            onUpdate={patch => space.updateStickyNote(note.id, patch)}
           />
         ))}
       </AnimatePresence>
@@ -398,7 +321,7 @@ export function StudySpacePage() {
       >
         <Box
           as="button"
-          onClick={() => setToolbarVisible((v) => !v)}
+          onClick={() => setToolbarVisible(v => !v)}
           display="flex"
           alignItems="center"
           justifyContent="center"
@@ -508,7 +431,7 @@ export function StudySpacePage() {
                 <Box
                   ref={avatarBtnRef as any}
                   as="button"
-                  onClick={() => setAccountOpen((v) => !v)}
+                  onClick={() => setAccountOpen(v => !v)}
                   display="flex"
                   alignItems="center"
                   justifyContent="center"

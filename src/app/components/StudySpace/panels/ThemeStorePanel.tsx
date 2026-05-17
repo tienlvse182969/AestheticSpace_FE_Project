@@ -2,8 +2,8 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { Palette } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { PanelCloseBtn } from "./PanelCloseBtn";
-import { useCenteredPanel } from "./useCenteredPanel";
+import { PanelCloseBtn } from "../ui/PanelCloseBtn";
+import { useCenteredPanel } from "../hooks/useCenteredPanel";
 
 const MotionBox = motion.create(Box);
 

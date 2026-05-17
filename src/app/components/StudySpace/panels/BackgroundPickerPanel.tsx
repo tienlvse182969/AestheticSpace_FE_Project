@@ -3,10 +3,10 @@ import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, Palette, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { PanelCloseBtn } from "./PanelCloseBtn";
-import { useCenteredPanel } from "./useCenteredPanel";
-import { BACKGROUNDS } from "./constants";
-import type { BackgroundItem } from "./types";
+import { PanelCloseBtn } from "../ui/PanelCloseBtn";
+import { useCenteredPanel } from "../hooks/useCenteredPanel";
+import { BACKGROUNDS } from "../constants";
+import type { BackgroundItem } from "../types";
 
 const MotionBox = motion.create(Box);
 

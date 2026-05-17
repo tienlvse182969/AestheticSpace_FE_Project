@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Box } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { X } from "lucide-react";
-import type { PlacedSticker } from "./types";
+import type { PlacedSticker } from "../types";
 
 const MotionBox = motion.create(Box);
 

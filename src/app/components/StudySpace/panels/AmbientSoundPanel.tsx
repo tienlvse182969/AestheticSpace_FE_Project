@@ -3,8 +3,8 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Coffee, Waves, Wind, TreePine, Music2, CloudRain, Flame, Radio, Check, AudioWaveform } from "lucide-react";
-import { PanelCloseBtn } from "./PanelCloseBtn";
-import { useCenteredPanel } from "./useCenteredPanel";
+import { PanelCloseBtn } from "../ui/PanelCloseBtn";
+import { useCenteredPanel } from "../hooks/useCenteredPanel";
 
 const MotionBox  = motion.create(Box);
 const MotionDiv  = motion.div;

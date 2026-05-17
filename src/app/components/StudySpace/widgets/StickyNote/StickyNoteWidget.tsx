@@ -3,7 +3,7 @@ import { Box, Flex } from "@chakra-ui/react";
 import { motion, useMotionValue, AnimatePresence } from "motion/react";
 import { GripHorizontal, X, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { StickyNote } from "./types";
+import type { StickyNote } from "../../types";
 
 export const STICKY_COLORS: {
   id: string;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
-import { RAINY_ART, SC_SRC, TRACK_NAMES } from "./constants";
+import { RAINY_ART, SC_SRC, TRACK_NAMES } from "../../constants";
 
 export function MusicPlayerWidget() {
   const iframeRef = useRef<HTMLIFrameElement>(null);

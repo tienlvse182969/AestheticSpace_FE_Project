@@ -1,3 +1,104 @@
-@import url('https://fonts.cdnfonts.com/css/harmonyos-sans');
 @import url('https://fonts.googleapis.com/css2?family=Tenor+Sans&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+
+/* HarmonyOS Sans — explicit @font-face so the browser uses the correct weight file.
+   cdnfonts.com uses local('HarmonyOS Sans') for every weight, which causes browsers to
+   match a locally-installed Regular variant for ALL weights (Bold, Black, etc.) on some
+   systems. Using weight-specific PostScript names prevents this mismatch. */
+
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: normal;
+  font-weight: 250;
+  font-display: swap;
+  src: local('HarmonyOS Sans Thin'), local('HarmonyOSSans-Thin'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Thin.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: italic;
+  font-weight: 250;
+  font-display: swap;
+  src: local('HarmonyOS Sans Thin Italic'), local('HarmonyOSSans-ThinItalic'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Thin_Italic.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: local('HarmonyOS Sans Light'), local('HarmonyOSSans-Light'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Light.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: italic;
+  font-weight: 300;
+  font-display: swap;
+  src: local('HarmonyOS Sans Light Italic'), local('HarmonyOSSans-LightItalic'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Light_Italic.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('HarmonyOS Sans Regular'), local('HarmonyOS Sans'), local('HarmonyOSSans-Regular'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Regular.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: local('HarmonyOS Sans Italic'), local('HarmonyOSSans-Italic'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Regular_Italic.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('HarmonyOS Sans Medium'), local('HarmonyOSSans-Medium'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Medium.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: local('HarmonyOS Sans Medium Italic'), local('HarmonyOSSans-MediumItalic'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Medium_Italic.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: local('HarmonyOS Sans Bold'), local('HarmonyOSSans-Bold'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Bold.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: local('HarmonyOS Sans Bold Italic'), local('HarmonyOSSans-BoldItalic'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Bold_Italic.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: local('HarmonyOS Sans Black'), local('HarmonyOSSans-Black'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Black.woff') format('woff');
+}
+@font-face {
+  font-family: 'HarmonyOS Sans';
+  font-style: italic;
+  font-weight: 900;
+  font-display: swap;
+  src: local('HarmonyOS Sans Black Italic'), local('HarmonyOSSans-BlackItalic'),
+       url('https://fonts.cdnfonts.com/s/107783/HarmonyOS_Sans_Black_Italic.woff') format('woff');
+}

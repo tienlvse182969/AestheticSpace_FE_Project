@@ -3,11 +3,11 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { Trash2, Plus, StickyNote } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { PanelCloseBtn } from "./PanelCloseBtn";
-import { WIDGET_DEFS } from "./constants";
-import { STICKY_COLORS } from "./StickyNoteWidget";
-import { useCenteredPanel } from "./useCenteredPanel";
-import type { WidgetId } from "./types";
+import { PanelCloseBtn } from "../ui/PanelCloseBtn";
+import { WIDGET_DEFS } from "../constants";
+import { STICKY_COLORS } from "../widgets/StickyNote/StickyNoteWidget";
+import { useCenteredPanel } from "../hooks/useCenteredPanel";
+import type { WidgetId } from "../types";
 
 const MotionBox = motion.create(Box);
 

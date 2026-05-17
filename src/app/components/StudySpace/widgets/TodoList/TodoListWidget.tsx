@@ -3,7 +3,7 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { ListTodo, Trash2, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { TodoItem } from "./types";
+import type { TodoItem } from "../../types";
 
 const MotionBox = motion.create(Box);
 

@@ -3,11 +3,11 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ClockMode, DigitalLayout } from "./types";
+import type { ClockMode, DigitalLayout } from "../../types";
 
 interface ClockSettingsPanelProps {
   show: boolean;
-  containerRef?: React.RefObject<HTMLDivElement>;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
   mode: ClockMode;
   layout: DigitalLayout;
   showSeconds: boolean;

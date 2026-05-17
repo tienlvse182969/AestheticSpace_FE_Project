@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { convertSolar2Lunar, getLunarYearName } from "./lunarCalendar";
-import type { ClockMode, DigitalLayout } from "./types";
+import { convertSolar2Lunar, getLunarYearName } from "../../utils/lunarCalendar";
+import type { ClockMode, DigitalLayout } from "../../types";
 
 const DAYS   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
 const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];

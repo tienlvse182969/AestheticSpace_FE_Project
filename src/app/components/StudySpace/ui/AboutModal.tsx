@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { Info, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "./PanelCloseBtn";
-import { useCenteredPanel } from "./useCenteredPanel";
+import { useCenteredPanel } from "../hooks/useCenteredPanel";
 
 const MotionBox = motion.create(Box);
 

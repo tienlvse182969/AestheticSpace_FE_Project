@@ -12,7 +12,7 @@ const MARGIN  = 12;
 /* ── Props ──────────────────────────────────────────────────────────────────── */
 interface PomodoroSettingsPanelProps {
   show: boolean;
-  containerRef?: React.RefObject<HTMLDivElement>;
+  containerRef?: React.RefObject<HTMLDivElement | null>;
   focusMinutes: number;
   breakMinutes: number;
   totalSessions: number;
