@@ -62,10 +62,10 @@ export function QuoteWidget() {
   return (
     <Box
       style={{
-        background: "rgba(12,18,22,0.75)",
+        background: "rgba(var(--widget-bg-rgb), 0.78)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        border: "1px solid rgba(var(--accent-rgb), 0.18)",
         borderRadius: "16px",
         padding: "16px 16px 14px",
         width: "100%",

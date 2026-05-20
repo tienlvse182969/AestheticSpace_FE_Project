@@ -296,5 +296,29 @@
     "blossom": "Hoa anh đào",
     "lavender": "Oải hương",
     "sky": "Bầu trời"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "appearance": "Giao diện",
+    "darkMode": "Chế độ tối",
+    "darkModeDesc": "Chuyển đổi giữa giao diện tối và sáng",
+    "comingSoon": "Đang phát triển — sắp ra mắt",
+    "language": "Ngôn ngữ",
+    "notifications": "Thông báo",
+    "browserNotif": "Thông báo trình duyệt",
+    "browserNotifDesc": "Nhận thông báo khi phiên Pomodoro kết thúc",
+    "notifDenied": "Quyền bị từ chối — bật trong cài đặt trình duyệt",
+    "notifUnsupported": "Trình duyệt không hỗ trợ tính năng này",
+    "accentColor": "Màu chủ đạo",
+    "accentColorDesc": "Áp dụng cho widget và các điểm nhấn giao diện",
+    "custom": "Tùy chỉnh"
+  },
+  "effects": {
+    "title": "HIỆU ỨNG",
+    "rain": "Mưa rơi",
+    "snow": "Tuyết rơi",
+    "active": "đang bật",
+    "noEffect": "Chưa có hiệu ứng — chọn một loại bên trên",
+    "clearEffect": "Tắt hiệu ứng"
   }
 }

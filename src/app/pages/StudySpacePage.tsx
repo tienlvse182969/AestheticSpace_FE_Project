@@ -2,7 +2,7 @@ import type { BackgroundItem } from "../components/StudySpace/types";
 import { useState, useRef } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronUp, ChevronDown, Image as ImageIcon, LayoutGrid, Sparkles, Palette, AudioWaveform, Settings } from "lucide-react";
+import { ChevronUp, ChevronDown, Image as ImageIcon, LayoutGrid, Sparkles, Palette, AudioWaveform, Settings, Wand2 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { AccountPanel, AvatarCircle, type UserInfo } from "../components/StudySpace/panels/AccountPanel";
@@ -22,6 +22,10 @@ import { BackgroundPickerPanel } from "../components/StudySpace/panels/Backgroun
 import { StickerPickerPanel }    from "../components/StudySpace/panels/StickerPickerPanel";
 import { ThemeStorePanel }       from "../components/StudySpace/panels/ThemeStorePanel";
 import { AmbientSoundPanel }     from "../components/StudySpace/panels/AmbientSoundPanel";
+import { EffectsPanel, type EffectType } from "../components/StudySpace/panels/EffectsPanel";
+import { SettingsPanel }           from "../components/StudySpace/panels/SettingsPanel";
+import { RainEffect }            from "../components/StudySpace/effects/RainEffect";
+import { SnowEffect }            from "../components/StudySpace/effects/SnowEffect";
 import { AboutModal }            from "../components/StudySpace/ui/AboutModal";
 import { ToolbarBtn }            from "../components/StudySpace/ui/ToolbarBtn";
 import { BACKGROUNDS }           from "../components/StudySpace/constants";
@@ -32,7 +36,7 @@ import { useSpaceItems }       from "../hooks/studyspace/useSpaceItems";
 
 const MotionBox = motion.create(Box);
 
-type ActivePanel = "widget" | "image" | "sticker" | "theme" | "ambient" | null;
+type ActivePanel = "widget" | "image" | "sticker" | "theme" | "ambient" | "effects" | "settings" | null;
 
 export function StudySpacePage() {
   const navigate = useNavigate();
@@ -42,6 +46,7 @@ export function StudySpacePage() {
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [activePanel, setActivePanel]       = useState<ActivePanel>(null);
   const [aboutOpen, setAboutOpen]           = useState(false);
+  const [activeEffect, setActiveEffect]     = useState<EffectType>(null);
   const [accountOpen, setAccountOpen]       = useState(false);
   const [currentBg, setCurrentBg]           = useState<BackgroundItem>(BACKGROUNDS[3]);
   const avatarBtnRef    = useRef<HTMLDivElement>(null);
@@ -108,6 +113,10 @@ export function StudySpacePage() {
         }}
       />
 
+      {/* ── Effect overlays ── */}
+      {activeEffect === "rain" && <RainEffect />}
+      {activeEffect === "snow" && <SnowEffect />}
+
       {/* ── Floating Panels ── */}
       <AnimatePresence>
         {activePanel === "image" && (
@@ -143,6 +152,20 @@ export function StudySpacePage() {
         {activePanel === "ambient" && (
           <AmbientSoundPanel
             key="ambient-panel"
+            onClose={() => setActivePanel(null)}
+          />
+        )}
+        {activePanel === "effects" && (
+          <EffectsPanel
+            key="effects-panel"
+            activeEffect={activeEffect}
+            onSelect={setActiveEffect}
+            onClose={() => setActivePanel(null)}
+          />
+        )}
+        {activePanel === "settings" && (
+          <SettingsPanel
+            key="settings-panel"
             onClose={() => setActivePanel(null)}
           />
         )}
@@ -425,6 +448,18 @@ export function StudySpacePage() {
                   active={activePanel === "ambient"}
                   onClick={() => togglePanel("ambient")}
                   tooltip={t("space.ambientSounds")}
+                />
+                <ToolbarBtn
+                  icon={<Wand2 size={22} />}
+                  active={activePanel === "effects"}
+                  onClick={() => togglePanel("effects")}
+                  tooltip={t("effects.title")}
+                />
+                <ToolbarBtn
+                  icon={<Settings size={22} />}
+                  active={activePanel === "settings"}
+                  onClick={() => togglePanel("settings")}
+                  tooltip={t("settings.title")}
                 />
 
                 {/* Account avatar button */}

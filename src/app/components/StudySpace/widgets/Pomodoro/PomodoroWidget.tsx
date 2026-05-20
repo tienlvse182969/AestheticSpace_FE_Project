@@ -72,10 +72,10 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     <Box
       position="relative"
       style={{
-        background: "rgba(12,18,22,0.75)",
+        background: "rgba(var(--widget-bg-rgb), 0.78)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
-        border: "1px solid rgba(255,255,255,0.1)",
+        border: "1px solid rgba(var(--accent-rgb), 0.18)",
         borderRadius: "16px",
         padding: "20px 22px",
         overflow: "hidden",
@@ -85,7 +85,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
       {/* ── Header ── */}
       <Flex align="center" gap={2} justify="center" mb={3}>
         <Flame size={12} color={isBreak ? "#38bdf8" : "#f97316"} />
-        <Text style={{ fontSize: "0.72rem", color: "#7aab97", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+        <Text style={{ fontSize: "0.72rem", color: "rgba(var(--accent-light-rgb), 0.85)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
           {isBreak ? t("pomodoroWidget.sessionBreak", { session }) : t("pomodoroWidget.sessionFocus", { session })}
         </Text>
       </Flex>
@@ -95,9 +95,9 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
         <Box style={{
           padding: "3px 14px", borderRadius: "20px", fontSize: "0.7rem",
           fontFamily: "'HarmonyOS Sans', sans-serif",
-          color: isBreak ? "rgba(56,189,248,0.85)" : "#7aab97",
-          background: isBreak ? "rgba(56,189,248,0.1)" : "rgba(74,166,134,0.08)",
-          border: isBreak ? "1px solid rgba(56,189,248,0.22)" : "1px solid rgba(74,166,134,0.18)",
+          color: isBreak ? "rgba(56,189,248,0.85)" : "rgba(var(--accent-light-rgb), 0.88)",
+          background: isBreak ? "rgba(56,189,248,0.1)" : "rgba(var(--accent-rgb), 0.08)",
+          border: isBreak ? "1px solid rgba(56,189,248,0.22)" : "1px solid rgba(var(--accent-rgb), 0.2)",
           display: "flex", alignItems: "center", gap: 5,
         }}>
           <span style={{ opacity: 0.6, fontSize: "0.62rem" }}>{isBreak ? t("pomodoroWidget.breakPhase") : t("pomodoroWidget.focusPhase")}</span>
@@ -119,7 +119,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
               <stop offset="100%" stopColor="#818cf8" />
             </linearGradient>
           </defs>
-          <circle cx="85" cy="85" r={r} fill="none" stroke="rgba(74,166,134,0.12)" strokeWidth="9" />
+          <circle cx="85" cy="85" r={r} fill="none" style={{ stroke: "rgba(var(--accent-rgb), 0.12)" }} strokeWidth="9" />
           <circle cx="85" cy="85" r={r} fill="none"
             stroke={`url(#${gradId})`} strokeWidth="9" strokeLinecap="round"
             strokeDasharray={`${dash} ${circ}`}
@@ -130,7 +130,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           <Text style={{ fontSize: "2.4rem", color: "#fff", letterSpacing: "0.04em", lineHeight: 1, fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: "600" }}>
             {mins}:{secs}
           </Text>
-          <Text style={{ fontSize: "0.65rem", color: isBreak ? "rgba(56,189,248,0.7)" : "#7aab97", marginTop: 4, letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+          <Text style={{ fontSize: "0.65rem", color: isBreak ? "rgba(56,189,248,0.7)" : "rgba(var(--accent-light-rgb), 0.75)", marginTop: 4, letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
             {isBreak ? t("pomodoroWidget.breakLabel") : t("pomodoroWidget.remaining")}
           </Text>
         </Flex>
@@ -140,8 +140,8 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
       <Flex align="center" justify="center" gap={3} mt={4}>
         <Box as="button" onClick={resetAll}
           borderRadius="full" display="flex" alignItems="center" justifyContent="center"
-          style={{ width: 38, height: 38, background: "rgba(74,166,134,0.1)", border: "1px solid rgba(74,166,134,0.3)", cursor: "pointer" }}>
-          <RotateCcw size={14} color="#7aab97" />
+          style={{ width: 38, height: 38, background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.3)", cursor: "pointer" }}>
+          <RotateCcw size={14} color="rgba(var(--accent-light-rgb), 0.85)" />
         </Box>
         <Box as="button" onClick={togglePlay}
           borderRadius="full" display="flex" alignItems="center" justifyContent="center"
@@ -160,12 +160,12 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           title={isBreak ? t("pomodoroWidget.skipBreakTooltip") : ""}
           style={{
             width: 38, height: 38,
-            background: "rgba(74,166,134,0.1)", border: "1px solid rgba(74,166,134,0.3)",
+            background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.3)",
             cursor: isBreak ? "pointer" : "default",
             opacity: isBreak ? 1 : 0.35,
             transition: "opacity 0.2s",
           }}>
-          <Zap size={14} color={isBreak ? "#38bdf8" : "#7aab97"} />
+          <Zap size={14} color={isBreak ? "#38bdf8" : "rgba(var(--accent-light-rgb), 0.85)"} />
         </Box>
       </Flex>
 
@@ -175,14 +175,14 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
         {Array.from({ length: totalSessions }, (_, i) => i + 1).map((i) => (
           <Box key={i} borderRadius="full" style={{
             width: 8, height: 8,
-            background: i < session ? "#4ade80" : i === session ? "rgba(74,222,128,0.6)" : "rgba(74,166,134,0.18)",
-            border: "1px solid rgba(74,222,128,0.3)",
+            background: i < session ? "var(--accent)" : i === session ? "rgba(var(--accent-light-rgb), 0.6)" : "rgba(var(--accent-rgb), 0.18)",
+            border: "1px solid rgba(var(--accent-rgb), 0.35)",
             transition: "background 0.3s",
             flexShrink: 0,
           }} />
         ))}
       </Flex>
-      <Text mt={3} textAlign="center" style={{ fontSize: "0.72rem", color: "#4d8a78", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+      <Text mt={3} textAlign="center" style={{ fontSize: "0.72rem", color: "rgba(var(--accent-rgb), 0.7)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
         {session > 1
           ? t("pomodoroWidget.sessionsDone", { done: session - 1, total: totalSessions, count: session - 1 })
           : t("pomodoroWidget.noSessionsDone", { total: totalSessions })}

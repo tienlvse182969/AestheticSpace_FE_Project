@@ -246,7 +246,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         borderRadius: 9,
         border: "none",
         cursor: "pointer",
-        background: value ? "rgba(74,222,128,0.45)" : "rgba(255,255,255,0.1)",
+        background: value ? "rgba(var(--accent-rgb), 0.45)" : "rgba(255,255,255,0.1)",
         padding: "2px",
         transition: "background 0.22s",
         display: "flex",
@@ -257,10 +257,10 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
       <Box style={{
         width: 14, height: 14,
         borderRadius: "50%",
-        background: value ? "#4ade80" : "rgba(255,255,255,0.38)",
+        background: value ? "var(--accent)" : "rgba(255,255,255,0.38)",
         transform: value ? "translateX(16px)" : "translateX(0)",
         transition: "transform 0.22s cubic-bezier(0.4,0,0.2,1), background 0.22s",
-        boxShadow: value ? "0 0 6px rgba(74,222,128,0.7)" : "none",
+        boxShadow: value ? "0 0 6px rgba(var(--accent-rgb), 0.7)" : "none",
       }} />
     </Box>
   );
