@@ -232,6 +232,36 @@
     "breakdown": "{{sessions}} × {{focus}}m tập trung + {{breaks}} × {{break}}m nghỉ",
     "totalTime": "≈ {{time}} tổng thời gian"
   },
+  "clockWidget": {
+    "days": ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],
+    "months": ["Th1", "Th2", "Th3", "Th4", "Th5", "Th6", "Th7", "Th8", "Th9", "Th10", "Th11", "Th12"],
+    "dateStr": "{{date}} tháng {{monthNum}} năm {{year}}",
+    "lunarStr": "{{day}} tháng {{leap}}{{month}} · {{year}}",
+    "lunarLeap": "nhuận "
+  },
+  "pomodoroWidget": {
+    "sessionFocus": "HIỆP {{session}} · TẬP TRUNG",
+    "sessionBreak": "HIỆP {{session}} · NGHỈ",
+    "focusPhase": "tập trung",
+    "breakPhase": "nghỉ",
+    "min": "phút",
+    "remaining": "CÒN LẠI",
+    "breakLabel": "NGHỈ",
+    "skipBreakTooltip": "Bỏ qua nghỉ",
+    "sessionsDone": "{{done}} / {{total}} hiệp đã hoàn thành",
+    "noSessionsDone": "0 / {{total}} hiệp",
+    "focusDoneTitle": "Hoàn thành phiên tập trung! 🎉",
+    "breakPromptDesc": "Bạn có muốn nghỉ ngơi {{minutes}} phút không?",
+    "takeBreak": "Nghỉ {{minutes}} phút",
+    "skip": "Bỏ qua",
+    "allDoneTitle": "Hoàn thành tất cả! 🏆",
+    "readyNextTitle": "Sẵn sàng tiếp tục? ⚡",
+    "allDoneDesc": "Đã hoàn thành {{total}} hiệp!",
+    "nextSessionDesc": "Bắt đầu hiệp {{next}} / {{total}} ({{minutes}} phút)?",
+    "startNext": "Hiệp {{next}} 🚀",
+    "stop": "Dừng lại",
+    "restart": "Bắt đầu lại"
+  },
   "clockSettings": {
     "title": "Cài đặt đồng hồ",
     "clockType": "Kiểu đồng hồ",

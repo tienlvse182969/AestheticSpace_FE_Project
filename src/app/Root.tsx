@@ -4,7 +4,7 @@ import { Footer } from "./components/homepage/Footer";
 
 export function Root() {
   const location = useLocation();
-  const isFullscreen = location.pathname === "/login" || location.pathname === "/space";
+  const isFullscreen = location.pathname === "/login" || location.pathname === "/space" || location.pathname === "/admin";
 
   return (
     <>

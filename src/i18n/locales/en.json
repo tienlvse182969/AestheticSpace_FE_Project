@@ -232,6 +232,37 @@
     "breakdown": "{{sessions}} × {{focus}}m focus + {{breaks}} × {{break}}m break",
     "totalTime": "≈ {{time}} total time"
   },
+  "clockWidget": {
+    "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    "months": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "dateStr": "{{month}} {{date}}, {{year}}",
+    "lunarStr": "{{leap}}Month {{month}}, Day {{day}} · {{year}}",
+    "lunarLeap": "Leap "
+  },
+  "pomodoroWidget": {
+    "sessionFocus": "SESSION {{session}} · FOCUS",
+    "sessionBreak": "SESSION {{session}} · BREAK",
+    "focusPhase": "focus",
+    "breakPhase": "break",
+    "min": "min",
+    "remaining": "REMAINING",
+    "breakLabel": "BREAK",
+    "skipBreakTooltip": "Skip break",
+    "sessionsDone_one": "1 / {{total}} session done",
+    "sessionsDone_other": "{{done}} / {{total}} sessions done",
+    "noSessionsDone": "0 / {{total}} sessions",
+    "focusDoneTitle": "Focus session done! 🎉",
+    "breakPromptDesc": "Would you like a {{minutes}}-minute break?",
+    "takeBreak": "Take {{minutes}} min break",
+    "skip": "Skip",
+    "allDoneTitle": "All done! 🏆",
+    "readyNextTitle": "Ready to continue? ⚡",
+    "allDoneDesc": "Completed {{total}} sessions!",
+    "nextSessionDesc": "Start session {{next}} / {{total}} ({{minutes}} min)?",
+    "startNext": "Session {{next}} 🚀",
+    "stop": "Stop",
+    "restart": "Start Again"
+  },
   "clockSettings": {
     "title": "Clock Settings",
     "clockType": "Clock type",

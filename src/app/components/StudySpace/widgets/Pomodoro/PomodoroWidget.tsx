@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { Flame, RotateCcw, Play, Pause, Coffee, Zap, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 const MotionBox = motion.create(Box);
 
@@ -17,6 +18,7 @@ interface PomodoroWidgetProps {
 }
 
 export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: PomodoroWidgetProps) {
+  const { t } = useTranslation();
   const focusTotal = focusMinutes * 60;
   const breakTotal = breakMinutes * 60;
 
@@ -84,7 +86,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
       <Flex align="center" gap={2} justify="center" mb={3}>
         <Flame size={12} color={isBreak ? "#38bdf8" : "#f97316"} />
         <Text style={{ fontSize: "0.72rem", color: "#7aab97", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-          {isBreak ? `SESSION ${session} · BREAK` : `SESSION ${session} · FOCUS`}
+          {isBreak ? t("pomodoroWidget.sessionBreak", { session }) : t("pomodoroWidget.sessionFocus", { session })}
         </Text>
       </Flex>
 
@@ -98,9 +100,9 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           border: isBreak ? "1px solid rgba(56,189,248,0.22)" : "1px solid rgba(74,166,134,0.18)",
           display: "flex", alignItems: "center", gap: 5,
         }}>
-          <span style={{ opacity: 0.6, fontSize: "0.62rem" }}>{isBreak ? "break" : "focus"}</span>
+          <span style={{ opacity: 0.6, fontSize: "0.62rem" }}>{isBreak ? t("pomodoroWidget.breakPhase") : t("pomodoroWidget.focusPhase")}</span>
           <span style={{ fontWeight: 600 }}>{isBreak ? breakMinutes : focusMinutes}</span>
-          <span>min</span>
+          <span>{t("pomodoroWidget.min")}</span>
         </Box>
       </Flex>
 
@@ -129,7 +131,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
             {mins}:{secs}
           </Text>
           <Text style={{ fontSize: "0.65rem", color: isBreak ? "rgba(56,189,248,0.7)" : "#7aab97", marginTop: 4, letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            {isBreak ? "BREAK" : "REMAINING"}
+            {isBreak ? t("pomodoroWidget.breakLabel") : t("pomodoroWidget.remaining")}
           </Text>
         </Flex>
       </Box>
@@ -155,7 +157,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
         <Box as="button"
           onClick={() => { if (isBreak) { setRunning(false); setPhase("idle"); setDialog("next-prompt"); } }}
           borderRadius="full" display="flex" alignItems="center" justifyContent="center"
-          title={isBreak ? "Skip break" : ""}
+          title={isBreak ? t("pomodoroWidget.skipBreakTooltip") : ""}
           style={{
             width: 38, height: 38,
             background: "rgba(74,166,134,0.1)", border: "1px solid rgba(74,166,134,0.3)",
@@ -181,7 +183,9 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
         ))}
       </Flex>
       <Text mt={3} textAlign="center" style={{ fontSize: "0.72rem", color: "#4d8a78", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-        {session > 1 ? `${session - 1} / ${totalSessions} session${session > 2 ? "s" : ""} done` : `0 / ${totalSessions} sessions`}
+        {session > 1
+          ? t("pomodoroWidget.sessionsDone", { done: session - 1, total: totalSessions, count: session - 1 })
+          : t("pomodoroWidget.noSessionsDone", { total: totalSessions })}
       </Text>
 
       {/* ── End-of-session dialog overlay ── */}
@@ -214,19 +218,19 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
               <>
                 <Coffee size={28} color="#38bdf8" style={{ marginBottom: 12, opacity: 0.9 }} />
                 <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
-                  Focus session done! 🎉
+                  {t("pomodoroWidget.focusDoneTitle")}
                 </Text>
                 <Text textAlign="center" mb={5} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.5 }}>
-                  Bạn có muốn nghỉ ngơi<br />{breakMinutes} phút không?
+                  {t("pomodoroWidget.breakPromptDesc", { minutes: breakMinutes })}
                 </Text>
                 <Flex gap={2} w="100%">
                   <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={startBreak}
                     style={{ background: "linear-gradient(135deg,#38bdf8,#818cf8)", color: "#fff", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(56,189,248,0.3)" }}>
-                    Nghỉ {breakMinutes} phút
+                    {t("pomodoroWidget.takeBreak", { minutes: breakMinutes })}
                   </Box>
                   <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={() => setDialog("next-prompt")}
                     style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
-                    Bỏ qua
+                    {t("pomodoroWidget.skip")}
                   </Box>
                 </Flex>
               </>
@@ -236,18 +240,18 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
               <>
                 <Zap size={28} color="#4ade80" style={{ marginBottom: 12, opacity: 0.9 }} />
                 <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
-                  {session >= totalSessions ? "Hoàn thành tất cả! 🏆" : "Sẵn sàng tiếp tục? ⚡"}
+                  {session >= totalSessions ? t("pomodoroWidget.allDoneTitle") : t("pomodoroWidget.readyNextTitle")}
                 </Text>
                 <Text textAlign="center" mb={5} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.5 }}>
                   {session >= totalSessions
-                    ? `Đã hoàn thành ${totalSessions} sessions!`
-                    : `Bắt đầu hiệp ${session + 1} / ${totalSessions} (${focusMinutes} phút)?`}
+                    ? t("pomodoroWidget.allDoneDesc", { total: totalSessions })
+                    : t("pomodoroWidget.nextSessionDesc", { next: session + 1, total: totalSessions, minutes: focusMinutes })}
                 </Text>
                 <Flex gap={2} w="100%">
                   {session < totalSessions && (
                     <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={skipToNext}
                       style={{ background: "linear-gradient(135deg,#4ade80,#38bdf8)", color: "#0d2b24", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(74,222,128,0.28)" }}>
-                      Hiệp {session + 1} 🚀
+                      {t("pomodoroWidget.startNext", { next: session + 1 })}
                     </Box>
                   )}
                   <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={resetAll}
@@ -259,7 +263,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
                       border: session >= totalSessions ? "none" : "1px solid rgba(255,255,255,0.12)",
                       cursor: "pointer",
                     }}>
-                    {session >= totalSessions ? "Bắt đầu lại" : "Dừng lại"}
+                    {session >= totalSessions ? t("pomodoroWidget.restart") : t("pomodoroWidget.stop")}
                   </Box>
                 </Flex>
               </>

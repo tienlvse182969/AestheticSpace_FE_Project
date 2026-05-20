@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
+import { useTranslation } from "react-i18next";
 import { convertSolar2Lunar, getLunarYearName } from "../../utils/lunarCalendar";
 import type { ClockMode, DigitalLayout } from "../../types";
-
-const DAYS   = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
 // Re-export types so ClockSettingsPanel can import from types.ts cleanly
 export type { ClockMode, DigitalLayout };
@@ -20,27 +18,41 @@ interface ClockWidgetProps {
 }
 
 export function ClockWidget({ mode, layout, showSeconds, showLunar, showDate }: ClockWidgetProps) {
+  const { t } = useTranslation();
   const [now, setNow] = useState(new Date());
 
   // 50 ms tick → 20 fps, enough for buttery-smooth sweep
   useEffect(() => {
-    const t = setInterval(() => setNow(new Date()), 50);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setNow(new Date()), 50);
+    return () => clearInterval(timer);
   }, []);
 
   // ── formatted values ──────────────────────────────────────────────────────
   const hh = String(now.getHours()).padStart(2, "0");
   const mm = String(now.getMinutes()).padStart(2, "0");
   const ss = String(now.getSeconds()).padStart(2, "0");
-  const dayName = DAYS[now.getDay()];
-  const dateStr = `${MONTHS[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+
+  const days    = t("clockWidget.days",   { returnObjects: true }) as string[];
+  const months  = t("clockWidget.months", { returnObjects: true }) as string[];
+  const dayName = days[now.getDay()];
+  const dateStr = t("clockWidget.dateStr", {
+    month:    months[now.getMonth()],
+    monthNum: now.getMonth() + 1,
+    date:     now.getDate(),
+    year:     now.getFullYear(),
+  });
 
   // ── lunar calendar ────────────────────────────────────────────────────────
   const [lDay, lMonth, lYear, lLeap] = convertSolar2Lunar(
     now.getDate(), now.getMonth() + 1, now.getFullYear()
   );
   const lunarYearName = getLunarYearName(lYear);
-  const lunarStr = `${lDay} tháng ${lLeap ? "nhuận " : ""}${lMonth} · ${lunarYearName}`;
+  const lunarStr = t("clockWidget.lunarStr", {
+    day:   lDay,
+    month: lMonth,
+    leap:  lLeap ? t("clockWidget.lunarLeap") : "",
+    year:  lunarYearName,
+  });
 
   // ── digital seconds arc (ms-smooth) ──────────────────────────────────────
   const r      = 28;
