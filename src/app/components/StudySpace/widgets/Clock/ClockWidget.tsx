@@ -79,10 +79,10 @@ export function ClockWidget({ mode, layout, showSeconds, showLunar, showDate }: 
 
   return (
     <Box style={{
-      background: "rgba(12,18,22,0.75)",
+      background: "rgba(var(--widget-bg-rgb), 0.78)",
       backdropFilter: "blur(18px)",
       WebkitBackdropFilter: "blur(18px)",
-      border: "1px solid rgba(255,255,255,0.1)",
+      border: "1px solid rgba(var(--accent-rgb), 0.18)",
       borderRadius: "16px",
       padding: "14px 16px 14px",
     }}>
@@ -223,7 +223,7 @@ function DigitalVertical({ hh, mm, ss, showSeconds, secFrac }: {
       >
         {/* track */}
         <circle cx={cx} cy={cy} r={r} fill="none"
-          stroke="rgba(251,191,36,0.1)" strokeWidth={4} />
+          style={{ stroke: "rgba(var(--accent-rgb), 0.12)" }} strokeWidth={4} />
         {/* progress arc */}
         <circle cx={cx} cy={cy} r={r} fill="none"
           stroke="url(#vSecGrad)" strokeWidth={4} strokeLinecap="round"
@@ -232,8 +232,8 @@ function DigitalVertical({ hh, mm, ss, showSeconds, secFrac }: {
         />
         <defs>
           <linearGradient id="vSecGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%"   stopColor="#fbbf24" />
-            <stop offset="100%" stopColor="#f97316" />
+            <stop offset="0%"   style={{ stopColor: "var(--accent)" }} />
+            <stop offset="100%" style={{ stopColor: "rgba(var(--accent-light-rgb), 0.7)" }} />
           </linearGradient>
         </defs>
       </svg>
@@ -299,16 +299,16 @@ function AnalogFace({ hrAngle, minAngle, secAngle, showSeconds }: {
         />
         {showSeconds && (
           <line x1={scT.x} y1={scT.y} x2={sc.x} y2={sc.y}
-            stroke="#fbbf24" strokeWidth={1.5} strokeLinecap="round"
+            strokeWidth={1.5} strokeLinecap="round"
             style={{
-              // No CSS transition — 50 ms tick already gives smooth continuous sweep
-              filter: "drop-shadow(0 0 3px rgba(251,191,36,0.8))",
+              stroke: "var(--accent)",
+              filter: "drop-shadow(0 0 3px rgba(var(--accent-rgb), 0.8))",
             }}
           />
         )}
 
         <circle cx={cx} cy={cy} r={5}   fill="rgba(255,255,255,0.9)" />
-        <circle cx={cx} cy={cy} r={2.5} fill={showSeconds ? "#fbbf24" : "rgba(12,18,22,0.85)"} />
+        <circle cx={cx} cy={cy} r={2.5} style={{ fill: showSeconds ? "var(--accent)" : "rgba(12,18,22,0.85)" }} />
       </svg>
     </Box>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { LogIn, Settings, HelpCircle, LogOut, User, Home, Info } from "lucide-react";
+import { LogIn, HelpCircle, LogOut, User, Home, Info } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 
@@ -105,13 +105,8 @@ export { AvatarCircle };
 
 export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogout, onHome, onAbout }: AccountPanelProps) {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [pos, setPos] = useState<{ bottom: number; right: number } | null>(null);
-
-  const changeLang = (lang: string) => {
-    i18n.changeLanguage(lang);
-    localStorage.setItem("lang", lang);
-  };
 
   useEffect(() => {
     if (!open || !anchorRef.current) return;
@@ -204,24 +199,6 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 style={{ background: "rgba(255,255,255,0.08)" }}
               />
 
-              {/* Settings */}
-              <Box
-                as="button"
-                onClick={() => onClose()}
-                display="flex"
-                alignItems="center"
-                gap={2}
-                w="100%"
-                px="10px"
-                py="8px"
-                borderRadius="9px"
-                style={menuItemStyle}
-                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
-              >
-                <Settings size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
-                {t("account.settings")}
-              </Box>
-
               {/* Help */}
               <Box
                 as="button"
@@ -275,37 +252,6 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 <Info size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
                 {t("account.about")}
               </Box>
-
-              {/* Language switcher */}
-              <Flex align="center" justify="space-between" px="10px" py="8px">
-                <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                  {t("account.language")}
-                </Text>
-                <Flex align="center" gap={1} borderRadius="8px" overflow="hidden"
-                  style={{ border: "1px solid rgba(255,255,255,0.12)" }}>
-                  {["en", "vi"].map((lang) => (
-                    <Box
-                      as="button"
-                      key={lang}
-                      onClick={() => changeLang(lang)}
-                      px={2}
-                      py="3px"
-                      fontSize="0.72rem"
-                      fontWeight="600"
-                      border="none"
-                      cursor="pointer"
-                      transition="all 0.2s"
-                      style={{
-                        background: i18n.language === lang ? "rgba(255,255,255,0.18)" : "transparent",
-                        color: i18n.language === lang ? "white" : "rgba(255,255,255,0.4)",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      {lang.toUpperCase()}
-                    </Box>
-                  ))}
-                </Flex>
-              </Flex>
 
               {/* Divider */}
               <Box
@@ -383,6 +329,24 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 </Text>
               </Box>
 
+              {/* Help */}
+              <Box
+                as="button"
+                onClick={() => onClose()}
+                display="flex"
+                alignItems="center"
+                gap={2}
+                w="100%"
+                px="10px"
+                py="8px"
+                borderRadius="9px"
+                style={menuItemStyle}
+                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
+              >
+                <HelpCircle size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
+                {t("account.help")}
+              </Box>
+
               {/* Home */}
               <Box
                 as="button"
@@ -418,37 +382,6 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 <Info size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
                 {t("account.about")}
               </Box>
-
-              {/* Language switcher */}
-              <Flex align="center" justify="space-between" px="10px" py="8px">
-                <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.5)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                  {t("account.language")}
-                </Text>
-                <Flex align="center" gap={1} borderRadius="8px" overflow="hidden"
-                  style={{ border: "1px solid rgba(255,255,255,0.12)" }}>
-                  {["en", "vi"].map((lang) => (
-                    <Box
-                      as="button"
-                      key={lang}
-                      onClick={() => changeLang(lang)}
-                      px={2}
-                      py="3px"
-                      fontSize="0.72rem"
-                      fontWeight="600"
-                      border="none"
-                      cursor="pointer"
-                      transition="all 0.2s"
-                      style={{
-                        background: i18n.language === lang ? "rgba(255,255,255,0.18)" : "transparent",
-                        color: i18n.language === lang ? "white" : "rgba(255,255,255,0.4)",
-                        letterSpacing: "0.05em",
-                      }}
-                    >
-                      {lang.toUpperCase()}
-                    </Box>
-                  ))}
-                </Flex>
-              </Flex>
 
               {/* Divider */}
               <Box

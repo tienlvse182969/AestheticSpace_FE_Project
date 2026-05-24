@@ -297,5 +297,29 @@
     "blossom": "Blossom",
     "lavender": "Lavender",
     "sky": "Sky"
+  },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "darkMode": "Dark mode",
+    "darkModeDesc": "Toggle between dark and light interface",
+    "comingSoon": "Coming soon — under development",
+    "language": "Language",
+    "notifications": "Notifications",
+    "browserNotif": "Browser notifications",
+    "browserNotifDesc": "Get notified when Pomodoro session ends",
+    "notifDenied": "Permission denied — enable in browser settings",
+    "notifUnsupported": "Not supported in this browser",
+    "accentColor": "Accent color",
+    "accentColorDesc": "Applied to widgets and UI highlights",
+    "custom": "Custom"
+  },
+  "effects": {
+    "title": "EFFECTS",
+    "rain": "Rain",
+    "snow": "Snow",
+    "active": "active",
+    "noEffect": "No effect — pick one above",
+    "clearEffect": "Clear effect"
   }
 }

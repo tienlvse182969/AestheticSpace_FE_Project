@@ -30,11 +30,11 @@ export function TodoListWidget() {
     setTodos((prev) => prev.filter((t) => t.id !== id));
 
   return (
-    <Box style={{ background: "rgba(12,18,22,0.75)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "16px", padding: "14px 14px 12px" }}>
+    <Box style={{ background: "rgba(var(--widget-bg-rgb), 0.78)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", border: "1px solid rgba(var(--accent-rgb), 0.18)", borderRadius: "16px", padding: "14px 14px 12px" }}>
       {/* Header */}
       <Flex align="center" gap={2} mb={3}>
-        <ListTodo size={13} color="#7aab97" />
-        <Text style={{ fontSize: "0.75rem", color: "#7aab97", letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+        <ListTodo size={13} style={{ color: "rgba(var(--accent-light-rgb), 0.85)" }} />
+        <Text style={{ fontSize: "0.75rem", color: "rgba(var(--accent-light-rgb), 0.85)", letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
           {t("todo.title")}
         </Text>
         <Box ml="auto" style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
