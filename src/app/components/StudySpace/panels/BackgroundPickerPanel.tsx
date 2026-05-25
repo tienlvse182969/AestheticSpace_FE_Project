@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, Palette, Sparkles } from "lucide-react";
@@ -24,6 +24,7 @@ interface UnsplashPhoto {
   alt_description: string | null;
   description: string | null;
   user: { name: string; links: { html: string } };
+  links: { download_location: string };
 }
 
 function mapPhoto(p: UnsplashPhoto): BackgroundItem {
@@ -34,7 +35,14 @@ function mapPhoto(p: UnsplashPhoto): BackgroundItem {
     label: p.alt_description || p.description || "Untitled",
     photographer: p.user.name,
     photographerUrl: `${p.user.links.html}?utm_source=aesthetic_space&utm_medium=referral`,
+    downloadLocation: p.links.download_location,
   };
+}
+
+// Required by Unsplash API guidelines when a user selects a photo
+function triggerUnsplashDownload(downloadLocation: string | undefined) {
+  if (!downloadLocation || !UNSPLASH_KEY) return;
+  fetch(`${downloadLocation}?client_id=${UNSPLASH_KEY}`).catch(() => {});
 }
 
 async function searchUnsplash(query: string, page: number) {
@@ -49,6 +57,163 @@ async function searchUnsplash(query: string, page: number) {
     totalPages: data.total_pages as number,
   };
 }
+
+interface PhotoCardProps {
+  bg: BackgroundItem;
+  isActive: boolean;
+  isFav: boolean;
+  onSelect: () => void;
+  onToggleFav: (e: React.MouseEvent) => void;
+  favLabel: string;
+}
+
+const PhotoCard = memo(function PhotoCard({ bg, isActive, isFav, onSelect, onToggleFav, favLabel }: PhotoCardProps) {
+  return (
+    <Box
+      position="relative"
+      borderRadius="8px"
+      overflow="hidden"
+      style={{
+        aspectRatio: "16/9",
+        cursor: "pointer",
+        border: isActive
+          ? "2px solid rgba(255,255,255,0.9)"
+          : "2px solid rgba(255,255,255,0.06)",
+        boxShadow: isActive
+          ? "0 0 0 3px rgba(255,255,255,0.18), 0 4px 16px rgba(0,0,0,0.5)"
+          : "0 2px 10px rgba(0,0,0,0.45)",
+        transform: isActive ? "scale(1.03)" : "scale(1)",
+        transition: "all 0.18s ease",
+      }}
+      css={{
+        "&:hover": {
+          border: "2px solid rgba(255,255,255,0.5) !important",
+          boxShadow: "0 6px 22px rgba(0,0,0,0.7) !important",
+          transform: "scale(1.04) !important",
+        },
+        "&:hover .card-overlay": { opacity: "1 !important" },
+        "&:hover .fav-btn":     { opacity: "1 !important" },
+      }}
+      onClick={onSelect}
+    >
+      {/* Thumbnail */}
+      <Box
+        position="absolute"
+        inset={0}
+        style={{
+          backgroundImage: `url(${bg.thumb})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+
+      {/* Gradient overlay with label */}
+      <Box
+        className="card-overlay"
+        position="absolute"
+        bottom={0}
+        left={0}
+        right={0}
+        px="7px"
+        py="5px"
+        style={{
+          background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)",
+          opacity: isActive ? 1 : 0,
+          transition: "opacity 0.18s",
+        }}
+      >
+        <Text style={{
+          fontSize: "0.6rem",
+          color: "rgba(255,255,255,0.88)",
+          fontFamily: "'HarmonyOS Sans', sans-serif",
+          letterSpacing: "0.02em",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}>
+          {bg.label}
+        </Text>
+        {bg.photographer && (
+          <Text style={{ fontSize: "0.55rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+            <Box
+              as="a"
+              href={bg.photographerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              style={{ color: "rgba(255,255,255,0.65)", textDecoration: "none" }}
+              _hover={{ textDecoration: "underline" }}
+            >
+              Photo by {bg.photographer}
+            </Box>
+            <Box as="span" style={{ color: "rgba(255,255,255,0.35)" }}> on </Box>
+            <Box
+              as="a"
+              href="https://unsplash.com/?utm_source=aesthetic_space&utm_medium=referral"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              style={{ color: "rgba(255,255,255,0.65)", textDecoration: "none" }}
+              _hover={{ textDecoration: "underline" }}
+            >
+              Unsplash
+            </Box>
+          </Text>
+        )}
+      </Box>
+
+      {/* Active checkmark */}
+      {isActive && (
+        <Box
+          position="absolute"
+          top="5px"
+          right="5px"
+          w="15px"
+          h="15px"
+          borderRadius="full"
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          style={{ background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.4)", zIndex: 2 }}
+        >
+          <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+            <path d="M1 3L3 5L7 1" stroke="#0d2b24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Box>
+      )}
+
+      {/* Favorite button */}
+      <Box
+        as="button"
+        className="fav-btn"
+        position="absolute"
+        bottom="6px"
+        right="6px"
+        w="22px"
+        h="22px"
+        borderRadius="full"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        bg="transparent"
+        border="none"
+        cursor="pointer"
+        style={{
+          opacity: isFav ? 1 : 0,
+          zIndex: 3,
+          color: isFav ? "#f87171" : "rgba(255,255,255,0.85)",
+          transition: "all 0.15s",
+          background: "rgba(0,0,0,0.32)",
+          backdropFilter: "blur(4px)",
+        }}
+        onClick={onToggleFav}
+        title={favLabel}
+      >
+        <Heart size={11} fill={isFav ? "#f87171" : "none"} stroke={isFav ? "#f87171" : "currentColor"} />
+      </Box>
+    </Box>
+  );
+});
 
 interface BackgroundPickerPanelProps {
   currentBgId: string;
@@ -69,6 +234,8 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
   const [loading, setLoading]         = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError]             = useState<string | null>(null);
+
+  const reqIdRef = useRef(0);
 
   /* ── Favorites (localStorage) ── */
   const [favorites, setFavorites] = useState<BackgroundItem[]>(() => {
@@ -91,19 +258,24 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
   /* ── Fetch ── */
   const fetchPhotos = useCallback(async (q: string, pg: number, append: boolean) => {
     if (!UNSPLASH_KEY) return;
+    const myId = ++reqIdRef.current;
     if (append) setLoadingMore(true);
     else { setLoading(true); setPhotos([]); }
     setError(null);
     try {
       const { items, totalPages: tp } = await searchUnsplash(q, pg);
+      if (myId !== reqIdRef.current) return;
       setPhotos(prev => append ? [...prev, ...items] : items);
       setTotalPages(tp);
       setPage(pg);
     } catch (e: any) {
+      if (myId !== reqIdRef.current) return;
       setError(e.message ?? "Failed to fetch");
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (myId === reqIdRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   }, []);
 
@@ -126,138 +298,16 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
 
   const handleLoadMore = () => fetchPhotos(activeQuery, page + 1, true);
 
-  /* ── Photo card ── */
-  const PhotoCard = ({ bg }: { bg: BackgroundItem }) => {
-    const isActive = bg.id === currentBgId;
-    const fav = isFav(bg.id);
-    return (
-      <Box
-        key={bg.id}
-        position="relative"
-        borderRadius="8px"
-        overflow="hidden"
-        style={{
-          aspectRatio: "16/9",
-          cursor: "pointer",
-          border: isActive
-            ? "2px solid rgba(255,255,255,0.9)"
-            : "2px solid rgba(255,255,255,0.06)",
-          boxShadow: isActive
-            ? "0 0 0 3px rgba(255,255,255,0.18), 0 4px 16px rgba(0,0,0,0.5)"
-            : "0 2px 10px rgba(0,0,0,0.45)",
-          transform: isActive ? "scale(1.03)" : "scale(1)",
-          transition: "all 0.18s ease",
-        }}
-        css={{
-          "&:hover": {
-            border: "2px solid rgba(255,255,255,0.5) !important",
-            boxShadow: "0 6px 22px rgba(0,0,0,0.7) !important",
-            transform: "scale(1.04) !important",
-          },
-          "&:hover .card-overlay": { opacity: "1 !important" },
-          "&:hover .fav-btn":     { opacity: "1 !important" },
-        }}
-        onClick={() => onSelect(bg)}
-      >
-        {/* Thumbnail */}
-        <Box
-          position="absolute"
-          inset={0}
-          style={{
-            backgroundImage: `url(${bg.thumb})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-        />
-
-        {/* Gradient overlay with label */}
-        <Box
-          className="card-overlay"
-          position="absolute"
-          bottom={0}
-          left={0}
-          right={0}
-          px="7px"
-          py="5px"
-          style={{
-            background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)",
-            opacity: isActive ? 1 : 0,
-            transition: "opacity 0.18s",
-          }}
-        >
-          <Text style={{
-            fontSize: "0.6rem",
-            color: "rgba(255,255,255,0.88)",
-            fontFamily: "'HarmonyOS Sans', sans-serif",
-            letterSpacing: "0.02em",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}>
-            {bg.label}
-          </Text>
-          {bg.photographer && (
-            <Text style={{
-              fontSize: "0.55rem",
-              color: "rgba(255,255,255,0.5)",
-              fontFamily: "'HarmonyOS Sans', sans-serif",
-            }}>
-              📷 {bg.photographer}
-            </Text>
-          )}
-        </Box>
-
-        {/* Active checkmark */}
-        {isActive && (
-          <Box
-            position="absolute"
-            top="5px"
-            right="5px"
-            w="15px"
-            h="15px"
-            borderRadius="full"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            style={{ background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.4)", zIndex: 2 }}
-          >
-            <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
-              <path d="M1 3L3 5L7 1" stroke="#0d2b24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </Box>
-        )}
-
-        {/* Favorite button */}
-        <Box
-          as="button"
-          className="fav-btn"
-          position="absolute"
-          bottom="6px"
-          right="6px"
-          w="22px"
-          h="22px"
-          borderRadius="full"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          bg="transparent"
-          border="none"
-          cursor="pointer"
-          style={{
-            opacity: fav ? 1 : 0,
-            zIndex: 3,
-            color: fav ? "#f87171" : "rgba(255,255,255,0.85)",
-            transition: "all 0.15s",
-            background: "rgba(0,0,0,0.32)",
-            backdropFilter: "blur(4px)",
-          }}
-          onClick={(e) => toggleFav(bg, e)}
-          title={fav ? t("backgrounds.removeFromFavorites") : t("backgrounds.addToFavorites")}
-        >
-          <Heart size={11} fill={fav ? "#f87171" : "none"} stroke={fav ? "#f87171" : "currentColor"} />
-        </Box>
-      </Box>
-    );
+  const makeCardProps = (bg: BackgroundItem) => {
+    const favored = favorites.some(f => f.id === bg.id);
+    return {
+      bg,
+      isActive: bg.id === currentBgId,
+      isFav: favored,
+      onSelect: () => { triggerUnsplashDownload(bg.downloadLocation); onSelect(bg); },
+      onToggleFav: (e: React.MouseEvent) => toggleFav(bg, e),
+      favLabel: favored ? t("backgrounds.removeFromFavorites") : t("backgrounds.addToFavorites"),
+    };
   };
 
   const TABS = [
@@ -459,7 +509,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
                   </Text>
                 </Box>
                 <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-                  {BACKGROUNDS.map(bg => <PhotoCard key={bg.id} bg={bg} />)}
+                  {BACKGROUNDS.map(bg => <PhotoCard key={bg.id} {...makeCardProps(bg)} />)}
                 </Box>
               </>
             ) : loading ? (
@@ -515,7 +565,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
               <>
                 {/* Photo grid */}
                 <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-                  {photos.map(bg => <PhotoCard key={bg.id} bg={bg} />)}
+                  {photos.map(bg => <PhotoCard key={bg.id} {...makeCardProps(bg)} />)}
                 </Box>
 
                 {/* Load more */}
@@ -599,7 +649,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
             </Flex>
           ) : (
             <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-              {favorites.map(bg => <PhotoCard key={bg.id} bg={bg} />)}
+              {favorites.map(bg => <PhotoCard key={bg.id} {...makeCardProps(bg)} />)}
             </Box>
           )
         )}

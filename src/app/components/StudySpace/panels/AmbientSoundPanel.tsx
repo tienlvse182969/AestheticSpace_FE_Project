@@ -2,67 +2,196 @@ import { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Coffee, Waves, Wind, TreePine, Music2, CloudRain, Flame, Radio, Check, AudioWaveform } from "lucide-react";
+import { Music2, AudioWaveform } from "lucide-react";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 
-const MotionBox  = motion.create(Box);
-const MotionDiv  = motion.div;
+const MotionBox = motion.create(Box);
+const MotionDiv = motion.div;
 
-const SOUNDS_BASE = [
-  { icon: Coffee,    key: "cafe",       color: "#fb923c", vol: 65, active: true  },
-  { icon: CloudRain, key: "rain",       color: "#60a5fa", vol: 80, active: true  },
-  { icon: Waves,     key: "ocean",      color: "#38bdf8", vol: 40, active: false },
-  { icon: TreePine,  key: "forest",     color: "#4ade80", vol: 55, active: true  },
-  { icon: Wind,      key: "wind",       color: "#a3e635", vol: 20, active: false },
-  { icon: Flame,     key: "fireplace",  color: "#f97316", vol: 50, active: false },
-  { icon: Music2,    key: "lofi",       color: "#c084fc", vol: 85, active: false },
-  { icon: Radio,     key: "whiteNoise", color: "#94a3b8", vol: 0,  active: false },
+/* ── Sound definitions ──────────────────────────────────────────────────────── */
+const SOUNDS_DATA = [
+  { key: "underwater", color: "#38bdf8", imgId: "1559827260-dc66d52bef19", vol: 0,  on: false },
+  { key: "fireplace",  color: "#f97316", imgId: "1481671836-1eb03bae46ea", vol: 50, on: false },
+  { key: "birds",      color: "#4ade80", imgId: "1444464666168-49d633b86797", vol: 55, on: false },
+  { key: "rain",       color: "#60a5fa", imgId: "1428592953211-077101b2021b", vol: 80, on: true  },
+  { key: "creek",      color: "#34d399", imgId: "1506905925346-21bda4d32df4", vol: 0,  on: false },
+  { key: "rainforest", color: "#22c55e", imgId: "1766910095060-03115e07bbc7", vol: 55, on: true  },
+  { key: "cityStreet", color: "#a78bfa", imgId: "1477959858617-67f85cf4f1df", vol: 0,  on: false },
+  { key: "wind",       color: "#a3e635", imgId: "1500382017468-9049fed747ef", vol: 20, on: false },
+  { key: "whiteNoise", color: "#94a3b8", imgId: "1558591710-4b4a1ae0f04d", vol: 0,  on: false },
+  { key: "beach",      color: "#fbbf24", imgId: "1599514724006-daebc8dca239", vol: 0,  on: false },
+  { key: "cafe",       color: "#fb923c", imgId: "1495474472287-4d71bcdd2085", vol: 65, on: true  },
+  { key: "thunder",    color: "#818cf8", imgId: "1516912481808-3406841bd33c", vol: 0,  on: false },
+  { key: "waterfall",  color: "#22d3ee", imgId: "1497290756760-23ac55edf36f", vol: 0,  on: false },
+  { key: "ocean",      color: "#38bdf8", imgId: "1505118380757-91f5f5632de0", vol: 40, on: false },
 ];
 
-/* ── Animated mini waveform ── */
-function WaveBar({ color, active }: { color: string; active: boolean }) {
-  const heights = [4, 7, 5, 9, 6, 8, 4, 6];
+const thumb = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=75&w=280&h=210`;
+
+/* ── Animated waveform indicator ─────────────────────────────────────────────── */
+function WaveIndicator({ color }: { color: string }) {
   return (
-    <Flex align="flex-end" gap="2px" style={{ height: 18 }}>
-      {heights.map((h, i) =>
-        active ? (
-          <MotionDiv
-            key={i}
-            style={{ width: 3, borderRadius: 2, background: color }}
-            animate={{ height: [h * 1.6, h * 2.8, h * 1.2, h * 2.2, h * 1.6] }}
-            transition={{ repeat: Infinity, duration: 0.85 + i * 0.09, ease: "easeInOut" }}
-          />
-        ) : (
-          <Box
-            key={i}
-            style={{ width: 3, height: `${30 + i * 7}%`, borderRadius: 2, background: "rgba(255,255,255,0.1)" }}
-          />
-        )
-      )}
+    <Flex align="flex-end" gap="2px" style={{ height: 14 }}>
+      {[3, 5, 4, 7, 4, 5, 3].map((h, i) => (
+        <MotionDiv
+          key={i}
+          style={{ width: 2.5, borderRadius: 1.5, background: color }}
+          animate={{ height: [h * 1.4, h * 2.6, h * 1.2, h * 2.2, h * 1.4] }}
+          transition={{ repeat: Infinity, duration: 0.78 + i * 0.09, ease: "easeInOut" }}
+        />
+      ))}
     </Flex>
   );
 }
 
+/* ── Individual sound card ───────────────────────────────────────────────────── */
+function SoundCard({
+  label, color, imgId, isOn, volume, onToggle, onVolume,
+}: {
+  label: string; color: string; imgId: string;
+  isOn: boolean; volume: number;
+  onToggle: () => void; onVolume: (v: number) => void;
+}) {
+  return (
+    <Box
+      as="button"
+      onClick={onToggle}
+      position="relative"
+      overflow="hidden"
+      borderRadius="12px"
+      style={{
+        height: 165,
+        cursor: "pointer",
+        border: `2px solid ${isOn ? color : "transparent"}`,
+        boxShadow: isOn ? `0 0 18px ${color}55` : "none",
+        outline: "none",
+        transition: "border-color 0.2s, box-shadow 0.2s, transform 0.15s",
+        display: "block",
+        width: "100%",
+        padding: 0,
+        background: "#0a1410",
+      }}
+      _hover={{ transform: "scale(1.03)" } as any}
+    >
+      {/* Background image */}
+      <Box
+        as="img"
+        src={thumb(imgId)}
+        alt={label}
+        position="absolute"
+        inset={0}
+        w="100%"
+        h="100%"
+        style={{
+          objectFit: "cover",
+          transition: "filter 0.25s",
+          filter: isOn ? "brightness(0.9) saturate(1.1)" : "brightness(0.62) saturate(0.85)",
+        }}
+      />
+
+      {/* Gradient overlay — bottom-heavy */}
+      <Box
+        position="absolute"
+        inset={0}
+        style={{
+          background: isOn
+            ? "linear-gradient(to top, rgba(0,0,0,0.82) 40%, rgba(0,0,0,0.1) 100%)"
+            : "linear-gradient(to top, rgba(0,0,0,0.72) 40%, rgba(0,0,0,0.18) 100%)",
+        }}
+      />
+
+      {/* Bottom content */}
+      <Flex
+        position="absolute"
+        bottom={0}
+        left={0}
+        right={0}
+        direction="column"
+        px="10px"
+        pb="10px"
+        gap="6px"
+      >
+        {/* Volume slider — visible only when active */}
+        <AnimatePresence>
+          {isOn && (
+            <MotionBox
+              key="slider"
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 4 }}
+              transition={{ duration: 0.16 } as any}
+            >
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={volume}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => { e.stopPropagation(); onVolume(Number(e.target.value)); }}
+                style={{
+                  width: "100%",
+                  height: 3,
+                  borderRadius: 4,
+                  appearance: "none",
+                  WebkitAppearance: "none",
+                  background: `linear-gradient(to right, ${color} ${volume}%, rgba(255,255,255,0.22) ${volume}%)`,
+                  outline: "none",
+                  cursor: "pointer",
+                  display: "block",
+                }}
+              />
+            </MotionBox>
+          )}
+        </AnimatePresence>
+
+        {/* Label row */}
+        <Flex align="center" justify="space-between">
+          <Text style={{
+            fontSize: "0.78rem",
+            fontWeight: 500,
+            color: isOn ? "white" : "rgba(255,255,255,0.72)",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+            textShadow: "0 1px 6px rgba(0,0,0,0.7)",
+            letterSpacing: "0.01em",
+          }}>
+            {label}
+          </Text>
+          <AnimatePresence>
+            {isOn && (
+              <MotionBox
+                key="wave"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.15 } as any}
+              >
+                <WaveIndicator color={color} />
+              </MotionBox>
+            )}
+          </AnimatePresence>
+        </Flex>
+      </Flex>
+    </Box>
+  );
+}
+
+/* ── Main panel ─────────────────────────────────────────────────────────────── */
 export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
-  const sw = typeof window !== "undefined" ? window.innerWidth  : 1440;
-  const sh = typeof window !== "undefined" ? window.innerHeight : 900;
-  const { x, y, ref } = useCenteredPanel(390);
+  const { x, y, ref } = useCenteredPanel(548);
 
-  const SOUNDS = SOUNDS_BASE.map(s => ({ ...s, label: t(`ambient.${s.key}`) }));
-  const [active,  setActive]  = useState(SOUNDS_BASE.map((s) => s.active));
-  const [volumes, setVolumes] = useState(SOUNDS_BASE.map((s) => s.vol));
+  const [active,  setActive]  = useState(SOUNDS_DATA.map((s) => s.on));
+  const [volumes, setVolumes] = useState(SOUNDS_DATA.map((s) => s.vol));
 
-  const toggle = (i: number) =>
-    setActive((a) => a.map((v, j) => (j === i ? !v : v)));
+  const toggle  = (i: number) => setActive((a) => a.map((v, j) => j === i ? !v : v));
+  const setVol  = (i: number, val: number) => setVolumes((v) => v.map((n, j) => j === i ? val : n));
 
-  const setVol = (i: number, val: number) =>
-    setVolumes((v) => v.map((n, j) => (j === i ? val : n)));
-
-  const activeList = SOUNDS.filter((_, i) => active[i]);
+  const activeList  = SOUNDS_DATA.filter((_, i) => active[i]);
   const activeCount = activeList.length;
-  const mixLabel = activeList.slice(0, 3).map((s) => s.label).join(" + ");
+  const mixLabel    = activeList.slice(0, 3).map((s) => t(`ambient.${s.key}`)).join(" · ");
 
   return (
     <MotionBox
@@ -79,174 +208,126 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
       zIndex={50}
       style={{
         x, y,
-        width: 390,
-        borderRadius: "16px",
-        background: "rgba(12,18,22,0.75)",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        border: "1px solid rgba(255,255,255,0.1)",
-        boxShadow: "0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.08)",
+        width: 548,
+        borderRadius: "18px",
+        background: "rgba(10,16,14,0.88)",
+        backdropFilter: "blur(22px)",
+        WebkitBackdropFilter: "blur(22px)",
+        border: "1px solid rgba(255,255,255,0.09)",
+        boxShadow: "0 28px 90px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06)",
         cursor: "grab",
       }}
     >
-      <Box position="relative" style={{ padding: "18px 18px 18px" }}>
+      <Box position="relative" style={{ padding: "18px 18px 16px" }}>
         <PanelCloseBtn onClose={onClose} />
 
         {/* ── Header ── */}
-        <Flex align="center" gap={2} mb={4}>
-          <AudioWaveform size={15} style={{ color: "rgba(255,255,255,0.5)" }} />
-          <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+        <Flex align="center" gap={2} mb={4} pr="50px">
+          <AudioWaveform size={15} style={{ color: "rgba(255,255,255,0.45)" }} />
+          <Text style={{
+            fontSize: "0.7rem",
+            color: "rgba(255,255,255,0.32)",
+            letterSpacing: "0.1em",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+          }}>
             {t("ambient.title")}
           </Text>
+          {activeCount > 0 && (
+            <Box
+              ml="auto"
+              style={{
+                fontSize: "0.62rem",
+                color: "rgba(74,222,128,0.75)",
+                background: "rgba(74,222,128,0.1)",
+                border: "1px solid rgba(74,222,128,0.2)",
+                borderRadius: "20px",
+                padding: "2px 9px",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                letterSpacing: "0.06em",
+              }}
+            >
+              {activeCount} {activeCount === 1 ? "layer" : "layers"}
+            </Box>
+          )}
         </Flex>
 
-        <Text mb={3} style={{ fontSize: "0.72rem", color: "rgba(94,234,212,0.6)", letterSpacing: "0.09em", fontFamily: "'HarmonyOS Sans', sans-serif", textAlign: "center" }}>
-          {t("ambient.subtitle")}
-        </Text>
-
-        {/* ── Sound cards grid ── */}
-        <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {SOUNDS.map((s, i) => {
-            const Icon = s.icon;
-            const isOn = active[i];
-            return (
-              <Box
-                key={s.label}
-                as="button"
-                onClick={() => toggle(i)}
-                borderRadius="12px"
-                p="10px 12px 10px"
-                textAlign="left"
-                style={{
-                  background: isOn
-                    ? `linear-gradient(135deg, ${s.color}1a, ${s.color}0a)`
-                    : "rgba(255,255,255,0.03)",
-                  border: `1px solid ${isOn ? s.color + "45" : "rgba(255,255,255,0.07)"}`,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-                _hover={{ transform: "scale(1.02)" } as any}
-              >
-                {/* Row: icon + label + check */}
-                <Flex align="center" justify="space-between" mb="8px">
-                  <Flex align="center" gap={2}>
-                    <Icon size={13} style={{ color: isOn ? s.color : "rgba(255,255,255,0.3)" }} />
-                    <Text style={{ fontSize: "0.78rem", color: isOn ? "rgba(255,255,255,0.88)" : "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {s.label}
-                    </Text>
-                  </Flex>
-                  <Flex
-                    borderRadius="full"
-                    align="center"
-                    justify="center"
-                    flexShrink={0}
-                    style={{
-                      width: 16, height: 16,
-                      background: isOn ? s.color : "rgba(255,255,255,0.08)",
-                      transition: "background 0.2s",
-                    }}
-                  >
-                    <AnimatePresence>
-                      {isOn && (
-                        <MotionBox
-                          initial={{ opacity: 0, scale: 0.6 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.6 }}
-                          transition={{ duration: 0.15 } as any}
-                          display="flex" alignItems="center" justifyContent="center"
-                        >
-                          <Check size={9} style={{ color: "#0a0f14" }} strokeWidth={3} />
-                        </MotionBox>
-                      )}
-                    </AnimatePresence>
-                  </Flex>
-                </Flex>
-
-                {/* Volume bar */}
-                <WaveBar color={s.color} active={isOn} />
-
-                {/* Volume slider (only when active) */}
-                <AnimatePresence>
-                  {isOn && (
-                    <MotionBox
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.18 } as any}
-                      overflow="hidden"
-                    >
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={volumes[i]}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        onClick={(e) => e.stopPropagation()}
-                        onChange={(e) => { e.stopPropagation(); setVol(i, Number(e.target.value)); }}
-                        style={{
-                          marginTop: 8,
-                          width: "100%",
-                          height: 3,
-                          borderRadius: 4,
-                          appearance: "none",
-                          WebkitAppearance: "none",
-                          background: `linear-gradient(to right, ${s.color} ${volumes[i]}%, rgba(255,255,255,0.1) ${volumes[i]}%)`,
-                          outline: "none",
-                          cursor: "pointer",
-                        }}
-                      />
-                    </MotionBox>
-                  )}
-                </AnimatePresence>
-              </Box>
-            );
-          })}
+        {/* ── Image card grid — 3 columns, scrollable ── */}
+        <Box
+          style={{
+            maxHeight: "calc(100vh - 220px)",
+            overflowY: "auto",
+            overflowX: "hidden",
+            marginRight: -4,
+            paddingRight: 4,
+          }}
+        >
+          <Box
+            display="grid"
+            style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}
+          >
+            {SOUNDS_DATA.map((s, i) => (
+              <SoundCard
+                key={s.key}
+                label={t(`ambient.${s.key}`)}
+                color={s.color}
+                imgId={s.imgId}
+                isOn={active[i]}
+                volume={volumes[i]}
+                onToggle={() => toggle(i)}
+                onVolume={(v) => setVol(i, v)}
+              />
+            ))}
+          </Box>
         </Box>
 
         {/* ── Now mixing footer ── */}
-        <Box mt={3} borderRadius="12px" p="10px 12px"
-          style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+        <Box
+          mt={3}
+          borderRadius="12px"
+          px="14px"
+          py="10px"
+          style={{
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.07)",
+          }}
         >
           {activeCount > 0 ? (
-            <Flex align="center" gap={2}>
+            <Flex align="center" gap={3}>
               <Flex
                 borderRadius="full"
                 align="center"
                 justify="center"
                 flexShrink={0}
-                style={{ width: 30, height: 30, background: "linear-gradient(135deg, #4ade80, #38bdf8)" }}
+                style={{ width: 30, height: 30, background: "linear-gradient(135deg,#4ade80,#38bdf8)" }}
               >
                 <Music2 size={13} style={{ color: "#0a0f14" }} />
               </Flex>
               <Box flex={1} minW={0}>
-                <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.82)", fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {t("ambient.nowMixing", { label: mixLabel + (activeCount > 3 ? ` +${activeCount - 3}` : "") })}
+                <Text style={{
+                  fontSize: "0.77rem",
+                  color: "rgba(255,255,255,0.82)",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}>
+                  {mixLabel}{activeCount > 3 ? ` +${activeCount - 3}` : ""}
                 </Text>
-                <Text style={{ fontSize: "0.7rem", color: "rgba(94,234,212,0.5)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                <Text style={{ fontSize: "0.68rem", color: "rgba(74,222,128,0.5)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                   {t("ambient.layersActive", { count: activeCount })}
                 </Text>
               </Box>
-              {/* Animated bars */}
-              <Flex align="flex-end" gap="2px" style={{ height: 20 }}>
-                {[4, 7, 5, 9, 6, 8, 4, 7].map((h, i) => (
-                  <MotionDiv
-                    key={i}
-                    style={{ width: 3, borderRadius: 2, background: "#4ade80" }}
-                    animate={{ height: [h * 1.6, h * 2.8, h * 1.2, h * 2.4, h * 1.6] }}
-                    transition={{ repeat: Infinity, duration: 0.8 + i * 0.1, ease: "easeInOut" }}
-                  />
-                ))}
-              </Flex>
+              <WaveIndicator color="#4ade80" />
             </Flex>
           ) : (
-            <Flex align="center" gap={2}>
+            <Flex align="center" gap={3}>
               <Flex
                 borderRadius="full" align="center" justify="center" flexShrink={0}
-                style={{ width: 30, height: 30, background: "rgba(255,255,255,0.06)" }}
+                style={{ width: 30, height: 30, background: "rgba(255,255,255,0.05)" }}
               >
-                <Music2 size={13} style={{ color: "rgba(255,255,255,0.25)" }} />
+                <Music2 size={13} style={{ color: "rgba(255,255,255,0.2)" }} />
               </Flex>
-              <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+              <Text style={{ fontSize: "0.77rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                 {t("ambient.noSounds")}
               </Text>
             </Flex>
