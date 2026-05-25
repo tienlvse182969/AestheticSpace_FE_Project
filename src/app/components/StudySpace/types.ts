@@ -10,6 +10,7 @@ export interface BackgroundItem {
   label: string;
   photographer?: string;
   photographerUrl?: string;
+  downloadLocation?: string;
 }
 
 export interface PlacedSticker {
