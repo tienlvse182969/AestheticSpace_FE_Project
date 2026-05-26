@@ -7,27 +7,27 @@ import type { TodoItem } from "../../types";
 
 const MotionBox = motion.create(Box);
 
-export function TodoListWidget() {
+interface TodoListWidgetProps {
+  todos: TodoItem[];
+  onTodosChange: (todos: TodoItem[]) => void;
+}
+
+export function TodoListWidget({ todos, onTodosChange }: TodoListWidgetProps) {
   const { t } = useTranslation();
-  const [todos, setTodos] = useState<TodoItem[]>([
-    { id: 1, text: "Review lecture notes", done: false },
-    { id: 2, text: "Complete assignment", done: false },
-    { id: 3, text: "Take a break", done: true },
-  ]);
   const [input, setInput] = useState("");
 
   const addTodo = () => {
-    const t = input.trim();
-    if (!t) return;
-    setTodos((prev) => [...prev, { id: Date.now(), text: t, done: false }]);
+    const text = input.trim();
+    if (!text) return;
+    onTodosChange([...todos, { id: Date.now(), text, done: false }]);
     setInput("");
   };
 
   const toggle = (id: number) =>
-    setTodos((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    onTodosChange(todos.map(item => item.id === id ? { ...item, done: !item.done } : item));
 
   const remove = (id: number) =>
-    setTodos((prev) => prev.filter((t) => t.id !== id));
+    onTodosChange(todos.filter(item => item.id !== id));
 
   return (
     <Box style={{ background: "rgba(var(--widget-bg-rgb), 0.78)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", border: "1px solid rgba(var(--accent-rgb), 0.18)", borderRadius: "16px", padding: "14px 14px 12px" }}>

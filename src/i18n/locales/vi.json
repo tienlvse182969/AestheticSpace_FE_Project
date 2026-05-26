@@ -135,9 +135,11 @@
     "backgrounds": "Hình nền",
     "themes": "Giao diện",
     "ambientSounds": "Âm thanh",
-    "guestTooltip": "Khách — nhấn để đăng nhập"
+    "guestTooltip": "Khách — nhấn để đăng nhập",
+    "rooms": "Phòng học"
   },
   "account": {
+    "mySpace": "Không gian của tôi",
     "settings": "Cài đặt",
     "help": "Trợ giúp",
     "home": "Trang chủ",
@@ -189,6 +191,7 @@
     "noSounds": "Chưa có âm thanh — nhấn thẻ để bắt đầu"
   },
   "backgrounds": {
+    "rooms": "Phòng học",
     "discover": "Khám phá",
     "favorites": "Yêu thích",
     "favoritesCount": "Yêu thích ({{count}})",
@@ -200,6 +203,8 @@
     "noFavoritesHint": "Rê chuột lên ảnh và nhấn ♡ để lưu",
     "removeFromFavorites": "Xóa khỏi yêu thích",
     "addToFavorites": "Thêm vào yêu thích",
+    "noRooms": "Không có phòng nào",
+    "errorRooms": "Không thể tải danh sách phòng",
     "inDevelopment": "Đang phát triển",
     "themesTitle": "Hình Nền Theo Giao Diện",
     "themesDesc": "Bộ hình nền theo chủ đề — Lofi Night, Cottagecore, Tokyo Rain và nhiều hơn nữa. Sắp ra mắt trong Theme Store.",

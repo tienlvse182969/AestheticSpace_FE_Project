@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box, Flex } from "@chakra-ui/react";
-import { motion } from "motion/react";
+import { motion, useMotionValue } from "motion/react";
 import { GripHorizontal, X } from "lucide-react";
 
 const MotionBox = motion.create(Box);
@@ -10,13 +10,19 @@ interface DraggableWidgetProps {
   initialX: number;
   initialY: number;
   onRemove: () => void;
+  onDragStart?: () => void;
+  onDragEnd?: (x: number, y: number) => void;
   extraControls?: React.ReactNode;
   floatingPanel?: React.ReactNode;
   containerRef?: React.RefObject<HTMLDivElement | null>;
 }
 
-export function DraggableWidget({ children, initialX, initialY, onRemove, extraControls, floatingPanel, containerRef }: DraggableWidgetProps) {
+export function DraggableWidget({ children, initialX, initialY, onRemove, onDragStart, onDragEnd, extraControls, floatingPanel, containerRef }: DraggableWidgetProps) {
   const [hovered, setHovered] = useState(false);
+  const x = useMotionValue(initialX);
+  const y = useMotionValue(initialY);
+
+  useEffect(() => { x.set(initialX); y.set(initialY); }, [initialX, initialY]);
 
   return (
     <MotionBox
@@ -27,17 +33,17 @@ export function DraggableWidget({ children, initialX, initialY, onRemove, extraC
       position="fixed"
       top={0}
       left={0}
-      initial={{ x: initialX, y: initialY, opacity: 0, scale: 0.92 }}
-      animate={{ x: initialX, y: initialY, opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.14, ease: [0.4, 0, 1, 1] } } as any}
       whileDrag={{ scale: 1.015, zIndex: 50 } as any}
       transition={{
         opacity: { duration: 0.12 },
         scale: { type: "spring", stiffness: 500, damping: 24, mass: 0.9 },
-        x: { duration: 0 },
-        y: { duration: 0 },
       } as any}
-      style={{ width: 240, cursor: "grab", userSelect: "none", zIndex: 10 }}
+      style={{ x, y, width: 240, cursor: "grab", userSelect: "none", zIndex: 10 }}
+      onDragStart={() => onDragStart?.()}
+      onDragEnd={() => onDragEnd?.(Math.round(x.get()), Math.round(y.get()))}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

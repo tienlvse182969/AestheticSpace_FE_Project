@@ -1,7 +1,7 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, useCallback } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { motion, useMotionValue, AnimatePresence } from "motion/react";
-import { GripHorizontal, X, Settings } from "lucide-react";
+import { GripHorizontal, X, Settings, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { StickyNote } from "../../types";
 
@@ -33,15 +33,17 @@ const MARGIN  = 12;
 interface StickyNoteWidgetProps {
   note: StickyNote;
   onRemove: () => void;
-  onUpdate: (patch: Partial<Pick<StickyNote, "text" | "color" | "w" | "h">>) => void;
+  onUpdate: (patch: Partial<Pick<StickyNote, "text" | "color" | "w" | "h" | "x" | "y">>) => void;
+  onSave?: () => void;
 }
 
-export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetProps) {
+export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNoteWidgetProps) {
   const { t } = useTranslation();
   const SIZES = SIZES_BASE.map(s => ({ ...s, label: t(s.labelKey) }));
   const [hovered,      setHovered]      = useState(false);
   const [focused,      setFocused]      = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [saved,        setSaved]        = useState(false);
 
   const [w, setW] = useState(note.w ?? SIZES[1].w);
   const [h, setH] = useState(note.h ?? SIZES[1].h);
@@ -51,6 +53,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
   const x = useMotionValue(note.x);
   const y = useMotionValue(note.y);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hSide, setHSide] = useState<"right" | "left">("right");
   const [vSide, setVSide] = useState<"top" | "bottom">("top");
@@ -84,6 +87,15 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
     onUpdate({ w: size.w, h: size.h });
   };
 
+  const handleSave = useCallback(() => {
+    onSave?.();
+    setSaved(true);
+    setTimeout(() => {
+      setSaved(false);
+      textareaRef.current?.blur();
+    }, 400);
+  }, [onSave]);
+
   return (
     <motion.div
       ref={containerRef}
@@ -96,6 +108,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
       exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.14, ease: [0.4, 0, 1, 1] } }}
       transition={{ type: "spring", stiffness: 500, damping: 24, mass: 0.9 }}
       whileDrag={{ scale: 1.02, zIndex: 60 }}
+      onDragEnd={() => onUpdate({ x: Math.round(x.get()), y: Math.round(y.get()) })}
       style={{
         position: "fixed",
         top: 0,
@@ -163,11 +176,13 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
           boxShadow: "0 4px 20px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2)",
           transition: "background 0.24s ease, border-color 0.24s ease",
           overflow: "hidden",
+          position: "relative",
           display: "flex",
           flexDirection: "column",
         }}
       >
         <textarea
+          ref={textareaRef}
           value={note.text}
           onChange={e => onUpdate({ text: e.target.value })}
           onFocus={() => setFocused(true)}
@@ -192,6 +207,40 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
           }}
           onPointerDown={e => e.stopPropagation()}
         />
+
+        {/* Save button — bottom-right, only when editing */}
+        <AnimatePresence>
+          {focused && onSave && (
+            <motion.button
+              key="save-btn"
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.7 }}
+              transition={{ type: "spring", stiffness: 500, damping: 24 }}
+              onMouseDown={e => e.preventDefault()}
+              onClick={handleSave}
+              style={{
+                position: "absolute",
+                bottom: 8,
+                right: 8,
+                width: 26,
+                height: 26,
+                borderRadius: "50%",
+                border: saved ? "none" : "1.5px solid rgba(255,255,255,0.85)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: saved ? "rgb(34,197,94)" : "rgb(34,197,94)",
+                color: "white",
+                transition: "background 0.15s, color 0.15s",
+                boxShadow: "0 2px 10px rgba(0,0,0,0.22)",
+              }}
+            >
+              <Check size={13} />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* ── Settings panel ──────────────────────────────────────────────── */}

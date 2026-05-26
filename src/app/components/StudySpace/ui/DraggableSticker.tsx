@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box } from "@chakra-ui/react";
-import { motion } from "motion/react";
+import { motion, useMotionValue } from "motion/react";
 import { X } from "lucide-react";
 import type { PlacedSticker } from "../types";
 
@@ -9,11 +9,15 @@ const MotionBox = motion.create(Box);
 interface DraggableStickerProps {
   sticker: PlacedSticker;
   onRemove: () => void;
+  onDragStart?: () => void;
+  onDragEnd?: (x: number, y: number) => void;
 }
 
-export function DraggableSticker({ sticker, onRemove }: DraggableStickerProps) {
+export function DraggableSticker({ sticker, onRemove, onDragStart, onDragEnd }: DraggableStickerProps) {
   const [hovered, setHovered] = useState(false);
-  // useMotionValue not needed — initial position passed via animate
+  const x = useMotionValue(sticker.x);
+  const y = useMotionValue(sticker.y);
+
   return (
     <MotionBox
       drag
@@ -22,12 +26,14 @@ export function DraggableSticker({ sticker, onRemove }: DraggableStickerProps) {
       position="fixed"
       top={0}
       left={0}
-      initial={{ x: sticker.x, y: sticker.y, opacity: 0, scale: 0.5 }}
-      animate={{ x: sticker.x, y: sticker.y, opacity: 1, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.4 }}
       whileDrag={{ scale: 1.08, zIndex: 60 } as any}
       transition={{ type: "spring", stiffness: 300, damping: 22 } as any}
-      style={{ width: sticker.size, height: sticker.size, zIndex: 15, cursor: "grab", userSelect: "none" }}
+      style={{ x, y, width: sticker.size, height: sticker.size, zIndex: 15, cursor: "grab", userSelect: "none" }}
+      onDragStart={() => onDragStart?.()}
+      onDragEnd={() => onDragEnd?.(Math.round(x.get()), Math.round(y.get()))}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >

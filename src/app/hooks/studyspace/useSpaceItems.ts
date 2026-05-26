@@ -1,10 +1,14 @@
 import { useState } from "react";
-import type { WidgetId, PlacedSticker, StickyNote } from "../../components/StudySpace/types";
+import type { WidgetId, PlacedSticker, StickyNote, TodoItem } from "../../components/StudySpace/types";
+
+const DEFAULT_TODOS: TodoItem[] = [];
 
 export function useSpaceItems() {
-  const [activeWidgets, setActiveWidgets]     = useState<Set<WidgetId>>(new Set(["clock", "pomodoro"]));
+  const [activeWidgets, setActiveWidgets]     = useState<Set<WidgetId>>(new Set());
   const [placedStickers, setPlacedStickers]   = useState<PlacedSticker[]>([]);
   const [stickyNotes, setStickyNotes]         = useState<StickyNote[]>([]);
+  const [widgetPositions, setWidgetPositions] = useState<Record<string, { x: number; y: number }>>({});
+  const [todoItems, setTodoItems]             = useState<TodoItem[]>(DEFAULT_TODOS);
 
   const toggleWidget = (id: WidgetId) =>
     setActiveWidgets(prev => {
@@ -37,6 +41,9 @@ export function useSpaceItems() {
   const removeSticker = (id: string) =>
     setPlacedStickers(prev => prev.filter(s => s.id !== id));
 
+  const updateSticker = (id: string, patch: Partial<Pick<PlacedSticker, "x" | "y">>) =>
+    setPlacedStickers(prev => prev.map(s => s.id === id ? { ...s, ...patch } : s));
+
   const addStickyNote = () => {
     const sw = window.innerWidth, sh = window.innerHeight;
     setStickyNotes(prev => [
@@ -54,12 +61,32 @@ export function useSpaceItems() {
   const removeStickyNote = (id: string) =>
     setStickyNotes(prev => prev.filter(n => n.id !== id));
 
-  const updateStickyNote = (id: string, patch: Partial<Pick<StickyNote, "text" | "color" | "w" | "h">>) =>
+  const updateStickyNote = (id: string, patch: Partial<Pick<StickyNote, "text" | "color" | "w" | "h" | "x" | "y">>) =>
     setStickyNotes(prev => prev.map(n => n.id === id ? { ...n, ...patch } : n));
+
+  const setWidgetPosition = (id: string, pos: { x: number; y: number }) =>
+    setWidgetPositions(prev => ({ ...prev, [id]: pos }));
+
+  const restoreItems = (data: {
+    activeWidgets?: string[];
+    placedStickers?: PlacedSticker[];
+    stickyNotes?: StickyNote[];
+    widgetPositions?: Record<string, { x: number; y: number }>;
+    todoItems?: TodoItem[];
+  }) => {
+    if (data.activeWidgets) setActiveWidgets(new Set(data.activeWidgets as WidgetId[]));
+    if (data.placedStickers) setPlacedStickers(data.placedStickers);
+    if (data.stickyNotes) setStickyNotes(data.stickyNotes);
+    if (data.widgetPositions) setWidgetPositions(data.widgetPositions);
+    if (data.todoItems) setTodoItems(data.todoItems);
+  };
 
   return {
     activeWidgets, toggleWidget, removeWidget,
-    placedStickers, placeSticker, removeSticker,
+    placedStickers, placeSticker, removeSticker, updateSticker,
     stickyNotes, addStickyNote, removeStickyNote, updateStickyNote,
+    widgetPositions, setWidgetPosition,
+    todoItems, setTodoItems,
+    restoreItems,
   };
 }
