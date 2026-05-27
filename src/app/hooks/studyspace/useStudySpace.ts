@@ -1,8 +1,9 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import html2canvas from "html2canvas";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../context/AuthContext";
+import { useAccent } from "../../context/AccentContext";
 import { useWorkspaceAutoSave } from "./useWorkspaceAutoSave";
 import { useClockSettings }    from "./useClockSettings";
 import { usePomodoroSettings } from "./usePomodoroSettings";
@@ -25,6 +26,9 @@ export function useStudySpace() {
 
   /* ── Auth ── */
   const { user, logout } = useAuth();
+
+  /* ── Accent color ── */
+  const { accent, setAccent } = useAccent();
   const currentUser: UserInfo | null = user
     ? { name: user.name, email: user.email, avatarUrl: user.avatarUrl ?? undefined }
     : null;
@@ -64,6 +68,7 @@ export function useStudySpace() {
   /* ── Restore layout helper ── */
   const applyLayout = useCallback((layout: LayoutConfig) => {
     if (layout.activeEffect !== undefined) setActiveEffect(layout.activeEffect as EffectType);
+    if (layout.accentColor) setAccent(layout.accentColor);
     if (layout.clockSettings) {
       clock.setMode(layout.clockSettings.mode as any);
       clock.setLayout(layout.clockSettings.layout as any);
@@ -98,14 +103,24 @@ export function useStudySpace() {
   const handleRoomSelect = useCallback(async (id: string, bg: BackgroundItem) => {
     setRoomId(id);
     setCurrentBg(bg);
-    if (!user) return;
+
+    const emptyLayout: LayoutConfig = {
+      activeEffect: null,
+      activeWidgets: [],
+      placedStickers: [],
+      stickyNotes: [],
+      widgetPositions: {},
+      todoItems: [],
+    };
+
+    if (!user) { applyLayout(emptyLayout); return; }
     try {
       const config = await workspaceService.getByRoomId(id);
-      if (!config?.jsonConfig) return;
+      if (!config?.jsonConfig) { applyLayout(emptyLayout); return; }
       const layout: LayoutConfig = JSON.parse(config.jsonConfig);
       if (layout.currentBg) setCurrentBg(layout.currentBg);
       applyLayout(layout);
-    } catch { /* no saved workspace for this room */ }
+    } catch { applyLayout(emptyLayout); }
   }, [user, applyLayout]);
 
   /* ── Screenshot for thumbnail ── */
@@ -143,9 +158,18 @@ export function useStudySpace() {
       focusMin: pomodoro.focusMin, breakMin: pomodoro.breakMin, totalSes: pomodoro.totalSes,
     },
     todoItems: space.todoItems,
+    accentColor: accent,
     captureScreenshot,
     onRestore: handleRestore,
   });
+
+  /* ── Auto-save when accent changes (skip first render) ── */
+  const isFirstAccentRender = useRef(true);
+  useEffect(() => {
+    if (isFirstAccentRender.current) { isFirstAccentRender.current = false; return; }
+    saveNow();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accent]);
 
   const togglePanel = (panel: ActivePanel) =>
     setActivePanel(p => p === panel ? null : panel);
@@ -165,6 +189,7 @@ export function useStudySpace() {
     WIDGET_POSITIONS,
     applyLayout, handleRestore, handleRoomSelect, captureScreenshot,
     saveStatus, saveNow, isRestoring,
+    accent, setAccent,
   };
 }
 

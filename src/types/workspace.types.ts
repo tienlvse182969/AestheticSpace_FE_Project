@@ -32,6 +32,7 @@ export interface LayoutConfig {
     totalSes: number;
   };
   todoItems?: Array<{ id: number; text: string; done: boolean }>;
+  accentColor?: string;
 }
 
 export interface WorkspaceConfig {

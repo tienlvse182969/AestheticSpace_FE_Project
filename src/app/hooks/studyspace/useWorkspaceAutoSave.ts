@@ -30,6 +30,7 @@ interface WorkspaceSaveParams {
   clockSettings: ClockSettings;
   pomodoroSettings: PomodoroSettings;
   todoItems: TodoItem[];
+  accentColor?: string;
   captureScreenshot?: () => Promise<string | null>;
   onRestore: (data: {
     roomId: string;
@@ -52,6 +53,7 @@ export function useWorkspaceAutoSave({
   clockSettings,
   pomodoroSettings,
   todoItems,
+  accentColor,
   captureScreenshot,
   onRestore,
 }: WorkspaceSaveParams) {
@@ -64,13 +66,13 @@ export function useWorkspaceAutoSave({
   const stateRef = useRef({
     roomId, currentBg, activeEffect, activeWidgets,
     widgetPositions, placedStickers, stickyNotes,
-    clockSettings, pomodoroSettings, todoItems,
+    clockSettings, pomodoroSettings, todoItems, accentColor,
   });
   useEffect(() => {
     stateRef.current = {
       roomId, currentBg, activeEffect, activeWidgets,
       widgetPositions, placedStickers, stickyNotes,
-      clockSettings, pomodoroSettings, todoItems,
+      clockSettings, pomodoroSettings, todoItems, accentColor,
     };
   });
 
@@ -128,6 +130,7 @@ export function useWorkspaceAutoSave({
           clockSettings:   s.clockSettings,
           pomodoroSettings: s.pomodoroSettings,
           todoItems:       s.todoItems,
+          accentColor:     s.accentColor,
         };
         const thumbnail = captureScreenshot ? await captureScreenshot() : null;
         await workspaceService.saveWorkspace({

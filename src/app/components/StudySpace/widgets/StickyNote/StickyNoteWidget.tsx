@@ -1,7 +1,7 @@
-import { useLayoutEffect, useRef, useState, useCallback } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { motion, useMotionValue, AnimatePresence } from "motion/react";
-import { GripHorizontal, X, Settings, Check } from "lucide-react";
+import { GripHorizontal, X, Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { StickyNote } from "../../types";
 
@@ -43,7 +43,6 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNot
   const [hovered,      setHovered]      = useState(false);
   const [focused,      setFocused]      = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [saved,        setSaved]        = useState(false);
 
   const [w, setW] = useState(note.w ?? SIZES[1].w);
   const [h, setH] = useState(note.h ?? SIZES[1].h);
@@ -86,15 +85,6 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNot
     setH(size.h);
     onUpdate({ w: size.w, h: size.h });
   };
-
-  const handleSave = useCallback(() => {
-    onSave?.();
-    setSaved(true);
-    setTimeout(() => {
-      setSaved(false);
-      textareaRef.current?.blur();
-    }, 400);
-  }, [onSave]);
 
   return (
     <motion.div
@@ -186,7 +176,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNot
           value={note.text}
           onChange={e => onUpdate({ text: e.target.value })}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onBlur={() => { setFocused(false); onSave?.(); }}
           placeholder={t("stickyNote.placeholder")}
           style={{
             flex: 1,
@@ -208,39 +198,6 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNot
           onPointerDown={e => e.stopPropagation()}
         />
 
-        {/* Save button — bottom-right, only when editing */}
-        <AnimatePresence>
-          {focused && onSave && (
-            <motion.button
-              key="save-btn"
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.7 }}
-              transition={{ type: "spring", stiffness: 500, damping: 24 }}
-              onMouseDown={e => e.preventDefault()}
-              onClick={handleSave}
-              style={{
-                position: "absolute",
-                bottom: 8,
-                right: 8,
-                width: 26,
-                height: 26,
-                borderRadius: "50%",
-                border: saved ? "none" : "1.5px solid rgba(255,255,255,0.85)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: saved ? "rgb(34,197,94)" : "rgb(34,197,94)",
-                color: "white",
-                transition: "background 0.15s, color 0.15s",
-                boxShadow: "0 2px 10px rgba(0,0,0,0.22)",
-              }}
-            >
-              <Check size={13} />
-            </motion.button>
-          )}
-        </AnimatePresence>
       </motion.div>
 
       {/* ── Settings panel ──────────────────────────────────────────────── */}

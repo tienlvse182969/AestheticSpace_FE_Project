@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../../../context/AuthContext";
 
 const MotionBox = motion.create(Box);
 
@@ -11,6 +12,7 @@ const DESK_IMG =
 export function CTASection() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { user } = useAuth();
   return (
     <Box
       as="section"
@@ -103,7 +105,11 @@ export function CTASection() {
               _active={{ transform: "scale(0.95)" }}
               onClick={(e: React.MouseEvent) => {
                 e.preventDefault();
-                navigate("/login", { state: { mode: "signup" } });
+                if (user) {
+                  navigate("/space");
+                } else {
+                  navigate("/login", { state: { mode: "signup" } });
+                }
               }}
             >
               {t("cta.joinNow")}
