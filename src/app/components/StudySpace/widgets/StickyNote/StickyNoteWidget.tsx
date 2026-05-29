@@ -33,10 +33,12 @@ const MARGIN  = 12;
 interface StickyNoteWidgetProps {
   note: StickyNote;
   onRemove: () => void;
-  onUpdate: (patch: Partial<Pick<StickyNote, "text" | "color" | "w" | "h">>) => void;
+  onUpdate: (patch: Partial<Pick<StickyNote, "text" | "color" | "w" | "h" | "x" | "y">>) => void;
+  onSave?: () => void;
+  locked?: boolean;
 }
 
-export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetProps) {
+export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: StickyNoteWidgetProps) {
   const { t } = useTranslation();
   const SIZES = SIZES_BASE.map(s => ({ ...s, label: t(s.labelKey) }));
   const [hovered,      setHovered]      = useState(false);
@@ -51,6 +53,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
   const x = useMotionValue(note.x);
   const y = useMotionValue(note.y);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [hSide, setHSide] = useState<"right" | "left">("right");
   const [vSide, setVSide] = useState<"top" | "bottom">("top");
@@ -76,7 +79,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
   const origin = hSide === "right" ? "left center" : "right center";
 
   const c            = STICKY_COLORS.find(col => col.id === note.color) ?? STICKY_COLORS[0];
-  const showControls = hovered || focused || settingsOpen;
+  const showControls = !locked && (hovered || focused || settingsOpen);
 
   const applySize = (size: typeof SIZES[number]) => {
     setW(size.w);
@@ -87,15 +90,16 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
   return (
     <motion.div
       ref={containerRef}
-      drag
+      drag={!locked}
       dragMomentum={false}
       dragElastic={0}
-      dragListener={!focused}
+      dragListener={!locked && !focused}
       initial={{ opacity: 0, scale: 0.88 }}
       animate={{ opacity: 1, scale: 1, width: w }}
       exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.14, ease: [0.4, 0, 1, 1] } }}
       transition={{ type: "spring", stiffness: 500, damping: 24, mass: 0.9 }}
-      whileDrag={{ scale: 1.02, zIndex: 60 }}
+      whileDrag={locked ? undefined : { scale: 1.02, zIndex: 60 }}
+      onDragEnd={() => !locked && onUpdate({ x: Math.round(x.get()), y: Math.round(y.get()) })}
       style={{
         position: "fixed",
         top: 0,
@@ -103,7 +107,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
         x,
         y,
         width: w,
-        cursor: focused ? "default" : "grab",
+        cursor: locked ? "default" : focused ? "default" : "grab",
         userSelect: "none",
         zIndex: 10,
       }}
@@ -163,15 +167,17 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
           boxShadow: "0 4px 20px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2)",
           transition: "background 0.24s ease, border-color 0.24s ease",
           overflow: "hidden",
+          position: "relative",
           display: "flex",
           flexDirection: "column",
         }}
       >
         <textarea
+          ref={textareaRef}
           value={note.text}
           onChange={e => onUpdate({ text: e.target.value })}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onBlur={() => { setFocused(false); onSave?.(); }}
           placeholder={t("stickyNote.placeholder")}
           style={{
             flex: 1,
@@ -192,6 +198,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate }: StickyNoteWidgetP
           }}
           onPointerDown={e => e.stopPropagation()}
         />
+
       </motion.div>
 
       {/* ── Settings panel ──────────────────────────────────────────────── */}

@@ -118,6 +118,10 @@
     "noAccount": "Chưa có tài khoản?",
     "alreadyMember": "Đã là thành viên?",
     "register": "Đăng ký",
+    "loginTagline": "Chào mừng\ntrở lại.",
+    "loginSubline": "Không gian của bạn đang chờ.",
+    "signupTagline": "Tạo nên\ndấu ấn của bạn.",
+    "signupSubline": "Thiết kế không gian làm việc độc đáo như chính bạn.",
     "errors": {
       "identifierRequired": "Vui lòng nhập email hoặc tên người dùng.",
       "invalidEmail": "Email không đúng định dạng.",
@@ -129,15 +133,28 @@
       "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự."
     }
   },
+  "contextMenu": {
+    "label": "Tùy chỉnh không gian",
+    "changeBackground": "Đổi hình nền",
+    "addWidget": "Thêm widget",
+    "addSticker": "Thêm sticker",
+    "changeAmbient": "Đổi âm thanh",
+    "changeEffect": "Đổi hiệu ứng",
+    "lockLayout": "Khóa bố cục",
+    "unlockLayout": "Mở khóa bố cục"
+  },
   "space": {
     "widgets": "Widget",
     "stickers": "Nhãn dán",
     "backgrounds": "Hình nền",
     "themes": "Giao diện",
     "ambientSounds": "Âm thanh",
-    "guestTooltip": "Khách — nhấn để đăng nhập"
+    "guestTooltip": "Khách — nhấn để đăng nhập",
+    "rooms": "Phòng học",
+    "loading": "Đang tải không gian của bạn…"
   },
   "account": {
+    "mySpace": "Không gian của tôi",
     "settings": "Cài đặt",
     "help": "Trợ giúp",
     "home": "Trang chủ",
@@ -189,6 +206,7 @@
     "noSounds": "Chưa có âm thanh — nhấn thẻ để bắt đầu"
   },
   "backgrounds": {
+    "rooms": "Phòng học",
     "discover": "Khám phá",
     "favorites": "Yêu thích",
     "favoritesCount": "Yêu thích ({{count}})",
@@ -200,6 +218,8 @@
     "noFavoritesHint": "Rê chuột lên ảnh và nhấn ♡ để lưu",
     "removeFromFavorites": "Xóa khỏi yêu thích",
     "addToFavorites": "Thêm vào yêu thích",
+    "noRooms": "Không có phòng nào",
+    "errorRooms": "Không thể tải danh sách phòng",
     "inDevelopment": "Đang phát triển",
     "themesTitle": "Hình Nền Theo Giao Diện",
     "themesDesc": "Bộ hình nền theo chủ đề — Lofi Night, Cottagecore, Tokyo Rain và nhiều hơn nữa. Sắp ra mắt trong Theme Store.",

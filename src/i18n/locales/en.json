@@ -118,6 +118,10 @@
     "noAccount": "Don't have an account?",
     "alreadyMember": "Already a member?",
     "register": "Register",
+    "loginTagline": "Welcome\nback.",
+    "loginSubline": "Your space is waiting for you.",
+    "signupTagline": "Make it\nyours.",
+    "signupSubline": "Design a workspace as unique as you are.",
     "errors": {
       "identifierRequired": "Please enter your email or username.",
       "invalidEmail": "That doesn't look like a valid email.",
@@ -129,15 +133,28 @@
       "passwordTooShort": "Password must be at least 6 characters."
     }
   },
+  "contextMenu": {
+    "label": "Customize Space",
+    "changeBackground": "Change Background",
+    "addWidget": "Add Widget",
+    "addSticker": "Add Sticker",
+    "changeAmbient": "Change Ambient Sound",
+    "changeEffect": "Change Visual Effect",
+    "lockLayout": "Lock Layout",
+    "unlockLayout": "Unlock Layout"
+  },
   "space": {
     "widgets": "Widgets",
     "stickers": "Stickers",
     "backgrounds": "Backgrounds",
     "themes": "Themes",
     "ambientSounds": "Ambient Sounds",
-    "guestTooltip": "Guest — click to sign in"
+    "guestTooltip": "Guest — click to sign in",
+    "rooms": "Rooms",
+    "loading": "Loading your space…"
   },
   "account": {
+    "mySpace": "My Space",
     "settings": "Settings",
     "help": "Help",
     "home": "Home",
@@ -189,6 +206,7 @@
     "noSounds": "No sounds active — tap a card to start"
   },
   "backgrounds": {
+    "rooms": "Rooms",
     "discover": "Discover",
     "favorites": "Favorites",
     "favoritesCount": "Favorites ({{count}})",
@@ -200,6 +218,8 @@
     "noFavoritesHint": "Hover over an image and click ♡ to save",
     "removeFromFavorites": "Remove from favorites",
     "addToFavorites": "Add to favorites",
+    "noRooms": "No rooms available",
+    "errorRooms": "Failed to load rooms",
     "inDevelopment": "In Development",
     "themesTitle": "Theme Backgrounds",
     "themesDesc": "Curated background packs tied to themes — Lofi Night, Cottagecore, Tokyo Rain and more. Coming soon as part of the Theme Store.",

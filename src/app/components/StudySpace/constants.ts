@@ -14,6 +14,64 @@ export const TRACK_NAMES = [
   "Midnight Study", "Forest Rain", "Soft Hours",
 ];
 
+export type MusicSource = "youtube" | "soundcloud";
+
+export interface PresetPlaylist {
+  id: string;
+  label: string;
+  url: string;
+  art: string;
+  artist: string;
+}
+
+export const YT_PRESETS: PresetPlaylist[] = [
+  {
+    id: "yt-lofi-girl",
+    label: "Lofi Girl",
+    url: "https://www.youtube.com/playlist?list=PLZoTAELRMXVNMbAuQA5kMw5FHqHSq8OP1",
+    art: "https://img.youtube.com/vi/jfKfPfyJRdk/mqdefault.jpg",
+    artist: "Lofi Girl",
+  },
+  {
+    id: "yt-chillhop",
+    label: "Chillhop",
+    url: "https://www.youtube.com/watch?v=7NOSDKb0HlU",
+    art: "https://img.youtube.com/vi/7NOSDKb0HlU/mqdefault.jpg",
+    artist: "Chillhop Music",
+  },
+  {
+    id: "yt-study",
+    label: "Study Beats",
+    url: "https://www.youtube.com/watch?v=lTRiuFIWV54",
+    art: "https://img.youtube.com/vi/lTRiuFIWV54/mqdefault.jpg",
+    artist: "College Music",
+  },
+];
+
+export const SC_PRESETS: PresetPlaylist[] = [
+  {
+    id: "sc-lofi",
+    label: "Lofi Hip Hop",
+    url: "https://soundcloud.com/lofi-hip-hop-music/sets/lofi-hip-hop-music",
+    art: RAINY_ART,
+    artist: "lofi hip hop music",
+  },
+  {
+    id: "sc-chill",
+    label: "Chill Beats",
+    url: "https://soundcloud.com/chillhopmusic/sets/chillhop-essentials-spring-2024",
+    art: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
+    artist: "Chillhop Records",
+  },
+  {
+    id: "sc-jazz",
+    label: "Jazz Café",
+    url: "https://soundcloud.com/jazz-night-music/sets/jazz-coffee-music",
+    art: "https://images.unsplash.com/photo-1415201364774-f6f0bb35f28f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=200",
+    artist: "Jazz Night Music",
+  },
+];
+
 export const BACKGROUNDS: BackgroundItem[] = [
   {
     id: "cherry",
@@ -81,7 +139,7 @@ export const WIDGET_DEFS: {
   {
     id: "music",
     label: "Music Player",
-    desc: "Lo-fi & chill music via SoundCloud",
+    desc: "Lo-fi & chill music via YouTube & SoundCloud",
     icon: Music,
     color: "#38bdf8",
   },

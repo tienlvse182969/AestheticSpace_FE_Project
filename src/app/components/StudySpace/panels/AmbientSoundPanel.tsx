@@ -181,7 +181,7 @@ function SoundCard({
 /* ── Main panel ─────────────────────────────────────────────────────────────── */
 export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
-  const { x, y, ref } = useCenteredPanel(548);
+  const { x, y, ref } = useCenteredPanel(548, 560);
 
   const [active,  setActive]  = useState(SOUNDS_DATA.map((s) => s.on));
   const [volumes, setVolumes] = useState(SOUNDS_DATA.map((s) => s.vol));
@@ -209,6 +209,7 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
       style={{
         x, y,
         width: 548,
+        height: 560,
         borderRadius: "18px",
         background: "rgba(10,16,14,0.88)",
         backdropFilter: "blur(22px)",
@@ -216,9 +217,12 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
         border: "1px solid rgba(255,255,255,0.09)",
         boxShadow: "0 28px 90px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06)",
         cursor: "grab",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
-      <Box position="relative" style={{ padding: "18px 18px 16px" }}>
+      <Box position="relative" style={{ padding: "18px 18px 16px", display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
         <PanelCloseBtn onClose={onClose} />
 
         {/* ── Header ── */}
@@ -254,7 +258,7 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
         {/* ── Image card grid — 3 columns, scrollable ── */}
         <Box
           style={{
-            maxHeight: "calc(100vh - 220px)",
+            flex: 1,
             overflowY: "auto",
             overflowX: "hidden",
             marginRight: -4,
@@ -283,6 +287,7 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
         {/* ── Now mixing footer ── */}
         <Box
           mt={3}
+          flexShrink={0}
           borderRadius="12px"
           px="14px"
           py="10px"

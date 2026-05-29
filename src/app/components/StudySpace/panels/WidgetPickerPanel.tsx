@@ -196,7 +196,8 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
   }, []);
 
   const panelW = isMobile ? Math.min(sw - 32, 340) : 600;
-  const { x, y, ref } = useCenteredPanel(panelW);
+  const panelH = isMobile ? 480 : 520;
+  const { x, y, ref } = useCenteredPanel(panelW, panelH);
 
   return (
     <MotionBox
@@ -214,17 +215,17 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
       style={{
         x, y,
         width: panelW,
+        height: panelH,
         borderRadius: "16px",
         background: "rgba(12,18,22,0.80)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
         border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.08)",
-        maxHeight: "88vh",
-        overflowY: "auto",
+        overflow: "hidden",
       }}
     >
-      <Box position="relative" style={{ padding: "20px 18px 18px" }}>
+      <Box position="relative" style={{ padding: "20px 18px 18px", height: "100%", overflowY: "auto" }}>
         <PanelCloseBtn onClose={onClose} />
 
         <Text mb={1} style={{
@@ -243,7 +244,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
             {WIDGET_DEFS.map((w) => {
               const isAdded = activeWidgets.has(w.id);
               const Icon = w.icon;
-              const isSoon = w.id === "music";
+              const isSoon = false;
               return (
                 <Flex key={w.id} align="center" gap={3} px={3} py={3} borderRadius="10px" style={{
                   background: isSoon ? "rgba(255,255,255,0.015)" : isAdded ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
@@ -290,7 +291,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
             {WIDGET_DEFS.map((w) => {
               const isAdded = activeWidgets.has(w.id);
               const Thumb = THUMBNAIL_MAP[w.id];
-              const isSoon = w.id === "music";
+              const isSoon = false;
               return (
                 <div key={w.id} style={{
                   borderRadius: "12px",
