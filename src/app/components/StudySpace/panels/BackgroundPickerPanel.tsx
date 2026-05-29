@@ -10,53 +10,13 @@ import type { BackgroundItem } from "../types";
 
 const MotionBox = motion.create(Box);
 
-const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY ?? "";
-const PER_PAGE = 12;
+import { hasUnsplashKey, searchUnsplash, triggerUnsplashDownload } from "../../../../services/unsplash.service";
 
 const PRESET_TAGS = [
   "Aesthetic Study", "Forest", "Japan Night", "Cozy Cafe",
   "Mountain", "Ocean", "Rainy", "Cherry Blossom", "Library",
 ];
 
-interface UnsplashPhoto {
-  id: string;
-  urls: { regular: string; small: string };
-  alt_description: string | null;
-  description: string | null;
-  user: { name: string; links: { html: string } };
-  links: { download_location: string };
-}
-
-function mapPhoto(p: UnsplashPhoto): BackgroundItem {
-  return {
-    id: p.id,
-    url: p.urls.regular,
-    thumb: p.urls.small,
-    label: p.alt_description || p.description || "Untitled",
-    photographer: p.user.name,
-    photographerUrl: `${p.user.links.html}?utm_source=aesthetic_space&utm_medium=referral`,
-    downloadLocation: p.links.download_location,
-  };
-}
-
-// Required by Unsplash API guidelines when a user selects a photo
-function triggerUnsplashDownload(downloadLocation: string | undefined) {
-  if (!downloadLocation || !UNSPLASH_KEY) return;
-  fetch(`${downloadLocation}?client_id=${UNSPLASH_KEY}`).catch(() => {});
-}
-
-async function searchUnsplash(query: string, page: number) {
-  const res = await fetch(
-    `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=${PER_PAGE}&page=${page}&orientation=landscape`,
-    { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
-  );
-  if (!res.ok) throw new Error(`${res.status}`);
-  const data = await res.json();
-  return {
-    items: (data.results as UnsplashPhoto[]).map(mapPhoto),
-    totalPages: data.total_pages as number,
-  };
-}
 
 interface PhotoCardProps {
   bg: BackgroundItem;
@@ -223,7 +183,7 @@ interface BackgroundPickerPanelProps {
 
 export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: BackgroundPickerPanelProps) {
   const { t } = useTranslation();
-  const { x, y, ref } = useCenteredPanel(604);
+  const { x, y, ref } = useCenteredPanel(604, 580);
 
   /* ── Search state ── */
   const [inputValue, setInputValue]   = useState("Aesthetic Study");
@@ -257,7 +217,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
 
   /* ── Fetch ── */
   const fetchPhotos = useCallback(async (q: string, pg: number, append: boolean) => {
-    if (!UNSPLASH_KEY) return;
+    if (!hasUnsplashKey()) return;
     const myId = ++reqIdRef.current;
     if (append) setLoadingMore(true);
     else { setLoading(true); setPhotos([]); }
@@ -335,7 +295,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
       style={{
         x, y,
         width: 604,
-        maxHeight: "82vh",
+        height: 580,
         borderRadius: "10px",
         background: "rgba(12,18,22,0.75)",
         backdropFilter: "blur(18px)",
@@ -383,7 +343,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
         </Flex>
 
         {/* Search + chips — only in Discover */}
-        {tab === "discover" && UNSPLASH_KEY && (
+        {tab === "discover" && hasUnsplashKey() && (
           <>
             {/* Search input */}
             <Box position="relative" mb={3}>
@@ -484,7 +444,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
         {tab === "discover" && (
           <>
             {/* No API key — show curated fallback */}
-            {!UNSPLASH_KEY ? (
+            {!hasUnsplashKey() ? (
               <>
                 <Box
                   mb={3}

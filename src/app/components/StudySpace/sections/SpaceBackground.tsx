@@ -1,5 +1,6 @@
 import { Box } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { RainEffect } from "../effects/RainEffect";
 import { SnowEffect } from "../effects/SnowEffect";
 import type { StudySpaceCtx } from "../../../hooks/studyspace/useStudySpace";
@@ -10,6 +11,7 @@ interface Props { ctx: StudySpaceCtx; }
 
 export function SpaceBackground({ ctx }: Props) {
   const { currentBg, isRestoring, activeEffect } = ctx;
+  const { t } = useTranslation();
 
   return (
     <>
@@ -76,7 +78,7 @@ export function SpaceBackground({ ctx }: Props) {
                 textTransform: "uppercase",
               }}
             >
-              Loading your space…
+              {t("space.loading")}
             </Box>
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
           </MotionBox>

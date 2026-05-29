@@ -5,7 +5,7 @@ import { AuthProvider } from "../context/AuthContext";
 
 export function Root() {
   const location = useLocation();
-  const isFullscreen = location.pathname === "/login" || location.pathname === "/space" || location.pathname === "/admin";
+  const isFullscreen = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/space" || location.pathname === "/admin";
 
   return (
     <AuthProvider>

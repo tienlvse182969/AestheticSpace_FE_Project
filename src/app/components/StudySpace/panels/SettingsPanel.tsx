@@ -121,7 +121,7 @@ function SettingRow({
 // ── Main component ─────────────────────────────────────────────────────────────
 export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const { t, i18n } = useTranslation();
-  const { x, y, ref } = useCenteredPanel(380);
+  const { x, y, ref } = useCenteredPanel(380, 500);
   const { accent, setAccent } = useAccent();
   const isCustomAccent = !PRESET_HEXES.includes(accent);
 
@@ -189,6 +189,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       style={{
         x, y,
         width: 380,
+        height: 500,
         borderRadius: "16px",
         background: "rgba(12,18,22,0.75)",
         backdropFilter: "blur(18px)",
@@ -196,9 +197,10 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.08)",
         cursor: "grab",
+        overflow: "hidden",
       }}
     >
-      <Box position="relative" style={{ padding: "18px 18px 20px" }}>
+      <Box position="relative" style={{ padding: "18px 18px 20px", height: "100%", overflowY: "auto" }}>
         <PanelCloseBtn onClose={onClose} />
 
         {/* Header */}

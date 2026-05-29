@@ -59,7 +59,7 @@ interface RoomManagerPanelProps {
 
 export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManagerPanelProps) {
   const { t } = useTranslation();
-  const { x, y, ref } = useCenteredPanel(400);
+  const { x, y, ref } = useCenteredPanel(400, 460);
 
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(false);
@@ -96,6 +96,7 @@ export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManag
       style={{
         x, y,
         width: 400,
+        height: 460,
         borderRadius: "16px",
         background: "rgba(12,18,22,0.75)",
         backdropFilter: "blur(18px)",
@@ -103,11 +104,14 @@ export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManag
         border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.08)",
         cursor: "grab",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
-      <Box position="relative" style={{ padding: "18px 18px 20px" }}>
+      <Box position="relative" style={{ padding: "18px 18px 20px", display: "flex", flexDirection: "column", flex: 1, overflow: "hidden" }}>
         <PanelCloseBtn onClose={onClose} />
 
         {/* Header */}
@@ -171,7 +175,7 @@ export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManag
             style={{
               gridTemplateColumns: "1fr 1fr",
               gap: 10,
-              maxHeight: 360,
+              flex: 1,
               overflowY: "auto",
               paddingRight: 2,
             }}
@@ -250,6 +254,7 @@ export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManag
         {/* Footer: current room info */}
         <Box
           mt={3}
+          flexShrink={0}
           borderRadius="10px"
           px={3}
           py="10px"

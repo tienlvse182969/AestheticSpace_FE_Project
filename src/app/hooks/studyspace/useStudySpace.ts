@@ -37,11 +37,14 @@ export function useStudySpace() {
   /* ── UI state ── */
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [activePanel,    setActivePanel]    = useState<ActivePanel>(null);
+  const [layoutLocked,   setLayoutLocked]   = useState(false);
   const [aboutOpen,      setAboutOpen]      = useState(false);
   const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const [accountOpen,    setAccountOpen]    = useState(false);
   const [currentBg,      setCurrentBg]      = useState<BackgroundItem>(BACKGROUNDS[3]);
   const [roomId,         setRoomId]         = useState<string | null>(null);
+  const [musicSource,    setMusicSource]    = useState<"youtube" | "soundcloud">("youtube");
+  const [musicUrl,       setMusicUrl]       = useState("");
 
   const avatarBtnRef    = useRef<HTMLDivElement>(null);
   const accountPanelRef = useRef<HTMLDivElement>(null);
@@ -57,7 +60,7 @@ export function useStudySpace() {
     const w = typeof window !== "undefined" ? window.innerWidth  : 1440;
     const h = typeof window !== "undefined" ? window.innerHeight : 900;
     return {
-      music:    { x: w - 260, y: Math.round(h * 0.12) },
+      music:    { x: w - 320, y: Math.round(h * 0.12) },
       pomodoro: { x: w - 260, y: Math.round(h * 0.12) + 130 },
       todo:     { x: w - 260, y: Math.round(h * 0.12) + 390 },
       clock:    { x: 32,      y: Math.round(h * 0.12) },
@@ -69,6 +72,10 @@ export function useStudySpace() {
   const applyLayout = useCallback((layout: LayoutConfig) => {
     if (layout.activeEffect !== undefined) setActiveEffect(layout.activeEffect as EffectType);
     if (layout.accentColor) setAccent(layout.accentColor);
+    if (layout.musicState) {
+      setMusicSource(layout.musicState.source as "youtube" | "soundcloud");
+      setMusicUrl(layout.musicState.activeUrl);
+    }
     if (layout.clockSettings) {
       clock.setMode(layout.clockSettings.mode as any);
       clock.setLayout(layout.clockSettings.layout as any);
@@ -159,6 +166,7 @@ export function useStudySpace() {
     },
     todoItems: space.todoItems,
     accentColor: accent,
+    musicState: { source: musicSource, activeUrl: musicUrl },
     captureScreenshot,
     onRestore: handleRestore,
   });
@@ -174,16 +182,21 @@ export function useStudySpace() {
   const togglePanel = (panel: ActivePanel) =>
     setActivePanel(p => p === panel ? null : panel);
 
+  const toggleLayoutLock = () => setLayoutLocked(v => !v);
+
   return {
     navigate, t,
     user, currentUser, handleLogout,
     toolbarVisible, setToolbarVisible,
     activePanel, setActivePanel, togglePanel,
+    layoutLocked, toggleLayoutLock,
     aboutOpen, setAboutOpen,
     activeEffect, setActiveEffect,
     accountOpen, setAccountOpen,
     currentBg, setCurrentBg,
     roomId, setRoomId,
+    musicSource, setMusicSource,
+    musicUrl, setMusicUrl,
     avatarBtnRef, accountPanelRef, spaceRef,
     clock, pomodoro, space,
     WIDGET_POSITIONS,

@@ -16,7 +16,7 @@ import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
 interface Props { ctx: StudySpaceCtx; }
 
 export function SpaceWidgets({ ctx }: Props) {
-  const { space, clock, pomodoro, saveNow, WIDGET_POSITIONS } = ctx;
+  const { space, clock, pomodoro, saveNow, WIDGET_POSITIONS, layoutLocked, musicSource, musicUrl, setMusicSource, setMusicUrl } = ctx;
 
   return (
     <>
@@ -25,12 +25,18 @@ export function SpaceWidgets({ ctx }: Props) {
         {space.activeWidgets.has("music") && (
           <DraggableWidget
             key="music"
+            width={300}
             initialX={space.widgetPositions["music"]?.x ?? WIDGET_POSITIONS.music.x}
             initialY={space.widgetPositions["music"]?.y ?? WIDGET_POSITIONS.music.y}
             onRemove={() => { space.removeWidget("music"); saveNow(); }}
             onDragEnd={(x, y) => { space.setWidgetPosition("music", { x, y }); saveNow(); }}
+            locked={layoutLocked}
           >
-            <MusicPlayerWidget />
+            <MusicPlayerWidget
+              initialSource={musicSource}
+              initialUrl={musicUrl}
+              onStateChange={(src, url) => { setMusicSource(src); setMusicUrl(url); saveNow(); }}
+            />
           </DraggableWidget>
         )}
 
@@ -42,6 +48,7 @@ export function SpaceWidgets({ ctx }: Props) {
             containerRef={pomodoro.containerRef}
             onRemove={() => { space.removeWidget("pomodoro"); pomodoro.setSettingsOpen(false); saveNow(); }}
             onDragEnd={(x, y) => { space.setWidgetPosition("pomodoro", { x, y }); saveNow(); }}
+            locked={layoutLocked}
             extraControls={
               <Box
                 as="button"
@@ -87,6 +94,7 @@ export function SpaceWidgets({ ctx }: Props) {
             initialY={space.widgetPositions["todo"]?.y ?? WIDGET_POSITIONS.todo.y}
             onRemove={() => { space.removeWidget("todo"); saveNow(); }}
             onDragEnd={(x, y) => { space.setWidgetPosition("todo", { x, y }); saveNow(); }}
+            locked={layoutLocked}
           >
             <TodoListWidget
               todos={space.todoItems}
@@ -103,6 +111,7 @@ export function SpaceWidgets({ ctx }: Props) {
             containerRef={clock.containerRef}
             onRemove={() => { space.removeWidget("clock"); clock.setSettingsOpen(false); saveNow(); }}
             onDragEnd={(x, y) => { space.setWidgetPosition("clock", { x, y }); saveNow(); }}
+            locked={layoutLocked}
             extraControls={
               <Box
                 as="button"
@@ -154,6 +163,7 @@ export function SpaceWidgets({ ctx }: Props) {
             initialY={space.widgetPositions["quote"]?.y ?? WIDGET_POSITIONS.quote.y}
             onRemove={() => { space.removeWidget("quote"); saveNow(); }}
             onDragEnd={(x, y) => { space.setWidgetPosition("quote", { x, y }); saveNow(); }}
+            locked={layoutLocked}
           >
             <QuoteWidget />
           </DraggableWidget>
@@ -168,6 +178,7 @@ export function SpaceWidgets({ ctx }: Props) {
             sticker={s}
             onRemove={() => { space.removeSticker(s.id); saveNow(); }}
             onDragEnd={(x, y) => { space.updateSticker(s.id, { x, y }); saveNow(); }}
+            locked={layoutLocked}
           />
         ))}
       </AnimatePresence>
@@ -184,6 +195,7 @@ export function SpaceWidgets({ ctx }: Props) {
               if ("x" in patch || "y" in patch || "color" in patch || "w" in patch || "h" in patch) saveNow();
             }}
             onSave={saveNow}
+            locked={layoutLocked}
           />
         ))}
       </AnimatePresence>

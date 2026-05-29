@@ -88,7 +88,7 @@ function EffectPreview({ effectKey, color, active }: { effectKey: EffectType; co
 
 export function EffectsPanel({ activeEffect, onSelect, onClose }: EffectsPanelProps) {
   const { t } = useTranslation();
-  const { x, y, ref } = useCenteredPanel(360);
+  const { x, y, ref } = useCenteredPanel(360, 310);
 
   return (
     <MotionBox
@@ -106,6 +106,7 @@ export function EffectsPanel({ activeEffect, onSelect, onClose }: EffectsPanelPr
       style={{
         x, y,
         width: 360,
+        height: 310,
         borderRadius: "16px",
         background: "rgba(12,18,22,0.75)",
         backdropFilter: "blur(18px)",
@@ -113,9 +114,10 @@ export function EffectsPanel({ activeEffect, onSelect, onClose }: EffectsPanelPr
         border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.08)",
         cursor: "grab",
+        overflow: "hidden",
       }}
     >
-      <Box position="relative" style={{ padding: "18px 18px 20px" }}>
+      <Box position="relative" style={{ padding: "18px 18px 20px", height: "100%", overflowY: "auto" }}>
         <PanelCloseBtn onClose={onClose} />
 
         {/* Header */}

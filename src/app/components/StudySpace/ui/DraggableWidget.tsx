@@ -15,9 +15,11 @@ interface DraggableWidgetProps {
   extraControls?: React.ReactNode;
   floatingPanel?: React.ReactNode;
   containerRef?: React.RefObject<HTMLDivElement | null>;
+  locked?: boolean;
+  width?: number;
 }
 
-export function DraggableWidget({ children, initialX, initialY, onRemove, onDragStart, onDragEnd, extraControls, floatingPanel, containerRef }: DraggableWidgetProps) {
+export function DraggableWidget({ children, initialX, initialY, onRemove, onDragStart, onDragEnd, extraControls, floatingPanel, containerRef, locked, width = 240 }: DraggableWidgetProps) {
   const [hovered, setHovered] = useState(false);
   const x = useMotionValue(initialX);
   const y = useMotionValue(initialY);
@@ -27,7 +29,7 @@ export function DraggableWidget({ children, initialX, initialY, onRemove, onDrag
   return (
     <MotionBox
       ref={containerRef as any}
-      drag
+      drag={!locked}
       dragMomentum={false}
       dragElastic={0}
       position="fixed"
@@ -36,47 +38,50 @@ export function DraggableWidget({ children, initialX, initialY, onRemove, onDrag
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.14, ease: [0.4, 0, 1, 1] } } as any}
-      whileDrag={{ scale: 1.015, zIndex: 50 } as any}
+      whileDrag={locked ? undefined : ({ scale: 1.015, zIndex: 50 } as any)}
       transition={{
         opacity: { duration: 0.12 },
         scale: { type: "spring", stiffness: 500, damping: 24, mass: 0.9 },
       } as any}
-      style={{ x, y, width: 240, cursor: "grab", userSelect: "none", zIndex: 10 }}
-      onDragStart={() => onDragStart?.()}
-      onDragEnd={() => onDragEnd?.(Math.round(x.get()), Math.round(y.get()))}
+      style={{ x, y, width, cursor: locked ? "default" : "grab", userSelect: "none", zIndex: 10 }}
+      onDragStart={() => !locked && onDragStart?.()}
+      onDragEnd={() => !locked && onDragEnd?.(Math.round(x.get()), Math.round(y.get()))}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Top bar: grip handle + extra controls + remove button */}
-      <Flex
-        justify="space-between"
-        align="center"
-        px="6px"
-        pb="4px"
-        style={{ height: 20, opacity: hovered ? 1 : 0, transition: "opacity 0.2s" }}
-      >
-        <GripHorizontal size={14} color="rgba(255,255,255,0.45)" />
-        <Flex align="center" gap="4px">
-          {extraControls}
-          <Box
-            as="button"
-            onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRemove(); }}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            w="18px"
-            h="18px"
-            borderRadius="full"
-            border="none"
-            cursor="pointer"
-            style={{ background: "rgba(239,68,68,0.18)", color: "rgba(239,68,68,0.7)", transition: "all 0.15s" }}
-            _hover={{ background: "rgba(239,68,68,0.85)", color: "white" }}
-            title="Remove widget"
-          >
-            <X size={10} />
-          </Box>
+      {/* Top bar: grip handle + extra controls + remove button — hidden when locked */}
+      {!locked && (
+        <Flex
+          justify="space-between"
+          align="center"
+          px="6px"
+          pb="4px"
+          style={{ height: 20, opacity: hovered ? 1 : 0, transition: "opacity 0.2s" }}
+        >
+          <GripHorizontal size={14} color="rgba(255,255,255,0.45)" />
+          <Flex align="center" gap="4px">
+            {extraControls}
+            <Box
+              as="button"
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRemove(); }}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              w="18px"
+              h="18px"
+              borderRadius="full"
+              border="none"
+              cursor="pointer"
+              style={{ background: "rgba(239,68,68,0.18)", color: "rgba(239,68,68,0.7)", transition: "all 0.15s" }}
+              _hover={{ background: "rgba(239,68,68,0.85)", color: "white" }}
+              title="Remove widget"
+            >
+              <X size={10} />
+            </Box>
+          </Flex>
         </Flex>
-      </Flex>
+      )}
+      {locked && <Box style={{ height: 20 }} />}
 
       {/* Widget content */}
       {children}

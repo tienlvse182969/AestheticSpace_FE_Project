@@ -14,7 +14,7 @@ interface StickerPickerPanelProps {
 
 export function StickerPickerPanel({ onPlace, onClose }: StickerPickerPanelProps) {
   const { t } = useTranslation();
-  const { x, y, ref } = useCenteredPanel(320);
+  const { x, y, ref } = useCenteredPanel(320, 440);
 
   return (
     <MotionBox
@@ -32,15 +32,17 @@ export function StickerPickerPanel({ onPlace, onClose }: StickerPickerPanelProps
       style={{
         x, y,
         width: 320,
+        height: 440,
         borderRadius: "14px",
         background: "rgba(12,18,22,0.75)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
         border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.08)",
+        overflow: "hidden",
       }}
     >
-      <Box position="relative" style={{ padding: "20px 18px 18px" }}>
+      <Box position="relative" style={{ padding: "20px 18px 18px", height: "100%", overflowY: "auto" }}>
         <PanelCloseBtn onClose={onClose} />
 
         <Text mb={1} style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>

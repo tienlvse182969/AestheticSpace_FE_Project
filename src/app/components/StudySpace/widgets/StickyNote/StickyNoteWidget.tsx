@@ -35,9 +35,10 @@ interface StickyNoteWidgetProps {
   onRemove: () => void;
   onUpdate: (patch: Partial<Pick<StickyNote, "text" | "color" | "w" | "h" | "x" | "y">>) => void;
   onSave?: () => void;
+  locked?: boolean;
 }
 
-export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNoteWidgetProps) {
+export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: StickyNoteWidgetProps) {
   const { t } = useTranslation();
   const SIZES = SIZES_BASE.map(s => ({ ...s, label: t(s.labelKey) }));
   const [hovered,      setHovered]      = useState(false);
@@ -78,7 +79,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNot
   const origin = hSide === "right" ? "left center" : "right center";
 
   const c            = STICKY_COLORS.find(col => col.id === note.color) ?? STICKY_COLORS[0];
-  const showControls = hovered || focused || settingsOpen;
+  const showControls = !locked && (hovered || focused || settingsOpen);
 
   const applySize = (size: typeof SIZES[number]) => {
     setW(size.w);
@@ -89,16 +90,16 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNot
   return (
     <motion.div
       ref={containerRef}
-      drag
+      drag={!locked}
       dragMomentum={false}
       dragElastic={0}
-      dragListener={!focused}
+      dragListener={!locked && !focused}
       initial={{ opacity: 0, scale: 0.88 }}
       animate={{ opacity: 1, scale: 1, width: w }}
       exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.14, ease: [0.4, 0, 1, 1] } }}
       transition={{ type: "spring", stiffness: 500, damping: 24, mass: 0.9 }}
-      whileDrag={{ scale: 1.02, zIndex: 60 }}
-      onDragEnd={() => onUpdate({ x: Math.round(x.get()), y: Math.round(y.get()) })}
+      whileDrag={locked ? undefined : { scale: 1.02, zIndex: 60 }}
+      onDragEnd={() => !locked && onUpdate({ x: Math.round(x.get()), y: Math.round(y.get()) })}
       style={{
         position: "fixed",
         top: 0,
@@ -106,7 +107,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave }: StickyNot
         x,
         y,
         width: w,
-        cursor: focused ? "default" : "grab",
+        cursor: locked ? "default" : focused ? "default" : "grab",
         userSelect: "none",
         zIndex: 10,
       }}

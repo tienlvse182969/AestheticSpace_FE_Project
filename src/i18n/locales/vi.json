@@ -118,6 +118,10 @@
     "noAccount": "Chưa có tài khoản?",
     "alreadyMember": "Đã là thành viên?",
     "register": "Đăng ký",
+    "loginTagline": "Chào mừng\ntrở lại.",
+    "loginSubline": "Không gian của bạn đang chờ.",
+    "signupTagline": "Tạo nên\ndấu ấn của bạn.",
+    "signupSubline": "Thiết kế không gian làm việc độc đáo như chính bạn.",
     "errors": {
       "identifierRequired": "Vui lòng nhập email hoặc tên người dùng.",
       "invalidEmail": "Email không đúng định dạng.",
@@ -129,6 +133,16 @@
       "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự."
     }
   },
+  "contextMenu": {
+    "label": "Tùy chỉnh không gian",
+    "changeBackground": "Đổi hình nền",
+    "addWidget": "Thêm widget",
+    "addSticker": "Thêm sticker",
+    "changeAmbient": "Đổi âm thanh",
+    "changeEffect": "Đổi hiệu ứng",
+    "lockLayout": "Khóa bố cục",
+    "unlockLayout": "Mở khóa bố cục"
+  },
   "space": {
     "widgets": "Widget",
     "stickers": "Nhãn dán",
@@ -136,7 +150,8 @@
     "themes": "Giao diện",
     "ambientSounds": "Âm thanh",
     "guestTooltip": "Khách — nhấn để đăng nhập",
-    "rooms": "Phòng học"
+    "rooms": "Phòng học",
+    "loading": "Đang tải không gian của bạn…"
   },
   "account": {
     "mySpace": "Không gian của tôi",

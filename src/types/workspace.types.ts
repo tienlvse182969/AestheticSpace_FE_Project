@@ -33,6 +33,7 @@ export interface LayoutConfig {
   };
   todoItems?: Array<{ id: number; text: string; done: boolean }>;
   accentColor?: string;
+  musicState?: { source: string; activeUrl: string };
 }
 
 export interface WorkspaceConfig {

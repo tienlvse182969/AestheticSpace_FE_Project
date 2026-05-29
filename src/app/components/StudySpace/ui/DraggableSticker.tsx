@@ -11,16 +11,17 @@ interface DraggableStickerProps {
   onRemove: () => void;
   onDragStart?: () => void;
   onDragEnd?: (x: number, y: number) => void;
+  locked?: boolean;
 }
 
-export function DraggableSticker({ sticker, onRemove, onDragStart, onDragEnd }: DraggableStickerProps) {
+export function DraggableSticker({ sticker, onRemove, onDragStart, onDragEnd, locked }: DraggableStickerProps) {
   const [hovered, setHovered] = useState(false);
   const x = useMotionValue(sticker.x);
   const y = useMotionValue(sticker.y);
 
   return (
     <MotionBox
-      drag
+      drag={!locked}
       dragMomentum={false}
       dragElastic={0}
       position="fixed"
@@ -29,11 +30,11 @@ export function DraggableSticker({ sticker, onRemove, onDragStart, onDragEnd }: 
       initial={{ opacity: 0, scale: 0.5 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.4 }}
-      whileDrag={{ scale: 1.08, zIndex: 60 } as any}
+      whileDrag={locked ? undefined : ({ scale: 1.08, zIndex: 60 } as any)}
       transition={{ type: "spring", stiffness: 300, damping: 22 } as any}
-      style={{ x, y, width: sticker.size, height: sticker.size, zIndex: 15, cursor: "grab", userSelect: "none" }}
-      onDragStart={() => onDragStart?.()}
-      onDragEnd={() => onDragEnd?.(Math.round(x.get()), Math.round(y.get()))}
+      style={{ x, y, width: sticker.size, height: sticker.size, zIndex: 15, cursor: locked ? "default" : "grab", userSelect: "none" }}
+      onDragStart={() => !locked && onDragStart?.()}
+      onDragEnd={() => !locked && onDragEnd?.(Math.round(x.get()), Math.round(y.get()))}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -50,30 +51,32 @@ export function DraggableSticker({ sticker, onRemove, onDragStart, onDragEnd }: 
           }}
           draggable={false}
         />
-        <Box
-          as="button"
-          onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRemove(); }}
-          position="absolute"
-          top="-6px"
-          right="-6px"
-          display="flex"
-          alignItems="center"
-          justifyContent="center"
-          w="18px"
-          h="18px"
-          borderRadius="full"
-          border="none"
-          cursor="pointer"
-          style={{
-            background: "rgba(239,68,68,0.9)",
-            color: "white",
-            opacity: hovered ? 1 : 0,
-            transition: "opacity 0.15s",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
-          }}
-        >
-          <X size={10} />
-        </Box>
+        {!locked && (
+          <Box
+            as="button"
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRemove(); }}
+            position="absolute"
+            top="-6px"
+            right="-6px"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            w="18px"
+            h="18px"
+            borderRadius="full"
+            border="none"
+            cursor="pointer"
+            style={{
+              background: "rgba(239,68,68,0.9)",
+              color: "white",
+              opacity: hovered ? 1 : 0,
+              transition: "opacity 0.15s",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+            }}
+          >
+            <X size={10} />
+          </Box>
+        )}
       </Box>
     </MotionBox>
   );

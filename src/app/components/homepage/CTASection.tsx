@@ -108,7 +108,7 @@ export function CTASection() {
                 if (user) {
                   navigate("/space");
                 } else {
-                  navigate("/login", { state: { mode: "signup" } });
+                  navigate("/signup");
                 }
               }}
             >

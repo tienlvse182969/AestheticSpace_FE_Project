@@ -118,6 +118,10 @@
     "noAccount": "Don't have an account?",
     "alreadyMember": "Already a member?",
     "register": "Register",
+    "loginTagline": "Welcome\nback.",
+    "loginSubline": "Your space is waiting for you.",
+    "signupTagline": "Make it\nyours.",
+    "signupSubline": "Design a workspace as unique as you are.",
     "errors": {
       "identifierRequired": "Please enter your email or username.",
       "invalidEmail": "That doesn't look like a valid email.",
@@ -129,6 +133,16 @@
       "passwordTooShort": "Password must be at least 6 characters."
     }
   },
+  "contextMenu": {
+    "label": "Customize Space",
+    "changeBackground": "Change Background",
+    "addWidget": "Add Widget",
+    "addSticker": "Add Sticker",
+    "changeAmbient": "Change Ambient Sound",
+    "changeEffect": "Change Visual Effect",
+    "lockLayout": "Lock Layout",
+    "unlockLayout": "Unlock Layout"
+  },
   "space": {
     "widgets": "Widgets",
     "stickers": "Stickers",
@@ -136,7 +150,8 @@
     "themes": "Themes",
     "ambientSounds": "Ambient Sounds",
     "guestTooltip": "Guest — click to sign in",
-    "rooms": "Rooms"
+    "rooms": "Rooms",
+    "loading": "Loading your space…"
   },
   "account": {
     "mySpace": "My Space",

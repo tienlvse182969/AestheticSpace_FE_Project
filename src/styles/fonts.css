@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Tenor+Sans&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap');
 
 /* HarmonyOS Sans — explicit @font-face so the browser uses the correct weight file.
    cdnfonts.com uses local('HarmonyOS Sans') for every weight, which causes browsers to
