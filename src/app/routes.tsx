@@ -6,6 +6,7 @@ import { SignUpPage } from "./pages/SignUpPage";
 import { StudySpacePage } from "./pages/StudySpacePage";
 import { AboutPage } from "./pages/AboutPage";
 import { AdminPage } from "./pages/AdminPage";
+import { PricingPage } from "./pages/PricingPage";
 
 export const router = createBrowserRouter([
   {
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
       { path: "space",  Component: StudySpacePage },
       { path: "about",  Component: AboutPage },
       { path: "admin",  Component: AdminPage },
+      { path: "pricing", Component: PricingPage },
     ],
   },
 ]);

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   ChevronUp, ChevronDown,
   Image as ImageIcon, LayoutGrid, Sparkles, Palette,
-  AudioWaveform, Settings, Wand2, LayoutDashboard,
+  AudioWaveform, Settings, Wand2, LayoutDashboard, BarChart2,
 } from "lucide-react";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
@@ -159,8 +159,9 @@ export function SpaceToolbar({ ctx }: Props) {
                 <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}    onClick={() => togglePanel("image")}    tooltip={t("space.backgrounds")} />
                 <ToolbarBtn icon={<Palette size={22} />}         active={activePanel === "theme"}    onClick={() => togglePanel("theme")}    tooltip={t("space.themes")} />
                 <ToolbarBtn icon={<AudioWaveform size={22} />}   active={activePanel === "ambient"}  onClick={() => togglePanel("ambient")}  tooltip={t("space.ambientSounds")} />
-                <ToolbarBtn icon={<Wand2 size={22} />}           active={activePanel === "effects"}  onClick={() => togglePanel("effects")}  tooltip={t("effects.title")} />
-                <ToolbarBtn icon={<Settings size={22} />}        active={activePanel === "settings"} onClick={() => togglePanel("settings")} tooltip={t("settings.title")} />
+                <ToolbarBtn icon={<Wand2 size={22} />}           active={activePanel === "effects"}         onClick={() => togglePanel("effects")}         tooltip={t("effects.title")} />
+                <ToolbarBtn icon={<BarChart2 size={22} />}       active={activePanel === "pomodoro-stats"}  onClick={() => togglePanel("pomodoro-stats")}  tooltip="Phân tích Pomodoro" />
+                <ToolbarBtn icon={<Settings size={22} />}        active={activePanel === "settings"}        onClick={() => togglePanel("settings")}        tooltip={t("settings.title")} />
 
                 {/* Account avatar button */}
                 <Box

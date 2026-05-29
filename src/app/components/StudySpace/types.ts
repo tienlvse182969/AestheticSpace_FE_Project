@@ -22,7 +22,7 @@ export interface PlacedSticker {
 }
 
 export interface TodoItem {
-  id: number;
+  id: string;
   text: string;
   done: boolean;
 }

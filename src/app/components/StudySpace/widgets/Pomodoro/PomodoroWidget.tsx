@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { Flame, RotateCcw, Play, Pause, Coffee, Zap, X } from "lucide-react";
+import { Flame, RotateCcw, Play, Pause, Coffee, Zap, X, BarChart2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../../../../../context/AuthContext";
+import { pomodoroService, type PomodoroStatsDto } from "../../../../../services/pomodoro.service";
 
 const MotionBox = motion.create(Box);
 
@@ -19,14 +21,21 @@ interface PomodoroWidgetProps {
 
 export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: PomodoroWidgetProps) {
   const { t } = useTranslation();
+  const { user } = useAuth();
+
   const focusTotal = focusMinutes * 60;
   const breakTotal = breakMinutes * 60;
 
-  const [phase,   setPhase]   = useState<Phase>("idle");
-  const [seconds, setSeconds] = useState(focusTotal);
-  const [running, setRunning] = useState(false);
-  const [session, setSession] = useState(1);
-  const [dialog,  setDialog]  = useState<Dialog>(null);
+  const [phase,            setPhase]            = useState<Phase>("idle");
+  const [seconds,          setSeconds]          = useState(focusTotal);
+  const [running,          setRunning]          = useState(false);
+  const [session,          setSession]          = useState(1);
+  const [dialog,           setDialog]           = useState<Dialog>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [statsOpen,        setStatsOpen]        = useState(false);
+  const [stats,            setStats]            = useState<PomodoroStatsDto | null>(null);
+  const [statsLoading,     setStatsLoading]     = useState(false);
+  const startingRef = useRef(false); // guard against concurrent start calls
 
   const isBreak = phase === "break";
   const total   = isBreak ? breakTotal : focusTotal;
@@ -46,25 +55,89 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
   /* ── Tick ── */
   useEffect(() => {
     if (!running) return;
-    const t = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
-    return () => clearInterval(t);
+    const id = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(id);
   }, [running]);
 
   /* ── Timer hits 0 ── */
   useEffect(() => {
     if (seconds === 0 && running) {
       setRunning(false);
-      if (phase === "focus")      { setPhase("idle"); setDialog("break-prompt"); }
-      else if (phase === "break") { setPhase("idle"); setDialog("next-prompt");  }
+      if (phase === "focus") {
+        if (user && currentSessionId) {
+          pomodoroService.end(currentSessionId).catch(() => {});
+          setCurrentSessionId(null);
+        }
+        setPhase("idle");
+        setDialog("break-prompt");
+      } else if (phase === "break") {
+        setPhase("idle");
+        setDialog("next-prompt");
+      }
     }
   }, [seconds, running, phase]);
 
   /* ── Helpers ── */
-  const startFocus = () => { setPhase("focus"); setSeconds(focusTotal); setRunning(true);  setDialog(null); };
-  const startBreak = () => { setPhase("break"); setSeconds(breakTotal); setRunning(true);  setDialog(null); };
+  const startFocus = async () => {
+    if (startingRef.current) return; // prevent double-click / concurrent calls
+    startingRef.current = true;
+
+    setPhase("focus");
+    setSeconds(focusTotal);
+    setRunning(true);
+    setDialog(null);
+
+    if (user) {
+      try {
+        const s = await pomodoroService.start(focusMinutes);
+        setCurrentSessionId(s.id);
+      } catch {
+        // silent — timer vẫn chạy local, không block UX
+      }
+    }
+
+    startingRef.current = false;
+  };
+
+  const startBreak = () => {
+    setPhase("break");
+    setSeconds(breakTotal);
+    setRunning(true);
+    setDialog(null);
+  };
+
   const skipToNext = () => { setSession((s) => s + 1); setDialog(null); startFocus(); };
-  const resetAll   = () => { setRunning(false); setPhase("idle"); setSeconds(focusTotal); setDialog(null); setSession(1); };
-  const togglePlay = () => { if (phase === "idle") startFocus(); else setRunning((r) => !r); };
+
+  const resetAll = () => {
+    // Nếu đang có session active trên backend, end nó trước khi reset
+    if (user && currentSessionId) {
+      pomodoroService.end(currentSessionId).catch(() => {});
+    }
+    startingRef.current = false;
+    setRunning(false);
+    setPhase("idle");
+    setSeconds(focusTotal);
+    setDialog(null);
+    setSession(1);
+    setCurrentSessionId(null);
+  };
+
+  const togglePlay = () => {
+    if (phase === "idle") startFocus();
+    else setRunning((r) => !r);
+  };
+
+  const handleToggleStats = () => {
+    const next = !statsOpen;
+    setStatsOpen(next);
+    if (next && !stats && !statsLoading && user) {
+      setStatsLoading(true);
+      pomodoroService.getStats()
+        .then(setStats)
+        .catch(() => {})
+        .finally(() => setStatsLoading(false));
+    }
+  };
 
   const gradId = isBreak ? "timerGradBreak" : "timerGradFocus";
 
@@ -153,7 +226,6 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           }}>
           {running ? <Pause size={18} color="#0d2b24" fill="#0d2b24" /> : <Play size={18} color="#0d2b24" fill="#0d2b24" />}
         </Box>
-        {/* Skip break */}
         <Box as="button"
           onClick={() => { if (isBreak) { setRunning(false); setPhase("idle"); setDialog("next-prompt"); } }}
           borderRadius="full" display="flex" alignItems="center" justifyContent="center"
@@ -187,6 +259,79 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           ? t("pomodoroWidget.sessionsDone", { done: session - 1, total: totalSessions, count: session - 1 })
           : t("pomodoroWidget.noSessionsDone", { total: totalSessions })}
       </Text>
+
+      {/* ── Stats toggle ── */}
+      {user && (
+        <Flex justify="center" mt={3}>
+          <Box as="button" onClick={handleToggleStats}
+            display="flex" alignItems="center" gap={1}
+            px={3} py={1} borderRadius="full" border="none" cursor="pointer"
+            style={{
+              background: statsOpen ? "rgba(var(--accent-rgb), 0.15)" : "transparent",
+              color: statsOpen ? "rgba(var(--accent-light-rgb), 0.8)" : "rgba(var(--accent-light-rgb), 0.4)",
+              fontSize: "0.65rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+              letterSpacing: "0.08em", transition: "all 0.2s",
+            }}
+          >
+            <BarChart2 size={11} />
+            &nbsp;PHÂN TÍCH
+          </Box>
+        </Flex>
+      )}
+
+      {/* ── Stats panel ── */}
+      <AnimatePresence>
+        {statsOpen && user && (
+          <MotionBox
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22 } as any}
+            mt={3}
+            style={{ borderTop: "1px solid rgba(var(--accent-rgb), 0.12)", paddingTop: 12, overflow: "hidden" }}
+          >
+            {statsLoading ? (
+              <Flex direction="column" gap={2}>
+                {[1, 2].map(i => (
+                  <Box key={i} h="32px" borderRadius="8px"
+                    style={{ background: "rgba(255,255,255,0.05)", animation: `pulse 1.5s ease-in-out ${i * 0.15}s infinite` }} />
+                ))}
+              </Flex>
+            ) : stats ? (
+              <Flex gap={3}>
+                <Box flex={1} p={2} borderRadius="10px"
+                  style={{ background: "rgba(var(--accent-rgb), 0.08)", border: "1px solid rgba(var(--accent-rgb), 0.15)" }}>
+                  <Text style={{ fontSize: "0.6rem", color: "rgba(var(--accent-light-rgb), 0.5)", letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    7 NGÀY
+                  </Text>
+                  <Text style={{ fontSize: "1.1rem", fontWeight: 700, color: "rgba(var(--accent-light-rgb), 0.9)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {stats.sessionsLast7Days}
+                  </Text>
+                  <Text style={{ fontSize: "0.62rem", color: "rgba(var(--accent-light-rgb), 0.45)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    phiên · {stats.totalMinutesLast7Days} phút
+                  </Text>
+                </Box>
+                <Box flex={1} p={2} borderRadius="10px"
+                  style={{ background: "rgba(var(--accent-rgb), 0.08)", border: "1px solid rgba(var(--accent-rgb), 0.15)" }}>
+                  <Text style={{ fontSize: "0.6rem", color: "rgba(var(--accent-light-rgb), 0.5)", letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    30 NGÀY
+                  </Text>
+                  <Text style={{ fontSize: "1.1rem", fontWeight: 700, color: "rgba(var(--accent-light-rgb), 0.9)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {stats.sessionsLast30Days}
+                  </Text>
+                  <Text style={{ fontSize: "0.62rem", color: "rgba(var(--accent-light-rgb), 0.45)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    phiên · {stats.totalMinutesLast30Days} phút
+                  </Text>
+                </Box>
+              </Flex>
+            ) : (
+              <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.2)", textAlign: "center", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                Chưa có dữ liệu
+              </Text>
+            )}
+          </MotionBox>
+        )}
+      </AnimatePresence>
 
       {/* ── End-of-session dialog overlay ── */}
       <AnimatePresence>
@@ -271,6 +416,10 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           </MotionBox>
         )}
       </AnimatePresence>
+
+      <style>{`
+        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+      `}</style>
     </Box>
   );
 }

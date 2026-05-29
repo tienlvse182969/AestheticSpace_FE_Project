@@ -2,6 +2,7 @@
   "nav": {
     "home": "Home",
     "aboutUs": "About Us",
+    "pricing": "Pricing",
     "contact": "Contact",
     "login": "Login"
   },
@@ -245,6 +246,17 @@
     "contributors": "CONTRIBUTORS",
     "copyright": "© AESTHETIC GROUP",
     "version": "Version Dev"
+  },
+  "pomodoroStats": {
+    "title": "POMODORO ANALYTICS",
+    "summary": "SUMMARY",
+    "chart": "SESSIONS BY DAY (LAST 7 DAYS)",
+    "days7": "7 DAYS",
+    "days30": "30 DAYS",
+    "sessions": "sessions",
+    "focusMinutes": "{{minutes}} min focused",
+    "tooltip": "{{sessions}} sessions · {{minutes}} min",
+    "noData": "No data yet"
   },
   "pomodoroSettings": {
     "title": "Pomodoro Settings",

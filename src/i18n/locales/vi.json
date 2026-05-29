@@ -2,6 +2,7 @@
   "nav": {
     "home": "Trang chủ",
     "aboutUs": "Về chúng tôi",
+    "pricing": "Bảng giá",
     "contact": "Liên hệ",
     "login": "Đăng nhập"
   },
@@ -245,6 +246,17 @@
     "contributors": "ĐÓNG GÓP",
     "copyright": "© AESTHETIC GROUP",
     "version": "Phiên bản Dev"
+  },
+  "pomodoroStats": {
+    "title": "PHÂN TÍCH POMODORO",
+    "summary": "TỔNG KẾT",
+    "chart": "PHIÊN HỌC THEO NGÀY (7 NGÀY GẦN NHẤT)",
+    "days7": "7 NGÀY",
+    "days30": "30 NGÀY",
+    "sessions": "phiên",
+    "focusMinutes": "{{minutes}} phút tập trung",
+    "tooltip": "{{sessions}} phiên · {{minutes}} phút",
+    "noData": "Chưa có dữ liệu"
   },
   "pomodoroSettings": {
     "title": "Cài đặt Pomodoro",
