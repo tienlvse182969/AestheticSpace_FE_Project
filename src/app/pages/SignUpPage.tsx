@@ -4,6 +4,7 @@ import { Mail, Eye, EyeOff, User, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
+import { GoogleAuthButton } from "../components/GoogleAuthButton";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 
@@ -36,7 +37,7 @@ type Errors = { username?: string; email?: string; password?: string; server?: s
 export function SignUpPage() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { register, isLoading } = useAuth();
+  const { register, googleLogin, isLoading } = useAuth();
   const reduce = useReducedMotion();
 
   const [username,     setUsername]     = useState("");
@@ -46,6 +47,11 @@ export function SignUpPage() {
   const [errors,       setErrors]       = useState<Errors>({});
 
   const isEmailFormat = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+
+  const handleGoogleCredential = async (idToken: string) => {
+    await googleLogin(idToken);
+    navigate("/space");
+  };
 
   const handleSubmit = async () => {
     const newErrors: Errors = {};
@@ -308,6 +314,24 @@ export function SignUpPage() {
                   : t("auth.signUp")}
               </button>
             </form>
+
+            {/* Divider */}
+            <Flex align="center" my={4} gap={3}>
+              <Box flex={1} h="1px" style={{ background: "rgba(255,255,255,0.15)" }} />
+              <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.32)", letterSpacing: "0.12em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                {t("auth.orContinueWith")}
+              </Text>
+              <Box flex={1} h="1px" style={{ background: "rgba(255,255,255,0.15)" }} />
+            </Flex>
+
+            {/* Google Signup */}
+            <Box mb={5}>
+              <GoogleAuthButton
+                label={t("auth.signUpWithGoogle")}
+                onCredential={handleGoogleCredential}
+                onError={() => setErrors({ server: t("auth.errors.googleError") })}
+              />
+            </Box>
 
             {/* Toggle to Login */}
             <Text textAlign="center" fontSize="sm" color="rgba(210,215,225,0.8)">

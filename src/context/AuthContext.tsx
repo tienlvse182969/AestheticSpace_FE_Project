@@ -6,6 +6,7 @@ interface AuthUser {
   userId: string;
   name: string;
   email: string;
+  role: string | null;
   accountTier: string;
   avatarUrl: string | null;
 }
@@ -15,6 +16,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (payload: LoginRequest) => Promise<void>;
   register: (payload: RegisterRequest) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -25,6 +27,7 @@ function toAuthUser(data: AuthData): AuthUser {
     userId: data.userId,
     name: data.username,
     email: data.email,
+    role: data.role,
     accountTier: data.accountTier,
     avatarUrl: data.avatarUrl,
   };
@@ -67,6 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const googleLogin = useCallback(async (idToken: string) => {
+    setIsLoading(true);
+    try {
+      const data = await authService.googleLogin(idToken);
+      const authUser = toAuthUser(data);
+      setUser(authUser);
+      localStorage.setItem("authUser", JSON.stringify(authUser));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(() => {
     authService.logout();
     localStorage.removeItem("authUser");
@@ -74,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

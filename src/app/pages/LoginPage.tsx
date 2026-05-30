@@ -2,8 +2,9 @@ import { useState } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
+import { GoogleAuthButton } from "../components/GoogleAuthButton";
 import { useAuth } from "../../context/AuthContext";
 import axios from "axios";
 
@@ -35,9 +36,10 @@ type Errors = { identifier?: string; password?: string; server?: string };
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const reduce = useReducedMotion();
-  const { login, isLoading } = useAuth();
+  const { login, googleLogin, isLoading } = useAuth();
 
   const [identifier,    setIdentifier]    = useState("");
   const [password,      setPassword]      = useState("");
@@ -45,7 +47,14 @@ export function LoginPage() {
   const [rememberMe,    setRememberMe]    = useState(false);
   const [errors,        setErrors]        = useState<Errors>({});
 
+  const from = (location.state as any)?.from?.pathname || "/space";
+
   const isEmailFormat = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+
+  const handleGoogleCredential = async (idToken: string) => {
+    await googleLogin(idToken);
+    navigate(from, { replace: true });
+  };
 
   const handleSubmit = async () => {
     const newErrors: Errors = {};
@@ -65,7 +74,7 @@ export function LoginPage() {
 
     try {
       await login({ email: identifier.trim(), password });
-      navigate("/space");
+      navigate(from, { replace: true });
     } catch (err) {
       if (axios.isAxiosError(err)) {
         const msg = err.response?.data?.message;
@@ -306,6 +315,24 @@ export function LoginPage() {
                 : t("auth.login")}
             </button>
             </form>
+
+            {/* Divider */}
+            <Flex align="center" my={4} gap={3}>
+              <Box flex={1} h="1px" style={{ background: "rgba(255,255,255,0.15)" }} />
+              <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.32)", letterSpacing: "0.12em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                {t("auth.orContinueWith")}
+              </Text>
+              <Box flex={1} h="1px" style={{ background: "rgba(255,255,255,0.15)" }} />
+            </Flex>
+
+            {/* Google Login */}
+            <Box mb={5}>
+              <GoogleAuthButton
+                label={t("auth.signInWithGoogle")}
+                onCredential={handleGoogleCredential}
+                onError={() => setErrors({ server: t("auth.errors.googleError") })}
+              />
+            </Box>
 
             {/* Toggle to Sign Up */}
             <Text textAlign="center" fontSize="sm" color="rgba(210,215,225,0.8)">

@@ -123,6 +123,9 @@
     "loginSubline": "Your space is waiting for you.",
     "signupTagline": "Make it\nyours.",
     "signupSubline": "Design a workspace as unique as you are.",
+    "orContinueWith": "OR CONTINUE WITH",
+    "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google",
     "errors": {
       "identifierRequired": "Please enter your email or username.",
       "invalidEmail": "That doesn't look like a valid email.",
@@ -131,7 +134,9 @@
       "emailRequired": "Email is required.",
       "invalidEmailFormat": "Please enter a valid email.",
       "passwordRequired": "Password is required.",
-      "passwordTooShort": "Password must be at least 6 characters."
+      "passwordTooShort": "Password must be at least 6 characters.",
+      "serverError": "Something went wrong. Please try again.",
+      "googleError": "Google sign-in failed. Please try again."
     }
   },
   "contextMenu": {

@@ -7,6 +7,7 @@ import { StudySpacePage } from "./pages/StudySpacePage";
 import { AboutPage } from "./pages/AboutPage";
 import { AdminPage } from "./pages/AdminPage";
 import { PricingPage } from "./pages/PricingPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
   {
@@ -14,12 +15,22 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: HomePage },
-      { path: "login",  Component: LoginPage },
-      { path: "signup", Component: SignUpPage },
-      { path: "space",  Component: StudySpacePage },
-      { path: "about",  Component: AboutPage },
-      { path: "admin",  Component: AdminPage },
+      { path: "login",   Component: LoginPage },
+      { path: "signup",  Component: SignUpPage },
+      { path: "about",   Component: AboutPage },
       { path: "pricing", Component: PricingPage },
+      {
+        element: <ProtectedRoute forbiddenRole="Admin" forbiddenRedirect="/admin" />,
+        children: [
+          { path: "space", Component: StudySpacePage },
+        ],
+      },
+      {
+        element: <ProtectedRoute requiredRole="Admin" />,
+        children: [
+          { path: "admin", Component: AdminPage },
+        ],
+      },
     ],
   },
 ]);
