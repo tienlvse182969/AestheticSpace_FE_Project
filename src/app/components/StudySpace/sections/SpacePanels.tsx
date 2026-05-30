@@ -7,6 +7,7 @@ import { AmbientSoundPanel }     from "../panels/AmbientSoundPanel";
 import { EffectsPanel }          from "../panels/EffectsPanel";
 import { SettingsPanel }         from "../panels/SettingsPanel";
 import { RoomManagerPanel }      from "../panels/RoomManagerPanel";
+import { PomodoroStatsPanel }    from "../panels/PomodoroStatsPanel";
 import { AboutModal }            from "../ui/AboutModal";
 import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
 
@@ -80,6 +81,12 @@ export function SpacePanels({ ctx }: Props) {
             key="room-panel"
             currentRoomId={roomId}
             onSelect={handleRoomSelect}
+            onClose={() => setActivePanel(null)}
+          />
+        )}
+        {activePanel === "pomodoro-stats" && (
+          <PomodoroStatsPanel
+            key="pomodoro-stats-panel"
             onClose={() => setActivePanel(null)}
           />
         )}

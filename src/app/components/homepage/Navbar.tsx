@@ -102,9 +102,10 @@ export function Navbar() {
   const onHero = isInHero;
 
   const navLinks = [
-    { key: "home",     href: "#home",     label: t("nav.home") },
-    { key: "about-us", href: "#about-us", label: t("nav.aboutUs") },
-    { key: "contact",  href: "#contact",  label: t("nav.contact") },
+    { key: "home",     href: "#home",     label: t("nav.home"),    route: null },
+    { key: "about-us", href: "#about-us", label: t("nav.aboutUs"), route: null },
+    { key: "pricing",  href: "/pricing",  label: t("nav.pricing"), route: "/pricing" },
+    { key: "contact",  href: "#contact",  label: t("nav.contact"), route: null },
   ];
 
   const changeLang = (lang: string) => {
@@ -148,11 +149,14 @@ export function Navbar() {
         <Flex display={{ base: "none", md: "flex" }} align="center" gap={10}>
           {navLinks.map((link) => (
             <Link
-              key={link.key} href={link.href}
+              key={link.key}
+              href={link.route ? undefined : link.href}
               color={onHero ? "white" : "#1a3c34"}
               fontSize="md" position="relative" transition="color 0.2s" textDecoration="none"
+              cursor="pointer"
               _hover={{ color: onHero ? "white/70" : "#4e7c6a" }}
               css={{ "&:hover .underline": { width: "100%" } }}
+              onClick={link.route ? (e: React.MouseEvent) => { e.preventDefault(); navigate(link.route!); } : undefined}
             >
               {link.label}
               <Box className="underline" position="absolute" bottom="-4px" left={0} w={0} h="2px"
@@ -322,9 +326,16 @@ export function Navbar() {
           borderTop="1px solid" borderColor="rgba(78,124,106,0.2)" px={6} py={4}>
           <Flex direction="column" gap={4}>
             {navLinks.map((link) => (
-              <Link key={link.key} href={link.href} color="#1a3c34" py={2}
+              <Link key={link.key}
+                href={link.route ? undefined : link.href}
+                color="#1a3c34" py={2}
                 borderBottom="1px solid" borderColor="gray.100" textDecoration="none"
-                _hover={{ color: "#4e7c6a" }} onClick={() => setMobileOpen(false)}>
+                cursor="pointer"
+                _hover={{ color: "#4e7c6a" }}
+                onClick={(e: React.MouseEvent) => {
+                  setMobileOpen(false);
+                  if (link.route) { e.preventDefault(); navigate(link.route); }
+                }}>
                 {link.label}
               </Link>
             ))}

@@ -17,6 +17,13 @@ export const authService = {
     return data.data;
   },
 
+  googleLogin: async (idToken: string): Promise<AuthData> => {
+    const { data } = await api.post<ApiResponse<AuthData>>("/auth/google-login", { idToken });
+    localStorage.setItem("accessToken", data.data.accessToken);
+    localStorage.setItem("refreshToken", data.data.refreshToken);
+    return data.data;
+  },
+
   logout: () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");

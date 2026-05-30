@@ -1,17 +1,20 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, Users, Palette, Sparkles, AudioWaveform,
-  ArrowLeft, ShieldCheck, ChevronRight, BarChart2,
+  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut,
 } from "lucide-react";
 import { useNavigate } from "react-router";
-import { DashboardSection }   from "../components/admin/DashboardSection";
-import { UsersSection }       from "../components/admin/UsersSection";
-import { ThemesSection }      from "../components/admin/ThemesSection";
-import { StickersSection }    from "../components/admin/StickersSection";
-import { SoundsSection }      from "../components/admin/SoundsSection";
-import { RevenueSection }     from "../components/admin/RevenueSection";
+import { useAuth } from "../../context/AuthContext";
+import { AdminThemeProvider, useAdminTheme } from "../components/admin/AdminThemeContext";
+import { AvatarCircle } from "../components/StudySpace/panels/AccountPanel";
+import { DashboardSection } from "../components/admin/DashboardSection";
+import { UsersSection }     from "../components/admin/UsersSection";
+import { ThemesSection }    from "../components/admin/ThemesSection";
+import { StickersSection }  from "../components/admin/StickersSection";
+import { SoundsSection }    from "../components/admin/SoundsSection";
+import { RevenueSection }   from "../components/admin/RevenueSection";
 
 const MotionBox = motion.create(Box);
 
@@ -23,19 +26,42 @@ const NAV_ITEMS: {
   icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
   badge?: number;
 }[] = [
-  { key: "dashboard",   label: "Dashboard",      icon: LayoutDashboard },
-  { key: "users",       label: "Users",           icon: Users,          badge: 1247 },
-  { key: "revenue",     label: "Revenue",         icon: BarChart2                   },
-  { key: "themes",      label: "Themes",          icon: Palette,        badge: 6    },
-  { key: "stickers",    label: "Stickers",        icon: Sparkles,       badge: 8    },
-  { key: "sounds",      label: "Ambient Sounds",  icon: AudioWaveform,  badge: 8    },
+  { key: "dashboard", label: "Dashboard",     icon: LayoutDashboard },
+  { key: "users",     label: "Users",          icon: Users,         badge: 1247 },
+  { key: "revenue",   label: "Revenue",        icon: BarChart2 },
+  { key: "themes",    label: "Themes",         icon: Palette,       badge: 6   },
+  { key: "stickers",  label: "Stickers",       icon: Sparkles,      badge: 8   },
+  { key: "sounds",    label: "Ambient Sounds", icon: AudioWaveform, badge: 8   },
 ];
 
-export function AdminPage() {
-  const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
-  const navigate = useNavigate();
+function AdminPageInner() {
+  const [activeSection,    setActiveSection]    = useState<AdminSection>("dashboard");
+  const [showAccountPanel, setShowAccountPanel] = useState(false);
+  const avatarRef      = useRef<HTMLDivElement>(null);
+  const panelRef       = useRef<HTMLDivElement>(null);
+  const navigate       = useNavigate();
+  const { user, logout } = useAuth();
+  const { isDark, toggle, c } = useAdminTheme();
 
   const current = NAV_ITEMS.find(n => n.key === activeSection)!;
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        panelRef.current  && !panelRef.current.contains(e.target as Node) &&
+        avatarRef.current && !avatarRef.current.contains(e.target as Node)
+      ) {
+        setShowAccountPanel(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <Box
@@ -46,21 +72,15 @@ export function AdminPage() {
       style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}
     >
       {/* Background */}
+      <Box position="absolute" inset={0} style={{ background: c.bg, transition: "background 0.3s" }} />
       <Box
         position="absolute"
         inset={0}
         style={{
-          background: "linear-gradient(135deg, #060b0f 0%, #0b1a18 55%, #07101c 100%)",
-        }}
-      />
-      {/* Subtle dot grid */}
-      <Box
-        position="absolute"
-        inset={0}
-        style={{
-          backgroundImage: "radial-gradient(rgba(78,124,106,0.07) 1px, transparent 1px)",
+          backgroundImage: c.dot,
           backgroundSize: "28px 28px",
           pointerEvents: "none",
+          transition: "background-image 0.3s",
         }}
       />
 
@@ -75,15 +95,16 @@ export function AdminPage() {
         display="flex"
         flexDirection="column"
         style={{
-          background: "rgba(6,10,14,0.88)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderRight: "1px solid rgba(255,255,255,0.06)",
+          background:          c.sidebar,
+          backdropFilter:      "blur(20px)",
+          WebkitBackdropFilter:"blur(20px)",
+          borderRight:         `1px solid ${c.sidebarBorder}`,
+          transition:          "background 0.3s, border-color 0.3s",
         }}
       >
         {/* Logo */}
-        <Box px={5} py={5} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-          <Flex align="center" gap={2} mb={1}>
+        <Box px={5} py={5} style={{ borderBottom: `1px solid ${c.border}` }}>
+          <Flex align="center" gap={2}>
             <Flex
               align="center"
               justify="center"
@@ -94,13 +115,12 @@ export function AdminPage() {
             >
               <ShieldCheck size={14} style={{ color: "#4e7c6a" }} />
             </Flex>
-            <Text style={{ fontFamily: "'Manrope', sans-serif", fontSize: "0.95rem", color: "rgba(255,255,255,0.88)", letterSpacing: "0.01em" }}>
-              Admin Panel
+            <Text style={{ fontSize: "0.95rem", color: c.text, letterSpacing: "0.01em" }}>
+              <span style={{ fontFamily: "'Manrope', sans-serif" }}>Aesthetic</span>
+              {" "}
+              <span style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}>Admin Panel</span>
             </Text>
           </Flex>
-          <Text style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.18)", letterSpacing: "0.12em" }}>
-            AĒSTHETIC GROUP
-          </Text>
         </Box>
 
         {/* Nav */}
@@ -108,7 +128,7 @@ export function AdminPage() {
           <Text
             mb={3}
             px={2}
-            style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.18)", letterSpacing: "0.14em", fontFamily: "'HarmonyOS Sans', sans-serif" }}
+            style={{ fontSize: "0.6rem", color: c.textSub, letterSpacing: "0.14em" }}
           >
             NAVIGATION
           </Text>
@@ -131,24 +151,18 @@ export function AdminPage() {
                 cursor="pointer"
                 transition="all 0.18s"
                 style={{
-                  display: "flex",
+                  display:    "flex",
                   alignItems: "center",
-                  gap: 9,
-                  background: isActive ? "rgba(78,124,106,0.16)" : "transparent",
-                  outline: isActive ? "1px solid rgba(78,124,106,0.3)" : "1px solid transparent",
+                  gap:        9,
+                  background: isActive ? c.navActive : "transparent",
+                  outline:    isActive ? `1px solid ${c.navActiveBorder}` : "1px solid transparent",
                 }}
-                _hover={{
-                  background: isActive ? "rgba(78,124,106,0.2)" : "rgba(255,255,255,0.04)",
-                } as any}
+                _hover={{ background: isActive ? c.navActive : c.navHover } as any}
               >
-                <Icon size={15} style={{ color: isActive ? "#4e7c6a" : "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+                <Icon size={15} style={{ color: isActive ? c.accent : c.textDim, flexShrink: 0 }} />
                 <Text
                   flex={1}
-                  style={{
-                    fontSize: "0.83rem",
-                    color: isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.42)",
-                    fontFamily: "'HarmonyOS Sans', sans-serif",
-                  }}
+                  style={{ fontSize: "0.83rem", color: isActive ? c.text : c.textMuted }}
                 >
                   {item.label}
                 </Text>
@@ -158,30 +172,30 @@ export function AdminPage() {
                     px="7px"
                     py="1px"
                     style={{
-                      background: isActive ? "rgba(78,124,106,0.25)" : "rgba(255,255,255,0.06)",
+                      background: isActive ? "rgba(78,124,106,0.25)" : c.badgeBg,
                       flexShrink: 0,
                     }}
                   >
-                    <Text style={{ fontSize: "0.6rem", color: isActive ? "#4e7c6a" : "rgba(255,255,255,0.22)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    <Text style={{ fontSize: "0.6rem", color: isActive ? c.accent : c.badgeText }}>
                       {item.badge.toLocaleString()}
                     </Text>
                   </Box>
                 )}
                 {isActive && (
-                  <Box w="4px" h="4px" borderRadius="full" flexShrink={0} style={{ background: "#4e7c6a" }} />
+                  <Box w="4px" h="4px" borderRadius="full" flexShrink={0} style={{ background: c.accent }} />
                 )}
               </Box>
             );
           })}
         </Box>
 
-        {/* Bottom: back to space */}
-        <Box px={3} pb={5} style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 16 }}>
+        {/* Bottom: back to home */}
+        <Box px={3} pb={5} style={{ borderTop: `1px solid ${c.border}`, paddingTop: 16 }}>
           <Box
             as="button"
             w="full"
             textAlign="left"
-            onClick={() => navigate("/space")}
+            onClick={() => navigate("/")}
             borderRadius="9px"
             px={3}
             py="9px"
@@ -189,11 +203,11 @@ export function AdminPage() {
             cursor="pointer"
             transition="all 0.18s"
             style={{ display: "flex", alignItems: "center", gap: 9, background: "transparent" }}
-            _hover={{ background: "rgba(255,255,255,0.04)" } as any}
+            _hover={{ background: c.navHover } as any}
           >
-            <ArrowLeft size={14} style={{ color: "rgba(255,255,255,0.25)" }} />
-            <Text style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              Back to Space
+            <ArrowLeft size={14} style={{ color: c.textDim }} />
+            <Text style={{ fontSize: "0.8rem", color: c.textDim }}>
+              Back to Home
             </Text>
           </Box>
         </Box>
@@ -207,19 +221,21 @@ export function AdminPage() {
           py="14px"
           flexShrink={0}
           style={{
-            background: "rgba(6,10,14,0.6)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            borderBottom: "1px solid rgba(255,255,255,0.05)",
+            background:          c.topbar,
+            backdropFilter:      "blur(10px)",
+            WebkitBackdropFilter:"blur(10px)",
+            borderBottom:        `1px solid ${c.border}`,
+            transition:          "background 0.3s, border-color 0.3s",
           }}
         >
           <Flex align="center" justify="space-between">
+            {/* Breadcrumb */}
             <Flex align="center" gap={2}>
-              <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.2)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.06em" }}>
+              <Text style={{ fontSize: "0.7rem", color: c.textSub, letterSpacing: "0.06em" }}>
                 Admin
               </Text>
-              <ChevronRight size={12} style={{ color: "rgba(255,255,255,0.15)" }} />
-              <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+              <ChevronRight size={12} style={{ color: c.textSub }} />
+              <Text style={{ fontSize: "0.7rem", color: c.textMuted }}>
                 {current.label}
               </Text>
             </Flex>
@@ -234,7 +250,7 @@ export function AdminPage() {
                 py="5px"
                 style={{
                   background: "rgba(74,222,128,0.08)",
-                  border: "1px solid rgba(74,222,128,0.2)",
+                  border:     "1px solid rgba(74,222,128,0.2)",
                 }}
               >
                 <Box
@@ -243,39 +259,159 @@ export function AdminPage() {
                   borderRadius="full"
                   style={{ background: "#4ade80", boxShadow: "0 0 6px #4ade80" }}
                 />
-                <Text style={{ fontSize: "0.7rem", color: "#4ade80", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                  Live
-                </Text>
+                <Text style={{ fontSize: "0.7rem", color: "#4ade80" }}>Live</Text>
               </Flex>
 
-              {/* Admin user */}
-              <Flex
-                align="center"
-                gap={2}
+              {/* Theme toggle */}
+              <Box
+                as="button"
+                onClick={toggle}
+                border="none"
+                cursor="pointer"
                 borderRadius="8px"
-                px={3}
-                py="5px"
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.07)",
-                }}
+                p="6px"
+                transition="all 0.18s"
+                style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}`, display: "flex", alignItems: "center", justifyContent: "center" }}
+                _hover={{ background: c.navHover } as any}
               >
+                {isDark
+                  ? <Sun  size={15} style={{ color: c.textMuted }} />
+                  : <Moon size={15} style={{ color: c.textMuted }} />
+                }
+              </Box>
+
+              {/* Avatar + account panel */}
+              <Box position="relative">
                 <Flex
+                  ref={avatarRef as any}
+                  as="button"
                   align="center"
-                  justify="center"
-                  w="22px"
-                  h="22px"
-                  borderRadius="full"
-                  style={{ background: "#1a3a8a" }}
+                  gap={2}
+                  borderRadius="lg"
+                  px={3}
+                  py="5px"
+                  border="none"
+                  cursor="pointer"
+                  transition="all 0.2s"
+                  onClick={() => setShowAccountPanel(p => !p)}
+                  style={{
+                    border:     `1px solid ${showAccountPanel ? "rgba(78,124,106,0.45)" : "rgba(255,255,255,0.22)"}`,
+                    background: showAccountPanel ? "rgba(255,255,255,0.1)" : "transparent",
+                    outline:    "none",
+                  }}
+                  _hover={{ background: "rgba(255,255,255,0.1)" } as any}
                 >
-                  <Text style={{ fontSize: "0.55rem", color: "white", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700 }}>
-                    AD
+                  <AvatarCircle
+                    user={user ? { name: user.name, email: user.email, avatarUrl: user.avatarUrl ?? undefined } : null}
+                    size={26}
+                    fontSize="0.55rem"
+                  />
+                  <Text style={{ fontSize: "0.75rem", color: c.textMuted }}>
+                    {user?.name ?? "Admin"}
                   </Text>
                 </Flex>
-                <Text style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.55)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                  Admin
-                </Text>
-              </Flex>
+
+                {/* Account panel dropdown */}
+                <AnimatePresence>
+                  {showAccountPanel && (
+                    <MotionBox
+                      ref={panelRef as any}
+                      position="absolute"
+                      top="calc(100% + 12px)"
+                      right={0}
+                      zIndex={200}
+                      initial={{ opacity: 0, scale: 0.94, y: -8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.94, y: -8 }}
+                      transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] } as any}
+                      style={{
+                        background:           "rgba(12,18,22,0.92)",
+                        backdropFilter:       "blur(20px)",
+                        WebkitBackdropFilter: "blur(20px)",
+                        border:               "1px solid rgba(255,255,255,0.12)",
+                        borderRadius:         "16px",
+                        padding:              "10px",
+                        minWidth:             "220px",
+                        boxShadow:            "0 16px 48px rgba(0,0,0,0.55)",
+                        transformOrigin:      "top right",
+                      }}
+                    >
+                      {/* User info */}
+                      <Flex align="center" gap={3} px={2} py={2} mb={1}>
+                        <AvatarCircle
+                          user={user ? { name: user.name, email: user.email, avatarUrl: user.avatarUrl ?? undefined } : null}
+                          size={42}
+                        />
+                        <Box overflow="hidden">
+                          <Text style={{
+                            color: "rgba(255,255,255,0.95)", fontSize: "0.88rem",
+                            fontFamily: "'HarmonyOS Sans', sans-serif",
+                            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "140px",
+                          }}>
+                            {user?.name ?? "Admin"}
+                          </Text>
+                          <Text style={{
+                            color: "rgba(255,255,255,0.42)", fontSize: "0.75rem",
+                            fontFamily: "'HarmonyOS Sans', sans-serif",
+                            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "140px",
+                          }}>
+                            {user?.email ?? ""}
+                          </Text>
+                        </Box>
+                      </Flex>
+
+                      {/* Role badge */}
+                      <Box px={2} pb={1}>
+                        <Box
+                          display="inline-flex"
+                          borderRadius="full"
+                          px="10px"
+                          py="3px"
+                          style={{
+                            background: "rgba(78,124,106,0.15)",
+                            border:     "1px solid rgba(78,124,106,0.3)",
+                          }}
+                        >
+                          <Text style={{ fontSize: "0.65rem", color: "#4e7c6a", letterSpacing: "0.08em" }}>
+                            ADMIN
+                          </Text>
+                        </Box>
+                      </Box>
+
+                      {/* Divider */}
+                      <Box mx={2} my="6px" h="1px" style={{ background: "rgba(255,255,255,0.08)" }} />
+
+                      {/* Logout */}
+                      <Box
+                        as="button"
+                        onClick={handleLogout}
+                        display="flex"
+                        alignItems="center"
+                        gap={2}
+                        w="100%"
+                        px="10px"
+                        py="8px"
+                        borderRadius="9px"
+                        style={{
+                          color:       "rgba(248,113,113,0.85)",
+                          fontSize:    "0.83rem",
+                          fontFamily:  "'HarmonyOS Sans', sans-serif",
+                          cursor:      "pointer",
+                          transition:  "background 0.15s, color 0.15s",
+                          background:  "transparent",
+                          border:      "none",
+                          textAlign:   "left",
+                          letterSpacing: "0.01em",
+                        }}
+                        _hover={{ background: "rgba(248,113,113,0.1)", color: "#f87171" } as any}
+                      >
+                        <LogOut size={15} style={{ flexShrink: 0 }} />
+                        Đăng xuất
+                      </Box>
+                    </MotionBox>
+                  )}
+                </AnimatePresence>
+              </Box>
             </Flex>
           </Flex>
         </Box>
@@ -286,12 +422,12 @@ export function AdminPage() {
           pt={6}
           pb={4}
           flexShrink={0}
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+          style={{ borderBottom: `1px solid ${c.border}`, transition: "border-color 0.3s" }}
         >
-          <Text style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.2)", letterSpacing: "0.14em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+          <Text style={{ fontSize: "0.62rem", color: c.textSub, letterSpacing: "0.14em" }}>
             {current.label.toUpperCase()}
           </Text>
-          <Text style={{ fontSize: "1.45rem", color: "rgba(255,255,255,0.88)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
+          <Text style={{ fontSize: "1.45rem", color: c.text, marginTop: 2 }}>
             {current.label}
           </Text>
         </Box>
@@ -306,16 +442,24 @@ export function AdminPage() {
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.22, ease: "easeOut" } as any}
             >
-              {activeSection === "dashboard"   && <DashboardSection />}
-              {activeSection === "users"        && <UsersSection />}
-              {activeSection === "revenue"      && <RevenueSection />}
-              {activeSection === "themes"       && <ThemesSection />}
-              {activeSection === "stickers"     && <StickersSection />}
-              {activeSection === "sounds"       && <SoundsSection />}
+              {activeSection === "dashboard" && <DashboardSection />}
+              {activeSection === "users"     && <UsersSection />}
+              {activeSection === "revenue"   && <RevenueSection />}
+              {activeSection === "themes"    && <ThemesSection />}
+              {activeSection === "stickers"  && <StickersSection />}
+              {activeSection === "sounds"    && <SoundsSection />}
             </MotionBox>
           </AnimatePresence>
         </Box>
       </Box>
     </Box>
+  );
+}
+
+export function AdminPage() {
+  return (
+    <AdminThemeProvider>
+      <AdminPageInner />
+    </AdminThemeProvider>
   );
 }

@@ -2,6 +2,7 @@
   "nav": {
     "home": "Home",
     "aboutUs": "About Us",
+    "pricing": "Pricing",
     "contact": "Contact",
     "login": "Login"
   },
@@ -122,6 +123,9 @@
     "loginSubline": "Your space is waiting for you.",
     "signupTagline": "Make it\nyours.",
     "signupSubline": "Design a workspace as unique as you are.",
+    "orContinueWith": "OR CONTINUE WITH",
+    "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google",
     "errors": {
       "identifierRequired": "Please enter your email or username.",
       "invalidEmail": "That doesn't look like a valid email.",
@@ -130,7 +134,9 @@
       "emailRequired": "Email is required.",
       "invalidEmailFormat": "Please enter a valid email.",
       "passwordRequired": "Password is required.",
-      "passwordTooShort": "Password must be at least 6 characters."
+      "passwordTooShort": "Password must be at least 6 characters.",
+      "serverError": "Something went wrong. Please try again.",
+      "googleError": "Google sign-in failed. Please try again."
     }
   },
   "contextMenu": {
@@ -245,6 +251,17 @@
     "contributors": "CONTRIBUTORS",
     "copyright": "© AESTHETIC GROUP",
     "version": "Version Dev"
+  },
+  "pomodoroStats": {
+    "title": "POMODORO ANALYTICS",
+    "summary": "SUMMARY",
+    "chart": "SESSIONS BY DAY (LAST 7 DAYS)",
+    "days7": "7 DAYS",
+    "days30": "30 DAYS",
+    "sessions": "sessions",
+    "focusMinutes": "{{minutes}} min focused",
+    "tooltip": "{{sessions}} sessions · {{minutes}} min",
+    "noData": "No data yet"
   },
   "pomodoroSettings": {
     "title": "Pomodoro Settings",
