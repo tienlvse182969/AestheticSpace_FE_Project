@@ -270,12 +270,35 @@ export function PricingPage() {
             flex={1}
             borderRadius="3xl"
             p={8}
+            position="relative"
             style={{
               background: "white",
-              border: "1.5px solid rgba(78,124,106,0.2)",
+              border: user?.accountTier === "Premium"
+                ? "1.5px solid rgba(78,124,106,0.2)"
+                : "1.5px solid rgba(78,124,106,0.35)",
               boxShadow: "0 4px 24px rgba(26,60,52,0.07)",
             }}
           >
+            {user?.accountTier !== "Premium" && (
+              <Box
+                position="absolute"
+                top={0}
+                right={0}
+                px={4}
+                py={1}
+                style={{
+                  background: "rgba(78,124,106,0.12)",
+                  borderBottomLeftRadius: "14px",
+                  borderTopRightRadius: "24px",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  color: "#4e7c6a",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Gói hiện tại
+              </Box>
+            )}
             <Flex align="center" gap={2} mb={2}>
               <Box
                 w="36px"
@@ -365,25 +388,36 @@ export function PricingPage() {
               boxShadow: "0 16px 48px rgba(26,60,52,0.35)",
             }}
           >
-            {/* Popular badge */}
-            <Box
+            {/* Popular / Current plan badge */}
+            <Flex
               position="absolute"
               top={0}
               right={0}
-              px={5}
+              align="center"
+              gap="5px"
+              px={4}
               py={2}
               style={{
-                background: "linear-gradient(90deg, #7aab97 0%, #4e7c6a 100%)",
+                background: user?.accountTier === "Premium"
+                  ? "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)"
+                  : "linear-gradient(90deg, #7aab97 0%, #4e7c6a 100%)",
                 borderBottomLeftRadius: "18px",
+                borderTopRightRadius: "24px",
                 fontSize: "0.72rem",
                 fontWeight: 700,
-                color: "white",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
+                color: user?.accountTier === "Premium" ? "#1a3c34" : "white",
+                letterSpacing: "0.06em",
               }}
             >
-              Phổ biến nhất
-            </Box>
+              {user?.accountTier === "Premium" ? (
+                <>
+                  <Check size={11} strokeWidth={3} />
+                  Gói của bạn
+                </>
+              ) : (
+                "Phổ biến nhất"
+              )}
+            </Flex>
 
             {/* Decorative circle */}
             <Box
@@ -500,21 +534,26 @@ export function PricingPage() {
 
             {/* Premium CTA — conditional on accountTier */}
             {user?.accountTier === "Premium" ? (
-              <Flex
-                w="full"
-                py={3}
-                borderRadius="xl"
-                justify="center"
-                align="center"
-                gap={2}
-                style={{
-                  background: "rgba(122,171,151,0.15)",
-                  border: "1px solid rgba(122,171,151,0.3)",
-                }}
-              >
-                <Crown size={14} color="#7aab97" />
-                <Text color="#7aab97" fontWeight="700" fontSize="sm">
-                  Bạn đã là Premium
+              <Flex direction="column" gap={2}>
+                <Flex
+                  w="full"
+                  py={3}
+                  borderRadius="xl"
+                  justify="center"
+                  align="center"
+                  gap={2}
+                  style={{
+                    background: "rgba(251,191,36,0.12)",
+                    border: "1.5px solid rgba(251,191,36,0.35)",
+                  }}
+                >
+                  <Crown size={15} color="#fbbf24" />
+                  <Text color="#fbbf24" fontWeight="700" fontSize="sm">
+                    Bạn đang sử dụng gói này
+                  </Text>
+                </Flex>
+                <Text fontSize="xs" color="rgba(255,255,255,0.35)" textAlign="center">
+                  Tài khoản của bạn đã được kích hoạt Premium
                 </Text>
               </Flex>
             ) : (

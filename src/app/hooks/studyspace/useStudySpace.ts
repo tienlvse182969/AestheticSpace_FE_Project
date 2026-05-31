@@ -31,7 +31,7 @@ export function useStudySpace() {
   /* ── Accent color ── */
   const { accent, setAccent } = useAccent();
   const currentUser: UserInfo | null = user
-    ? { name: user.name, email: user.email, avatarUrl: user.avatarUrl ?? undefined }
+    ? { name: user.name, email: user.email, avatarUrl: user.avatarUrl ?? undefined, accountTier: user.accountTier }
     : null;
   const handleLogout = () => { logout(); navigate("/"); };
 

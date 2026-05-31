@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { LogIn, HelpCircle, LogOut, User, Home, Info } from "lucide-react";
+import { LogIn, HelpCircle, LogOut, User, Home, Info, Crown } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 
@@ -11,6 +11,43 @@ export interface UserInfo {
   name: string;
   email: string;
   avatarUrl?: string;
+  accountTier?: string;
+}
+
+function AccountTierBadge({ tier }: { tier?: string }) {
+  const isPremium = tier?.toLowerCase() === "premium";
+  return (
+    <Flex
+      align="center"
+      gap="3px"
+      style={{
+        display: "inline-flex",
+        padding: "2px 7px 2px 5px",
+        borderRadius: "20px",
+        fontSize: "0.67rem",
+        fontFamily: "'HarmonyOS Sans', sans-serif",
+        fontWeight: 600,
+        letterSpacing: "0.04em",
+        userSelect: "none",
+        ...(isPremium
+          ? {
+              background: "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.12) 100%)",
+              border: "1px solid rgba(251,191,36,0.45)",
+              color: "#fbbf24",
+            }
+          : {
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              color: "rgba(255,255,255,0.45)",
+            }),
+      }}
+    >
+      {isPremium ? (
+        <Crown size={9} style={{ flexShrink: 0 }} />
+      ) : null}
+      {isPremium ? "Premium" : "Free"}
+    </Flex>
+  );
 }
 
 interface AccountPanelProps {
@@ -188,6 +225,9 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                   >
                     {user.email}
                   </Text>
+                  <Box mt="4px">
+                    <AccountTierBadge tier={user.accountTier} />
+                  </Box>
                 </Box>
               </Flex>
 
