@@ -1,31 +1,28 @@
 import api from "./api";
+import { tokenStore } from "./token.store";
 import type { ApiResponse } from "../types/api.types";
 import type { LoginRequest, RegisterRequest, AuthData } from "../types/auth.types";
 
 export const authService = {
-  login: async (payload: LoginRequest) => {
+  login: async (payload: LoginRequest, rememberMe = false) => {
     const { data } = await api.post<ApiResponse<AuthData>>("/auth/login", payload);
-    localStorage.setItem("accessToken", data.data.accessToken);
-    localStorage.setItem("refreshToken", data.data.refreshToken);
+    tokenStore.setTokens(data.data.accessToken, data.data.refreshToken, rememberMe);
     return data.data;
   },
 
   register: async (payload: RegisterRequest) => {
     const { data } = await api.post<ApiResponse<AuthData>>("/auth/register", payload);
-    localStorage.setItem("accessToken", data.data.accessToken);
-    localStorage.setItem("refreshToken", data.data.refreshToken);
+    tokenStore.setTokens(data.data.accessToken, data.data.refreshToken, true);
     return data.data;
   },
 
   googleLogin: async (idToken: string): Promise<AuthData> => {
     const { data } = await api.post<ApiResponse<AuthData>>("/auth/google-login", { idToken });
-    localStorage.setItem("accessToken", data.data.accessToken);
-    localStorage.setItem("refreshToken", data.data.refreshToken);
+    tokenStore.setTokens(data.data.accessToken, data.data.refreshToken, true);
     return data.data;
   },
 
   logout: () => {
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
+    tokenStore.clearTokens();
   },
 };

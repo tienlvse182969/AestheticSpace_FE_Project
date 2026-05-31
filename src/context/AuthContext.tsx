@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { authService } from "../services/auth.service";
+import { tokenStore } from "../services/token.store";
 import type { LoginRequest, RegisterRequest, AuthData } from "../types/auth.types";
 
 interface AuthUser {
@@ -14,7 +15,7 @@ interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
-  login: (payload: LoginRequest) => Promise<void>;
+  login: (payload: LoginRequest, rememberMe?: boolean) => Promise<void>;
   register: (payload: RegisterRequest) => Promise<void>;
   googleLogin: (idToken: string) => Promise<void>;
   logout: () => void;
@@ -36,24 +37,31 @@ function toAuthUser(data: AuthData): AuthUser {
 
 function loadStoredUser(): AuthUser | null {
   try {
-    const raw = localStorage.getItem("authUser");
+    const raw = sessionStorage.getItem("authUser") ?? localStorage.getItem("authUser");
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
+function saveUser(user: AuthUser, rememberMe: boolean) {
+  const primary = rememberMe ? localStorage : sessionStorage;
+  const secondary = rememberMe ? sessionStorage : localStorage;
+  primary.setItem("authUser", JSON.stringify(user));
+  secondary.removeItem("authUser");
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(loadStoredUser);
   const [isLoading, setIsLoading] = useState(false);
 
-  const login = useCallback(async (payload: LoginRequest) => {
+  const login = useCallback(async (payload: LoginRequest, rememberMe = false) => {
     setIsLoading(true);
     try {
-      const data = await authService.login(payload);
+      const data = await authService.login(payload, rememberMe);
       const authUser = toAuthUser(data);
       setUser(authUser);
-      localStorage.setItem("authUser", JSON.stringify(authUser));
+      saveUser(authUser, rememberMe);
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await authService.register(payload);
       const authUser = toAuthUser(data);
       setUser(authUser);
-      localStorage.setItem("authUser", JSON.stringify(authUser));
+      saveUser(authUser, true);
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await authService.googleLogin(idToken);
       const authUser = toAuthUser(data);
       setUser(authUser);
-      localStorage.setItem("authUser", JSON.stringify(authUser));
+      saveUser(authUser, true);
     } finally {
       setIsLoading(false);
     }
@@ -86,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     authService.logout();
     localStorage.removeItem("authUser");
+    sessionStorage.removeItem("authUser");
     setUser(null);
   }, []);
 
@@ -93,7 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser((prev) => {
       if (!prev) return prev;
       const updated = { ...prev, accountTier: newTier };
-      localStorage.setItem("authUser", JSON.stringify(updated));
+      saveUser(updated, tokenStore.isRemembered());
       return updated;
     });
   }, []);

@@ -73,7 +73,7 @@ export function LoginPage() {
     setErrors({});
 
     try {
-      await login({ email: identifier.trim(), password });
+      await login({ email: identifier.trim(), password }, rememberMe);
       navigate(from, { replace: true });
     } catch (err) {
       if (axios.isAxiosError(err)) {
