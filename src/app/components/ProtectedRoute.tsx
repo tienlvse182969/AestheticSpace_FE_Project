@@ -6,9 +6,10 @@ interface Props {
   requiredRole?: string;
   forbiddenRole?: string;
   forbiddenRedirect?: string;
+  allowGuest?: boolean;
 }
 
-export function ProtectedRoute({ requiredRole, forbiddenRole, forbiddenRedirect = "/" }: Props) {
+export function ProtectedRoute({ requiredRole, forbiddenRole, forbiddenRedirect = "/", allowGuest = false }: Props) {
   const { user, isLoading } = useAuth();
   const location = useLocation();
 
@@ -20,15 +21,15 @@ export function ProtectedRoute({ requiredRole, forbiddenRole, forbiddenRedirect 
     );
   }
 
-  if (!user) {
+  if (!user && !allowGuest) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
+  if (requiredRole && user?.role !== requiredRole) {
     return <Navigate to="/" replace />;
   }
 
-  if (forbiddenRole && user.role === forbiddenRole) {
+  if (forbiddenRole && user?.role === forbiddenRole) {
     return <Navigate to={forbiddenRedirect} replace />;
   }
 
