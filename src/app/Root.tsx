@@ -5,7 +5,7 @@ import { AuthProvider } from "../context/AuthContext";
 
 export function Root() {
   const location = useLocation();
-  const isFullscreen = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/space" || location.pathname === "/admin";
+  const isFullscreen = ["/login", "/signup", "/forgot-password", "/reset-password", "/space", "/admin"].includes(location.pathname);
 
   return (
     <AuthProvider>

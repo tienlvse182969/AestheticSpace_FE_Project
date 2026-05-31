@@ -126,6 +126,16 @@
     "orContinueWith": "HOẶC TIẾP TỤC VỚI",
     "signInWithGoogle": "Đăng nhập bằng Google",
     "signUpWithGoogle": "Đăng ký bằng Google",
+    "forgotPasswordTitle": "Quên Mật Khẩu",
+    "forgotPasswordDesc": "Nhập địa chỉ email của bạn và chúng tôi sẽ gửi liên kết để đặt lại mật khẩu.",
+    "forgotPasswordSuccess": "Nếu tài khoản tồn tại với email đó, một liên kết đặt lại đã được gửi. Vui lòng kiểm tra hộp thư.",
+    "sendResetLink": "Gửi Liên Kết Đặt Lại",
+    "backToLogin": "Quay lại Đăng nhập",
+    "resetPasswordTitle": "Đặt Lại Mật Khẩu",
+    "newPasswordPlaceholder": "Mật khẩu mới",
+    "confirmPasswordPlaceholder": "Xác nhận mật khẩu",
+    "resetPasswordSuccess": "Mật khẩu đã được thay đổi! Bạn có thể đăng nhập với mật khẩu mới.",
+    "resetPassword": "Đặt Lại Mật Khẩu",
     "errors": {
       "identifierRequired": "Vui lòng nhập email hoặc tên người dùng.",
       "invalidEmail": "Email không đúng định dạng.",
@@ -135,6 +145,9 @@
       "invalidEmailFormat": "Vui lòng nhập email hợp lệ.",
       "passwordRequired": "Vui lòng nhập mật khẩu.",
       "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự.",
+      "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu.",
+      "passwordsDoNotMatch": "Mật khẩu xác nhận không khớp.",
+      "resetTokenMissing": "Liên kết đặt lại không hợp lệ. Vui lòng yêu cầu liên kết mới.",
       "serverError": "Đã có lỗi xảy ra. Vui lòng thử lại.",
       "googleError": "Đăng nhập Google thất bại. Vui lòng thử lại."
     }

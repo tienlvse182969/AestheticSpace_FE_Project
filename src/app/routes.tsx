@@ -8,6 +8,8 @@ import { AboutPage } from "./pages/AboutPage";
 import { AdminPage } from "./pages/AdminPage";
 import { PricingPage } from "./pages/PricingPage";
 import { PaymentResultPage } from "./pages/PaymentResultPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/ResetPasswordPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
 export const router = createBrowserRouter([
@@ -16,11 +18,13 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: HomePage },
-      { path: "login",   Component: LoginPage },
-      { path: "signup",  Component: SignUpPage },
-      { path: "about",           Component: AboutPage },
-      { path: "pricing",         Component: PricingPage },
-      { path: "payment/result",  Component: PaymentResultPage },
+      { path: "login",            Component: LoginPage },
+      { path: "signup",           Component: SignUpPage },
+      { path: "forgot-password",  Component: ForgotPasswordPage },
+      { path: "reset-password",   Component: ResetPasswordPage },
+      { path: "about",            Component: AboutPage },
+      { path: "pricing",          Component: PricingPage },
+      { path: "payment/result",   Component: PaymentResultPage },
       {
         element: <ProtectedRoute forbiddenRole="Admin" forbiddenRedirect="/admin" allowGuest />,
         children: [
