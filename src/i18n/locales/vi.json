@@ -370,6 +370,27 @@
     "accentColorDesc": "Áp dụng cho widget và các điểm nhấn giao diện",
     "custom": "Tùy chỉnh"
   },
+  "premiumGate": {
+    "title": "Tính năng Premium",
+    "desc": "Nâng cấp gói của bạn để mở khóa tính năng này và trải nghiệm Aesthetic Space đầy đủ.",
+    "sticker": "Nhãn dán",
+    "ambient": "Âm thanh môi trường",
+    "effects": "Hiệu ứng hình ảnh",
+    "quest": "Hệ thống nhiệm vụ",
+    "upgrade": "Nâng cấp ngay",
+    "later": "Để sau"
+  },
+  "quest": {
+    "title": "Nhiệm vụ",
+    "canClaim": "{{count}} có thể nhận",
+    "daily": "HÀNG NGÀY",
+    "weekly": "HÀNG TUẦN",
+    "achievement": "THÀNH TỰU",
+    "claimable": "Sẵn sàng nhận!",
+    "claim": "Nhận thưởng",
+    "completed": "Đã hoàn thành ✓",
+    "loading": "Đang tải…"
+  },
   "effects": {
     "title": "HIỆU ỨNG",
     "rain": "Mưa rơi",

@@ -371,6 +371,27 @@
     "accentColorDesc": "Applied to widgets and UI highlights",
     "custom": "Custom"
   },
+  "premiumGate": {
+    "title": "Premium Feature",
+    "desc": "Upgrade your plan to unlock this feature and enjoy the full Aesthetic Space experience.",
+    "sticker": "Stickers",
+    "ambient": "Ambient Sounds",
+    "effects": "Visual Effects",
+    "quest": "Quest System",
+    "upgrade": "Upgrade Now",
+    "later": "Maybe Later"
+  },
+  "quest": {
+    "title": "Quests",
+    "canClaim": "{{count}} claimable",
+    "daily": "DAILY",
+    "weekly": "WEEKLY",
+    "achievement": "ACHIEVEMENTS",
+    "claimable": "Ready to claim!",
+    "claim": "Claim reward",
+    "completed": "Completed ✓",
+    "loading": "Loading…"
+  },
   "effects": {
     "title": "EFFECTS",
     "rain": "Rain",

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
+import { PremiumGateModal, type LockedFeature } from "../ui/PremiumGateModal";
 import { coinService }                from "../../../../services/coin.service";
 import type { StudySpaceCtx }         from "../../../hooks/studyspace/useStudySpace";
 
@@ -30,6 +31,11 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
     avatarBtnRef, accountPanelRef,
     setAboutOpen,
   } = ctx;
+
+  const isFree = !!currentUser && currentUser.accountTier?.toLowerCase() !== "premium";
+  const [gateFeature, setGateFeature] = useState<LockedFeature | null>(null);
+
+  const handleLockedClick = (feature: LockedFeature) => setGateFeature(feature);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -77,6 +83,9 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
       {accountOpen && (
         <Box position="fixed" inset={0} zIndex={99} onClick={() => setAccountOpen(false)} />
       )}
+
+      {/* ── Premium gate modal ── */}
+      <PremiumGateModal feature={gateFeature} onClose={() => setGateFeature(null)} />
 
       {/* ── Account panel ── */}
       <AccountPanel
@@ -165,16 +174,16 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                   boxShadow:    "0 -4px 24px rgba(0,0,0,0.3)",
                 }}
               >
-                <ToolbarBtn icon={<LayoutDashboard size={22} />} active={activePanel === "room"}     onClick={() => togglePanel("room")}     tooltip={t("space.rooms")} />
-                <ToolbarBtn icon={<LayoutGrid size={22} />}      active={activePanel === "widget"}   onClick={() => togglePanel("widget")}   tooltip={t("space.widgets")} />
-                <ToolbarBtn icon={<Sparkles size={22} />}        active={activePanel === "sticker"}  onClick={() => togglePanel("sticker")}  tooltip={t("space.stickers")} />
-                <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}    onClick={() => togglePanel("image")}    tooltip={t("space.backgrounds")} />
-                <ToolbarBtn icon={<Palette size={22} />}         active={activePanel === "theme"}    onClick={() => togglePanel("theme")}    tooltip={t("space.themes")} />
-                <ToolbarBtn icon={<AudioWaveform size={22} />}   active={activePanel === "ambient"}  onClick={() => togglePanel("ambient")}  tooltip={t("space.ambientSounds")} />
-                <ToolbarBtn icon={<Wand2 size={22} />}           active={activePanel === "effects"}         onClick={() => togglePanel("effects")}         tooltip={t("effects.title")} />
-                <ToolbarBtn icon={<BarChart2 size={22} />}       active={activePanel === "pomodoro-stats"}  onClick={() => togglePanel("pomodoro-stats")}  tooltip="Phân tích Pomodoro" />
-                <ToolbarBtn icon={<Trophy size={22} />}          active={activePanel === "quest"}           onClick={() => togglePanel("quest")}           tooltip="Nhiệm vụ" />
-                <ToolbarBtn icon={<Settings size={22} />}        active={activePanel === "settings"}        onClick={() => togglePanel("settings")}        tooltip={t("settings.title")} />
+                <ToolbarBtn icon={<LayoutDashboard size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} />
+                <ToolbarBtn icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} />
+                <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} />
+                <ToolbarBtn icon={<Palette size={22} />}         active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("space.themes")} />
+                <ToolbarBtn icon={<Sparkles size={22} />}      active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} />
+                <ToolbarBtn icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} locked={isFree} onClick={() => isFree ? handleLockedClick("ambient") : togglePanel("ambient")} tooltip={t("space.ambientSounds")} />
+                <ToolbarBtn icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} />
+                <ToolbarBtn icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" />
+                <ToolbarBtn icon={<BarChart2 size={22} />} active={activePanel === "pomodoro-stats"} onClick={() => togglePanel("pomodoro-stats")} tooltip="Phân tích Pomodoro" />
+                <ToolbarBtn icon={<Settings size={22} />}  active={activePanel === "settings"}       onClick={() => togglePanel("settings")}       tooltip={t("settings.title")} />
 
                 {/* Account avatar button */}
                 <Box
