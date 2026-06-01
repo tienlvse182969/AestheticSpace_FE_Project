@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Box } from "@chakra-ui/react";
 import { useStudySpace } from "../hooks/studyspace/useStudySpace";
 import { SpaceBackground }   from "../components/StudySpace/sections/SpaceBackground";
@@ -8,6 +9,7 @@ import { SpaceContextMenu }  from "../components/StudySpace/ui/SpaceContextMenu"
 
 export function StudySpacePage() {
   const ctx = useStudySpace();
+  const [coinBalance, setCoinBalance] = useState<number | undefined>(undefined);
 
   return (
     <SpaceContextMenu ctx={ctx}>
@@ -20,8 +22,8 @@ export function StudySpacePage() {
       >
         <SpaceBackground ctx={ctx} />
         <SpaceWidgets    ctx={ctx} />
-        <SpacePanels     ctx={ctx} />
-        <SpaceToolbar    ctx={ctx} />
+        <SpacePanels     ctx={ctx} coinBalance={coinBalance} onCoinBalanceChange={setCoinBalance} />
+        <SpaceToolbar    ctx={ctx} coinBalance={coinBalance} onCoinBalanceReady={setCoinBalance} />
       </Box>
     </SpaceContextMenu>
   );

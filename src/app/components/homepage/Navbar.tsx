@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text, Link } from "@chakra-ui/react";
-import { Menu, X, Info, Settings, LogOut, Layers } from "lucide-react";
+import { Menu, X, Info, Settings, LogOut, Layers, Crown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -34,6 +34,41 @@ function AvatarBubble({ avatarUrl, name, size = 28 }: { avatarUrl: string | null
     >
       {getInitials(name)}
     </Box>
+  );
+}
+
+function NavAccountTierBadge({ tier }: { tier?: string | null }) {
+  const isPremium = tier?.toLowerCase() === "premium";
+  return (
+    <Flex
+      align="center"
+      gap="3px"
+      style={{
+        display: "inline-flex",
+        padding: "2px 7px 2px 5px",
+        borderRadius: "20px",
+        fontSize: "0.67rem",
+        fontFamily: "'HarmonyOS Sans', sans-serif",
+        fontWeight: 600,
+        letterSpacing: "0.04em",
+        userSelect: "none",
+        marginTop: "3px",
+        ...(isPremium
+          ? {
+              background: "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.12) 100%)",
+              border: "1px solid rgba(251,191,36,0.45)",
+              color: "#fbbf24",
+            }
+          : {
+              background: "rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.15)",
+              color: "rgba(255,255,255,0.45)",
+            }),
+      }}
+    >
+      {isPremium ? <Crown size={9} style={{ flexShrink: 0 }} /> : null}
+      {isPremium ? "Premium" : "Free"}
+    </Flex>
   );
 }
 
@@ -242,6 +277,7 @@ export function Navbar() {
                         }}>
                           {user.email}
                         </Text>
+                        <NavAccountTierBadge tier={user.accountTier} />
                       </Box>
                     </Flex>
 
@@ -362,6 +398,26 @@ export function Navbar() {
                   <Box>
                     <Text fontSize="sm" fontWeight="600" color="#1a3c34">{user.name}</Text>
                     <Text fontSize="xs" color="#6b7280">{user.email}</Text>
+                    <Flex
+                      align="center"
+                      gap="3px"
+                      mt="3px"
+                      style={{
+                        display: "inline-flex",
+                        padding: "2px 7px 2px 5px",
+                        borderRadius: "20px",
+                        fontSize: "0.67rem",
+                        fontWeight: 600,
+                        letterSpacing: "0.04em",
+                        userSelect: "none",
+                        ...(user.accountTier?.toLowerCase() === "premium"
+                          ? { background: "rgba(251,191,36,0.15)", border: "1px solid rgba(245,158,11,0.4)", color: "#b45309" }
+                          : { background: "rgba(0,0,0,0.06)", border: "1px solid rgba(0,0,0,0.12)", color: "#6b7280" }),
+                      }}
+                    >
+                      {user.accountTier?.toLowerCase() === "premium" && <Crown size={9} style={{ flexShrink: 0 }} />}
+                      {user.accountTier?.toLowerCase() === "premium" ? "Premium" : "Free"}
+                    </Flex>
                   </Box>
                 </Flex>
                 <Box h="1px" style={{ background: "rgba(0,0,0,0.08)" }} mx={1} my={1} />

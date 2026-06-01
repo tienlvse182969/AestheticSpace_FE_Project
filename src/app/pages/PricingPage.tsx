@@ -1,8 +1,10 @@
-import { motion } from "motion/react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
-import { Check, Sparkles, Crown, Gift } from "lucide-react";
+import { Check, Sparkles, Crown, Gift, X, Loader } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import { paymentService } from "../../services/payment.service";
 
 const MotionBox = motion.create(Box);
 const MotionFlex = motion.create(Flex);
@@ -22,7 +24,10 @@ const freemiumFeatures = [
 const premiumFeatures = [
   { label: "Tất cả tính năng của gói Freemium", highlight: false },
   { label: "Truy cập Aesthetic Store — kho theme độc quyền", highlight: true },
-  { label: "Hình nền, sticker & hiệu ứng độc quyền theo theme", highlight: true },
+  {
+    label: "Hình nền, sticker & hiệu ứng độc quyền theo theme",
+    highlight: true,
+  },
   { label: "Ambient sound đặc biệt đi kèm từng theme", highlight: true },
   { label: "Kiểu widget premium (sắp ra mắt)", highlight: false },
   { label: "Lưu preset room không giới hạn", highlight: true },
@@ -30,15 +35,55 @@ const premiumFeatures = [
   { label: "Hệ thống điểm xu & nhiệm vụ hằng ngày", highlight: false },
 ];
 
+type PaymentMethod = "vnpay" | null;
+
 export function PricingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Modal state
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const resetModal = () => {
+    setShowPaymentModal(false);
+    setPaymentMethod(null);
+    setIsProcessing(false);
+  };
 
   const handleGetStarted = () => {
     if (user) {
       navigate("/space");
     } else {
       navigate("/signup");
+    }
+  };
+
+  const handleUpgradeClick = () => {
+    if (!user) {
+      navigate("/signup");
+      return;
+    }
+    setShowPaymentModal(true);
+  };
+
+  const handleVnPay = async () => {
+    setIsProcessing(true);
+    try {
+      const { transactionCode, paymentUrl } =
+        await paymentService.createVnPayPayment({
+          amountVnd: 100000,
+          returnUrl: "string",
+          description: "string",
+          purpose: "Subscription",
+          storeItemId: null,
+          coinsAmount: 0,
+        });
+      sessionStorage.setItem("vnpay_transaction_code", transactionCode);
+      window.location.href = paymentUrl;
+    } catch {
+      setIsProcessing(false);
     }
   };
 
@@ -181,12 +226,36 @@ export function PricingPage() {
             flex={1}
             borderRadius="3xl"
             p={8}
+            position="relative"
             style={{
               background: "white",
-              border: "1.5px solid rgba(78,124,106,0.2)",
+              border:
+                user?.accountTier === "Premium"
+                  ? "1.5px solid rgba(78,124,106,0.2)"
+                  : "1.5px solid rgba(78,124,106,0.35)",
               boxShadow: "0 4px 24px rgba(26,60,52,0.07)",
             }}
           >
+            {user?.accountTier !== "Premium" && (
+              <Box
+                position="absolute"
+                top={0}
+                right={0}
+                px={4}
+                py={1}
+                style={{
+                  background: "rgba(78,124,106,0.12)",
+                  borderBottomLeftRadius: "14px",
+                  borderTopRightRadius: "24px",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  color: "#4e7c6a",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Gói hiện tại
+              </Box>
+            )}
             <Flex align="center" gap={2} mb={2}>
               <Box
                 w="36px"
@@ -276,25 +345,37 @@ export function PricingPage() {
               boxShadow: "0 16px 48px rgba(26,60,52,0.35)",
             }}
           >
-            {/* Popular badge */}
-            <Box
+            {/* Popular / Current plan badge */}
+            <Flex
               position="absolute"
               top={0}
               right={0}
-              px={5}
+              align="center"
+              gap="5px"
+              px={4}
               py={2}
               style={{
-                background: "linear-gradient(90deg, #7aab97 0%, #4e7c6a 100%)",
+                background:
+                  user?.accountTier === "Premium"
+                    ? "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)"
+                    : "linear-gradient(90deg, #7aab97 0%, #4e7c6a 100%)",
                 borderBottomLeftRadius: "18px",
+                borderTopRightRadius: "24px",
                 fontSize: "0.72rem",
                 fontWeight: 700,
-                color: "white",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
+                color: user?.accountTier === "Premium" ? "#1a3c34" : "white",
+                letterSpacing: "0.06em",
               }}
             >
-              Phổ biến nhất
-            </Box>
+              {user?.accountTier === "Premium" ? (
+                <>
+                  <Check size={11} strokeWidth={3} />
+                  Gói của bạn
+                </>
+              ) : (
+                "Phổ biến nhất"
+              )}
+            </Flex>
 
             {/* Decorative circle */}
             <Box
@@ -399,7 +480,9 @@ export function PricingPage() {
                     fontSize="sm"
                     lineHeight="relaxed"
                     color={
-                      f.highlight ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"
+                      f.highlight
+                        ? "rgba(255,255,255,0.9)"
+                        : "rgba(255,255,255,0.6)"
                     }
                     fontWeight={f.highlight ? "500" : "400"}
                   >
@@ -409,26 +492,57 @@ export function PricingPage() {
               ))}
             </Flex>
 
-            <Box
-              as="button"
-              w="full"
-              py={3}
-              borderRadius="xl"
-              color="#1a3c34"
-              fontWeight="700"
-              fontSize="sm"
-              cursor="pointer"
-              transition="all 0.2s"
-              onClick={handleGetStarted}
-              style={{
-                background: "linear-gradient(90deg, #7aab97 0%, #5a9982 100%)",
-                boxShadow: "0 4px 16px rgba(122,171,151,0.4)",
-              }}
-              _hover={{ transform: "scale(1.02)" }}
-              _active={{ transform: "scale(0.98)" }}
-            >
-              {user ? "Nâng cấp Premium" : "Bắt đầu dùng thử miễn phí"}
-            </Box>
+            {/* Premium CTA — conditional on accountTier */}
+            {user?.accountTier === "Premium" ? (
+              <Flex direction="column" gap={2}>
+                <Flex
+                  w="full"
+                  py={3}
+                  borderRadius="xl"
+                  justify="center"
+                  align="center"
+                  gap={2}
+                  style={{
+                    background: "rgba(251,191,36,0.12)",
+                    border: "1.5px solid rgba(251,191,36,0.35)",
+                  }}
+                >
+                  <Crown size={15} color="#fbbf24" />
+                  <Text color="#fbbf24" fontWeight="700" fontSize="sm">
+                    Bạn đang sử dụng gói này
+                  </Text>
+                </Flex>
+                <Text
+                  fontSize="xs"
+                  color="rgba(255,255,255,0.35)"
+                  textAlign="center"
+                >
+                  Tài khoản của bạn đã được kích hoạt Premium
+                </Text>
+              </Flex>
+            ) : (
+              <Box
+                as="button"
+                w="full"
+                py={3}
+                borderRadius="xl"
+                color="#1a3c34"
+                fontWeight="700"
+                fontSize="sm"
+                cursor="pointer"
+                transition="all 0.2s"
+                onClick={handleUpgradeClick}
+                style={{
+                  background:
+                    "linear-gradient(90deg, #7aab97 0%, #5a9982 100%)",
+                  boxShadow: "0 4px 16px rgba(122,171,151,0.4)",
+                }}
+                _hover={{ transform: "scale(1.02)" }}
+                _active={{ transform: "scale(0.98)" }}
+              >
+                {user ? "Nâng cấp Premium" : "Bắt đầu dùng thử miễn phí"}
+              </Box>
+            )}
           </Box>
         </MotionFlex>
 
@@ -443,12 +557,152 @@ export function PricingPage() {
           <Text color="#9ca3af" fontSize="sm" lineHeight="relaxed">
             Thanh toán qua{" "}
             <Box as="span" color="#4e7c6a" fontWeight="600">
-              Sepay / VNPay
+              VNPay
             </Box>{" "}
             · Huỷ bất cứ lúc nào · Không tính phí ẩn
           </Text>
         </MotionBox>
       </Box>
+
+      {/* Payment Modal */}
+      <AnimatePresence>
+        {showPaymentModal && (
+          <Box
+            position="fixed"
+            inset={0}
+            zIndex={200}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            px={4}
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(4px)",
+            }}
+            onClick={(e: React.MouseEvent) => {
+              if (e.target === e.currentTarget) resetModal();
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              style={{ width: "100%", maxWidth: "480px" }}
+            >
+              <Box
+                bg="#f9f6f2"
+                borderRadius="3xl"
+                p={8}
+                position="relative"
+                style={{ boxShadow: "0 24px 64px rgba(0,0,0,0.2)" }}
+              >
+                {/* Close button */}
+                <Box
+                  as="button"
+                  position="absolute"
+                  top={5}
+                  right={5}
+                  w="32px"
+                  h="32px"
+                  borderRadius="full"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  bg="transparent"
+                  border="none"
+                  cursor="pointer"
+                  onClick={resetModal}
+                  style={{ color: "#9ca3af" }}
+                  _hover={{ bg: "rgba(0,0,0,0.06)", color: "#1a3c34" }}
+                >
+                  <X size={18} />
+                </Box>
+
+                {/* ── Step: chọn phương thức ── */}
+                {!paymentMethod && (
+                  <Box>
+                    <Text fontWeight="800" fontSize="lg" color="#1a3c34" mb={1}>
+                      Chọn phương thức thanh toán
+                    </Text>
+                    <Text fontSize="sm" color="#6b7280" mb={6}>
+                      130.000₫ / tháng · Gia hạn tự động
+                    </Text>
+
+                    <Flex direction="column" gap={3}>
+                      {/* VNPay */}
+                      <Box
+                        as="button"
+                        w="full"
+                        p={4}
+                        borderRadius="2xl"
+                        border="1.5px solid"
+                        borderColor={
+                          isProcessing
+                            ? "rgba(78,124,106,0.5)"
+                            : "rgba(78,124,106,0.25)"
+                        }
+                        bg="white"
+                        cursor={isProcessing ? "not-allowed" : "pointer"}
+                        transition="all 0.2s"
+                        onClick={() => !isProcessing && handleVnPay()}
+                        _hover={
+                          isProcessing
+                            ? {}
+                            : {
+                                borderColor: "#4e7c6a",
+                                boxShadow: "0 4px 16px rgba(78,124,106,0.12)",
+                              }
+                        }
+                        textAlign="left"
+                      >
+                        <Flex align="center" justify="space-between">
+                          <Box>
+                            <Text
+                              fontWeight="700"
+                              fontSize="sm"
+                              color="#1a3c34"
+                              mb="2px"
+                            >
+                              VNPay
+                            </Text>
+                            <Text fontSize="xs" color="#6b7280">
+                              Thẻ ATM, Visa, MasterCard, QR Code
+                            </Text>
+                          </Box>
+                          {isProcessing ? (
+                            <Box
+                              style={{ animation: "spin 1s linear infinite" }}
+                            >
+                              <Loader size={18} color="#4e7c6a" />
+                            </Box>
+                          ) : (
+                            <Box
+                              px={3}
+                              py={1}
+                              borderRadius="lg"
+                              style={{ background: "rgba(78,124,106,0.1)" }}
+                            >
+                              <Text
+                                fontSize="xs"
+                                fontWeight="600"
+                                color="#4e7c6a"
+                              >
+                                Chuyển hướng
+                              </Text>
+                            </Box>
+                          )}
+                        </Flex>
+                      </Box>
+                    </Flex>
+                    <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                  </Box>
+                )}
+              </Box>
+            </motion.div>
+          </Box>
+        )}
+      </AnimatePresence>
     </Box>
   );
 }

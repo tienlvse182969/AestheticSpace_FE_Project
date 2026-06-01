@@ -126,6 +126,16 @@
     "orContinueWith": "OR CONTINUE WITH",
     "signInWithGoogle": "Sign in with Google",
     "signUpWithGoogle": "Sign up with Google",
+    "forgotPasswordTitle": "Forgot Password",
+    "forgotPasswordDesc": "Enter your email address and we'll send you a link to reset your password.",
+    "forgotPasswordSuccess": "If an account exists for that email, a reset link has been sent. Check your inbox.",
+    "sendResetLink": "Send Reset Link",
+    "backToLogin": "Back to Login",
+    "resetPasswordTitle": "Reset Password",
+    "newPasswordPlaceholder": "New Password",
+    "confirmPasswordPlaceholder": "Confirm Password",
+    "resetPasswordSuccess": "Password changed! You can now log in with your new password.",
+    "resetPassword": "Reset Password",
     "errors": {
       "identifierRequired": "Please enter your email or username.",
       "invalidEmail": "That doesn't look like a valid email.",
@@ -135,6 +145,9 @@
       "invalidEmailFormat": "Please enter a valid email.",
       "passwordRequired": "Password is required.",
       "passwordTooShort": "Password must be at least 6 characters.",
+      "confirmPasswordRequired": "Please confirm your password.",
+      "passwordsDoNotMatch": "Passwords do not match.",
+      "resetTokenMissing": "Reset link is invalid. Please request a new one.",
       "serverError": "Something went wrong. Please try again.",
       "googleError": "Google sign-in failed. Please try again."
     }
@@ -170,7 +183,8 @@
     "demoMode": "Demo mode",
     "signInPrompt": "Sign in to save your space, sync preferences, and more.",
     "signIn": "Sign in",
-    "language": "Language"
+    "language": "Language",
+    "upgradeToPremium": "Upgrade to Premium"
   },
   "widgetPicker": {
     "title": "WIDGETS",

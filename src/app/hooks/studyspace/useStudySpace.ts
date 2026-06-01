@@ -18,7 +18,7 @@ import type { EffectType }     from "../../components/StudySpace/panels/EffectsP
 export type ActivePanel =
   | "widget" | "image" | "sticker" | "theme"
   | "ambient" | "effects" | "settings" | "room"
-  | "pomodoro-stats"
+  | "pomodoro-stats" | "quest"
   | null;
 
 export function useStudySpace() {
@@ -31,7 +31,7 @@ export function useStudySpace() {
   /* ── Accent color ── */
   const { accent, setAccent } = useAccent();
   const currentUser: UserInfo | null = user
-    ? { name: user.name, email: user.email, avatarUrl: user.avatarUrl ?? undefined }
+    ? { name: user.name, email: user.email, avatarUrl: user.avatarUrl ?? undefined, accountTier: user.accountTier }
     : null;
   const handleLogout = () => { logout(); navigate("/"); };
 

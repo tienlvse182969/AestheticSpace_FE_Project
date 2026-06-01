@@ -73,7 +73,7 @@ export function LoginPage() {
     setErrors({});
 
     try {
-      await login({ email: identifier.trim(), password });
+      await login({ email: identifier.trim(), password }, rememberMe);
       navigate(from, { replace: true });
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -286,8 +286,9 @@ export function LoginPage() {
                 </Box>
                 <Text fontSize="sm" color="rgba(230,235,240,0.85)" style={{ userSelect: "none" }}>{t("auth.rememberMe")}</Text>
               </Flex>
-              <Text as="a" href="#" fontSize="sm" color="rgba(230,235,240,0.85)" textDecoration="none"
-                _hover={{ color: "white", textDecoration: "underline" }} transition="color 0.2s">
+              <Text as="span" fontSize="sm" color="rgba(230,235,240,0.85)" cursor="pointer"
+                _hover={{ color: "white", textDecoration: "underline" } as any} transition="color 0.2s"
+                onClick={() => navigate("/forgot-password")}>
                 {t("auth.forgotPassword")}
               </Text>
             </Flex>

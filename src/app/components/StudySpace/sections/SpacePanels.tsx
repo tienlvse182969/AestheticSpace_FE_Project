@@ -8,12 +8,17 @@ import { EffectsPanel }          from "../panels/EffectsPanel";
 import { SettingsPanel }         from "../panels/SettingsPanel";
 import { RoomManagerPanel }      from "../panels/RoomManagerPanel";
 import { PomodoroStatsPanel }    from "../panels/PomodoroStatsPanel";
+import { QuestPanel }            from "../panels/QuestPanel";
 import { AboutModal }            from "../ui/AboutModal";
 import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
 
-interface Props { ctx: StudySpaceCtx; }
+interface Props {
+  ctx: StudySpaceCtx;
+  onCoinBalanceChange?: (newBalance: number) => void;
+  coinBalance?: number;
+}
 
-export function SpacePanels({ ctx }: Props) {
+export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
   const {
     activePanel, setActivePanel,
     currentBg, setCurrentBg,
@@ -88,6 +93,14 @@ export function SpacePanels({ ctx }: Props) {
           <PomodoroStatsPanel
             key="pomodoro-stats-panel"
             onClose={() => setActivePanel(null)}
+          />
+        )}
+        {activePanel === "quest" && (
+          <QuestPanel
+            key="quest-panel"
+            onClose={() => setActivePanel(null)}
+            onBalanceChange={onCoinBalanceChange}
+            currentCoinBalance={coinBalance}
           />
         )}
         {aboutOpen && (
