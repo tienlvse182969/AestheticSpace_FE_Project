@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
-import { Check, Sparkles, Crown, Gift, X, Loader, Copy, CheckCheck } from "lucide-react";
+import { Check, Sparkles, Crown, Gift, X, Loader } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { paymentService } from "../../services/payment.service";
@@ -24,7 +24,10 @@ const freemiumFeatures = [
 const premiumFeatures = [
   { label: "Tất cả tính năng của gói Freemium", highlight: false },
   { label: "Truy cập Aesthetic Store — kho theme độc quyền", highlight: true },
-  { label: "Hình nền, sticker & hiệu ứng độc quyền theo theme", highlight: true },
+  {
+    label: "Hình nền, sticker & hiệu ứng độc quyền theo theme",
+    highlight: true,
+  },
   { label: "Ambient sound đặc biệt đi kèm từng theme", highlight: true },
   { label: "Kiểu widget premium (sắp ra mắt)", highlight: false },
   { label: "Lưu preset room không giới hạn", highlight: true },
@@ -32,30 +35,21 @@ const premiumFeatures = [
   { label: "Hệ thống điểm xu & nhiệm vụ hằng ngày", highlight: false },
 ];
 
-type PaymentMethod = "vnpay" | "sepay" | null;
-type SePayStep = "instructions" | "confirming" | "done";
+type PaymentMethod = "vnpay" | null;
 
 export function PricingPage() {
   const navigate = useNavigate();
-  const { user, refreshAccountTier } = useAuth();
+  const { user } = useAuth();
 
   // Modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [sePayCode, setSePayCode] = useState<string | null>(null);
-  const [sePayStep, setSePayStep] = useState<SePayStep>("instructions");
-  const [sePayError, setSePayError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const resetModal = () => {
     setShowPaymentModal(false);
     setPaymentMethod(null);
     setIsProcessing(false);
-    setSePayCode(null);
-    setSePayStep("instructions");
-    setSePayError(null);
-    setCopied(false);
   };
 
   const handleGetStarted = () => {
@@ -77,58 +71,20 @@ export function PricingPage() {
   const handleVnPay = async () => {
     setIsProcessing(true);
     try {
-      const { transactionCode, paymentUrl } = await paymentService.createVnPayPayment({
-        amountVnd: 130000,
-        returnUrl: `${window.location.origin}/payment/result`,
-        description: "Nâng cấp Premium AestheticSpace",
-        purpose: "subscription",
-      });
+      const { transactionCode, paymentUrl } =
+        await paymentService.createVnPayPayment({
+          amountVnd: 100000,
+          returnUrl: "string",
+          description: "string",
+          purpose: "Subscription",
+          storeItemId: null,
+          coinsAmount: 0,
+        });
       sessionStorage.setItem("vnpay_transaction_code", transactionCode);
       window.location.href = paymentUrl;
     } catch {
       setIsProcessing(false);
     }
-  };
-
-  const handleSePayInit = async () => {
-    setIsProcessing(true);
-    setSePayError(null);
-    setPaymentMethod("sepay");
-    try {
-      const { transactionCode } = await paymentService.createSePayPayment({
-        amountVnd: 130000,
-        description: "Nâng cấp Premium AestheticSpace",
-        purpose: "subscription",
-      });
-      setSePayCode(transactionCode);
-      setSePayStep("instructions");
-    } catch {
-      setSePayError("Không thể khởi tạo thanh toán. Vui lòng thử lại.");
-      setPaymentMethod(null);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleSePayConfirm = async () => {
-    if (!sePayCode) return;
-    setSePayStep("confirming");
-    setSePayError(null);
-    try {
-      await paymentService.upgradeSubscription(sePayCode);
-      refreshAccountTier("Premium");
-      setSePayStep("done");
-    } catch {
-      setSePayError("Thanh toán chưa được xác nhận. Vui lòng thử lại sau ít phút.");
-      setSePayStep("instructions");
-    }
-  };
-
-  const handleCopyCode = () => {
-    if (!sePayCode) return;
-    navigator.clipboard.writeText(sePayCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -273,9 +229,10 @@ export function PricingPage() {
             position="relative"
             style={{
               background: "white",
-              border: user?.accountTier === "Premium"
-                ? "1.5px solid rgba(78,124,106,0.2)"
-                : "1.5px solid rgba(78,124,106,0.35)",
+              border:
+                user?.accountTier === "Premium"
+                  ? "1.5px solid rgba(78,124,106,0.2)"
+                  : "1.5px solid rgba(78,124,106,0.35)",
               boxShadow: "0 4px 24px rgba(26,60,52,0.07)",
             }}
           >
@@ -398,9 +355,10 @@ export function PricingPage() {
               px={4}
               py={2}
               style={{
-                background: user?.accountTier === "Premium"
-                  ? "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)"
-                  : "linear-gradient(90deg, #7aab97 0%, #4e7c6a 100%)",
+                background:
+                  user?.accountTier === "Premium"
+                    ? "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)"
+                    : "linear-gradient(90deg, #7aab97 0%, #4e7c6a 100%)",
                 borderBottomLeftRadius: "18px",
                 borderTopRightRadius: "24px",
                 fontSize: "0.72rem",
@@ -522,7 +480,9 @@ export function PricingPage() {
                     fontSize="sm"
                     lineHeight="relaxed"
                     color={
-                      f.highlight ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"
+                      f.highlight
+                        ? "rgba(255,255,255,0.9)"
+                        : "rgba(255,255,255,0.6)"
                     }
                     fontWeight={f.highlight ? "500" : "400"}
                   >
@@ -552,7 +512,11 @@ export function PricingPage() {
                     Bạn đang sử dụng gói này
                   </Text>
                 </Flex>
-                <Text fontSize="xs" color="rgba(255,255,255,0.35)" textAlign="center">
+                <Text
+                  fontSize="xs"
+                  color="rgba(255,255,255,0.35)"
+                  textAlign="center"
+                >
                   Tài khoản của bạn đã được kích hoạt Premium
                 </Text>
               </Flex>
@@ -569,7 +533,8 @@ export function PricingPage() {
                 transition="all 0.2s"
                 onClick={handleUpgradeClick}
                 style={{
-                  background: "linear-gradient(90deg, #7aab97 0%, #5a9982 100%)",
+                  background:
+                    "linear-gradient(90deg, #7aab97 0%, #5a9982 100%)",
                   boxShadow: "0 4px 16px rgba(122,171,151,0.4)",
                 }}
                 _hover={{ transform: "scale(1.02)" }}
@@ -592,7 +557,7 @@ export function PricingPage() {
           <Text color="#9ca3af" fontSize="sm" lineHeight="relaxed">
             Thanh toán qua{" "}
             <Box as="span" color="#4e7c6a" fontWeight="600">
-              Sepay / VNPay
+              VNPay
             </Box>{" "}
             · Huỷ bất cứ lúc nào · Không tính phí ẩn
           </Text>
@@ -610,7 +575,10 @@ export function PricingPage() {
             alignItems="center"
             justifyContent="center"
             px={4}
-            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+            style={{
+              background: "rgba(0,0,0,0.55)",
+              backdropFilter: "blur(4px)",
+            }}
             onClick={(e: React.MouseEvent) => {
               if (e.target === e.currentTarget) resetModal();
             }}
@@ -669,17 +637,33 @@ export function PricingPage() {
                         p={4}
                         borderRadius="2xl"
                         border="1.5px solid"
-                        borderColor={isProcessing ? "rgba(78,124,106,0.5)" : "rgba(78,124,106,0.25)"}
+                        borderColor={
+                          isProcessing
+                            ? "rgba(78,124,106,0.5)"
+                            : "rgba(78,124,106,0.25)"
+                        }
                         bg="white"
                         cursor={isProcessing ? "not-allowed" : "pointer"}
                         transition="all 0.2s"
                         onClick={() => !isProcessing && handleVnPay()}
-                        _hover={isProcessing ? {} : { borderColor: "#4e7c6a", boxShadow: "0 4px 16px rgba(78,124,106,0.12)" }}
+                        _hover={
+                          isProcessing
+                            ? {}
+                            : {
+                                borderColor: "#4e7c6a",
+                                boxShadow: "0 4px 16px rgba(78,124,106,0.12)",
+                              }
+                        }
                         textAlign="left"
                       >
                         <Flex align="center" justify="space-between">
                           <Box>
-                            <Text fontWeight="700" fontSize="sm" color="#1a3c34" mb="2px">
+                            <Text
+                              fontWeight="700"
+                              fontSize="sm"
+                              color="#1a3c34"
+                              mb="2px"
+                            >
                               VNPay
                             </Text>
                             <Text fontSize="xs" color="#6b7280">
@@ -687,7 +671,9 @@ export function PricingPage() {
                             </Text>
                           </Box>
                           {isProcessing ? (
-                            <Box style={{ animation: "spin 1s linear infinite" }}>
+                            <Box
+                              style={{ animation: "spin 1s linear infinite" }}
+                            >
                               <Loader size={18} color="#4e7c6a" />
                             </Box>
                           ) : (
@@ -697,222 +683,20 @@ export function PricingPage() {
                               borderRadius="lg"
                               style={{ background: "rgba(78,124,106,0.1)" }}
                             >
-                              <Text fontSize="xs" fontWeight="600" color="#4e7c6a">
+                              <Text
+                                fontSize="xs"
+                                fontWeight="600"
+                                color="#4e7c6a"
+                              >
                                 Chuyển hướng
                               </Text>
                             </Box>
                           )}
                         </Flex>
                       </Box>
-
-                      {/* SePay */}
-                      <Box
-                        as="button"
-                        w="full"
-                        p={4}
-                        borderRadius="2xl"
-                        border="1.5px solid"
-                        borderColor={isProcessing ? "rgba(78,124,106,0.5)" : "rgba(78,124,106,0.25)"}
-                        bg="white"
-                        cursor={isProcessing ? "not-allowed" : "pointer"}
-                        transition="all 0.2s"
-                        onClick={() => !isProcessing && handleSePayInit()}
-                        _hover={isProcessing ? {} : { borderColor: "#4e7c6a", boxShadow: "0 4px 16px rgba(78,124,106,0.12)" }}
-                        textAlign="left"
-                      >
-                        <Flex align="center" justify="space-between">
-                          <Box>
-                            <Text fontWeight="700" fontSize="sm" color="#1a3c34" mb="2px">
-                              SePay — Chuyển khoản ngân hàng
-                            </Text>
-                            <Text fontSize="xs" color="#6b7280">
-                              Chuyển khoản nội địa, xác nhận tự động
-                            </Text>
-                          </Box>
-                          {isProcessing ? (
-                            <Box style={{ animation: "spin 1s linear infinite" }}>
-                              <Loader size={18} color="#4e7c6a" />
-                            </Box>
-                          ) : (
-                            <Box
-                              px={3}
-                              py={1}
-                              borderRadius="lg"
-                              style={{ background: "rgba(78,124,106,0.1)" }}
-                            >
-                              <Text fontSize="xs" fontWeight="600" color="#4e7c6a">
-                                QR / CK
-                              </Text>
-                            </Box>
-                          )}
-                        </Flex>
-                      </Box>
                     </Flex>
                     <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
                   </Box>
-                )}
-
-                {/* ── Step: SePay instructions ── */}
-                {paymentMethod === "sepay" && sePayStep === "instructions" && sePayCode && (
-                  <Box>
-                    <Text fontWeight="800" fontSize="lg" color="#1a3c34" mb={1}>
-                      Thông tin chuyển khoản
-                    </Text>
-                    <Text fontSize="sm" color="#6b7280" mb={5}>
-                      Chuyển đúng số tiền và nội dung để được xác nhận tự động
-                    </Text>
-
-                    <Flex direction="column" gap={3} mb={5}>
-                      {[
-                        { label: "Ngân hàng", value: "MB Bank" },
-                        { label: "Số tài khoản", value: "0123456789" },
-                        { label: "Chủ tài khoản", value: "AESTHETIC SPACE" },
-                        { label: "Số tiền", value: "130.000₫" },
-                      ].map((row) => (
-                        <Flex
-                          key={row.label}
-                          justify="space-between"
-                          align="center"
-                          px={4}
-                          py={3}
-                          borderRadius="xl"
-                          bg="white"
-                          style={{ border: "1px solid rgba(78,124,106,0.15)" }}
-                        >
-                          <Text fontSize="sm" color="#6b7280">
-                            {row.label}
-                          </Text>
-                          <Text fontSize="sm" fontWeight="600" color="#1a3c34">
-                            {row.value}
-                          </Text>
-                        </Flex>
-                      ))}
-
-                      {/* Transaction code — copyable */}
-                      <Flex
-                        justify="space-between"
-                        align="center"
-                        px={4}
-                        py={3}
-                        borderRadius="xl"
-                        style={{
-                          background: "rgba(122,171,151,0.12)",
-                          border: "1.5px solid rgba(122,171,151,0.35)",
-                        }}
-                      >
-                        <Box>
-                          <Text fontSize="xs" color="#4e7c6a" fontWeight="600" mb="2px">
-                            Nội dung chuyển khoản
-                          </Text>
-                          <Text fontSize="sm" fontWeight="700" color="#1a3c34" letterSpacing="0.04em">
-                            {sePayCode}
-                          </Text>
-                        </Box>
-                        <Box
-                          as="button"
-                          p={2}
-                          borderRadius="lg"
-                          border="none"
-                          bg="transparent"
-                          cursor="pointer"
-                          onClick={handleCopyCode}
-                          style={{ color: copied ? "#4e7c6a" : "#9ca3af" }}
-                          _hover={{ bg: "rgba(78,124,106,0.1)" }}
-                        >
-                          {copied ? <CheckCheck size={16} /> : <Copy size={16} />}
-                        </Box>
-                      </Flex>
-                    </Flex>
-
-                    {sePayError && (
-                      <Text fontSize="sm" color="#ef4444" mb={4} textAlign="center">
-                        {sePayError}
-                      </Text>
-                    )}
-
-                    <Box
-                      as="button"
-                      w="full"
-                      py={3}
-                      borderRadius="xl"
-                      color="#1a3c34"
-                      fontWeight="700"
-                      fontSize="sm"
-                      cursor="pointer"
-                      transition="all 0.2s"
-                      onClick={handleSePayConfirm}
-                      style={{
-                        background: "linear-gradient(90deg, #7aab97 0%, #5a9982 100%)",
-                        boxShadow: "0 4px 16px rgba(122,171,151,0.35)",
-                      }}
-                      _hover={{ transform: "scale(1.02)" }}
-                    >
-                      Tôi đã thanh toán xong
-                    </Box>
-                  </Box>
-                )}
-
-                {/* ── Step: SePay confirming ── */}
-                {paymentMethod === "sepay" && sePayStep === "confirming" && (
-                  <Flex direction="column" align="center" gap={4} py={4}>
-                    <Box style={{ animation: "spin 1s linear infinite" }}>
-                      <Loader size={36} color="#4e7c6a" />
-                    </Box>
-                    <Text fontWeight="600" color="#1a3c34">
-                      Đang xác nhận thanh toán...
-                    </Text>
-                    <Text fontSize="sm" color="#6b7280" textAlign="center">
-                      Vui lòng chờ trong giây lát
-                    </Text>
-                    <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-                  </Flex>
-                )}
-
-                {/* ── Step: SePay done ── */}
-                {paymentMethod === "sepay" && sePayStep === "done" && (
-                  <Flex direction="column" align="center" gap={5} py={2}>
-                    <Box
-                      w="72px"
-                      h="72px"
-                      borderRadius="full"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                      style={{
-                        background: "rgba(122,171,151,0.15)",
-                        border: "2px solid rgba(122,171,151,0.35)",
-                      }}
-                    >
-                      <Crown size={32} color="#4e7c6a" />
-                    </Box>
-                    <Box textAlign="center">
-                      <Text fontWeight="800" fontSize="lg" color="#1a3c34" mb={1}>
-                        Nâng cấp thành công!
-                      </Text>
-                      <Text fontSize="sm" color="#6b7280">
-                        Tài khoản của bạn đã là Premium.
-                      </Text>
-                    </Box>
-                    <Box
-                      as="button"
-                      px={8}
-                      py={3}
-                      borderRadius="xl"
-                      color="#1a3c34"
-                      fontWeight="700"
-                      fontSize="sm"
-                      cursor="pointer"
-                      transition="all 0.2s"
-                      onClick={() => navigate("/space")}
-                      style={{
-                        background: "linear-gradient(90deg, #7aab97 0%, #5a9982 100%)",
-                        boxShadow: "0 4px 16px rgba(122,171,151,0.35)",
-                      }}
-                      _hover={{ transform: "scale(1.02)" }}
-                    >
-                      Khám phá không gian của bạn
-                    </Box>
-                  </Flex>
                 )}
               </Box>
             </motion.div>

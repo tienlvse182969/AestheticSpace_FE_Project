@@ -183,7 +183,8 @@
     "demoMode": "Demo mode",
     "signInPrompt": "Sign in to save your space, sync preferences, and more.",
     "signIn": "Sign in",
-    "language": "Language"
+    "language": "Language",
+    "upgradeToPremium": "Upgrade to Premium"
   },
   "widgetPicker": {
     "title": "WIDGETS",

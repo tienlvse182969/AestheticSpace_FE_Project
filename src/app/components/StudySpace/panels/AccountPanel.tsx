@@ -1,7 +1,17 @@
 import { useEffect, useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { LogIn, HelpCircle, LogOut, User, Home, Info, Crown } from "lucide-react";
+import {
+  LogIn,
+  HelpCircle,
+  LogOut,
+  User,
+  Home,
+  Info,
+  Crown,
+  Coins,
+  Zap,
+} from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 
@@ -31,7 +41,8 @@ function AccountTierBadge({ tier }: { tier?: string }) {
         userSelect: "none",
         ...(isPremium
           ? {
-              background: "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.12) 100%)",
+              background:
+                "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.12) 100%)",
               border: "1px solid rgba(251,191,36,0.45)",
               color: "#fbbf24",
             }
@@ -42,9 +53,7 @@ function AccountTierBadge({ tier }: { tier?: string }) {
             }),
       }}
     >
-      {isPremium ? (
-        <Crown size={9} style={{ flexShrink: 0 }} />
-      ) : null}
+      {isPremium ? <Crown size={9} style={{ flexShrink: 0 }} /> : null}
       {isPremium ? "Premium" : "Free"}
     </Flex>
   );
@@ -53,6 +62,7 @@ function AccountTierBadge({ tier }: { tier?: string }) {
 interface AccountPanelProps {
   open: boolean;
   user: UserInfo | null;
+  coinBalance?: number;
   anchorRef: React.RefObject<HTMLDivElement | null>;
   panelRef: React.RefObject<HTMLDivElement | null>;
   onClose: () => void;
@@ -140,10 +150,22 @@ function AvatarCircle({
 
 export { AvatarCircle };
 
-export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogout, onHome, onAbout }: AccountPanelProps) {
+export function AccountPanel({
+  open,
+  user,
+  coinBalance,
+  anchorRef,
+  panelRef,
+  onClose,
+  onLogout,
+  onHome,
+  onAbout,
+}: AccountPanelProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [pos, setPos] = useState<{ bottom: number; right: number } | null>(null);
+  const [pos, setPos] = useState<{ bottom: number; right: number } | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!open || !anchorRef.current) return;
@@ -225,9 +247,32 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                   >
                     {user.email}
                   </Text>
-                  <Box mt="4px">
+                  <Flex align="center" gap="6px" mt="4px">
                     <AccountTierBadge tier={user.accountTier} />
-                  </Box>
+                    {user.accountTier?.toLowerCase() === "premium" &&
+                      coinBalance !== undefined && (
+                        <Flex
+                          align="center"
+                          gap="3px"
+                          style={{
+                            display: "inline-flex",
+                            padding: "2px 7px 2px 5px",
+                            borderRadius: "20px",
+                            fontSize: "0.67rem",
+                            fontFamily: "'HarmonyOS Sans', sans-serif",
+                            fontWeight: 600,
+                            letterSpacing: "0.04em",
+                            userSelect: "none",
+                            background: "rgba(250,204,21,0.12)",
+                            border: "1px solid rgba(250,204,21,0.35)",
+                            color: "#facc15",
+                          }}
+                        >
+                          <Coins size={9} style={{ flexShrink: 0 }} />
+                          {coinBalance.toLocaleString()}
+                        </Flex>
+                      )}
+                  </Flex>
                 </Box>
               </Flex>
 
@@ -238,6 +283,43 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 h="1px"
                 style={{ background: "rgba(255,255,255,0.08)" }}
               />
+
+              {/* Upgrade button for Free users */}
+              {user.accountTier?.toLowerCase() !== "premium" && (
+                <>
+                  <Box
+                    as="button"
+                    onClick={() => {
+                      onClose();
+                      navigate("/pricing");
+                    }}
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    gap={2}
+                    w="100%"
+                    h="36px"
+                    borderRadius="10px"
+                    mt="2px"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.28) 100%)",
+                      border: "1px solid rgba(251,191,36,0.45)",
+                      color: "#fbbf24",
+                      fontSize: "0.82rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      letterSpacing: "0.02em",
+                      transition: "opacity 0.2s",
+                    }}
+                    _hover={{ opacity: 0.82 } as any}
+                  >
+                    <Zap size={13} style={{ flexShrink: 0 }} />
+                    {t("account.upgradeToPremium")}
+                  </Box>
+                </>
+              )}
 
               {/* Help */}
               <Box
@@ -251,16 +333,27 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 py="8px"
                 borderRadius="9px"
                 style={menuItemStyle}
-                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
+                _hover={
+                  {
+                    background: "rgba(255,255,255,0.08)",
+                    color: "white",
+                  } as any
+                }
               >
-                <HelpCircle size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
+                <HelpCircle
+                  size={15}
+                  style={{ opacity: 0.65, flexShrink: 0 }}
+                />
                 {t("account.help")}
               </Box>
 
               {/* Home */}
               <Box
                 as="button"
-                onClick={() => { onHome(); onClose(); }}
+                onClick={() => {
+                  onHome();
+                  onClose();
+                }}
                 display="flex"
                 alignItems="center"
                 gap={2}
@@ -269,7 +362,12 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 py="8px"
                 borderRadius="9px"
                 style={menuItemStyle}
-                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
+                _hover={
+                  {
+                    background: "rgba(255,255,255,0.08)",
+                    color: "white",
+                  } as any
+                }
               >
                 <Home size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
                 {t("account.home")}
@@ -278,7 +376,10 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
               {/* About */}
               <Box
                 as="button"
-                onClick={() => { onAbout(); onClose(); }}
+                onClick={() => {
+                  onAbout();
+                  onClose();
+                }}
                 display="flex"
                 alignItems="center"
                 gap={2}
@@ -287,7 +388,12 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 py="8px"
                 borderRadius="9px"
                 style={menuItemStyle}
-                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
+                _hover={
+                  {
+                    background: "rgba(255,255,255,0.08)",
+                    color: "white",
+                  } as any
+                }
               >
                 <Info size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
                 {t("account.about")}
@@ -304,7 +410,10 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
               {/* Logout */}
               <Box
                 as="button"
-                onClick={() => { onLogout(); onClose(); }}
+                onClick={() => {
+                  onLogout();
+                  onClose();
+                }}
                 display="flex"
                 alignItems="center"
                 gap={2}
@@ -313,7 +422,12 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 py="8px"
                 borderRadius="9px"
                 style={{ ...menuItemStyle, color: "rgba(248,113,113,0.85)" }}
-                _hover={{ background: "rgba(248,113,113,0.1)", color: "#f87171" } as any}
+                _hover={
+                  {
+                    background: "rgba(248,113,113,0.1)",
+                    color: "#f87171",
+                  } as any
+                }
               >
                 <LogOut size={15} style={{ flexShrink: 0 }} />
                 {t("account.signOut")}
@@ -381,16 +495,27 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 py="8px"
                 borderRadius="9px"
                 style={menuItemStyle}
-                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
+                _hover={
+                  {
+                    background: "rgba(255,255,255,0.08)",
+                    color: "white",
+                  } as any
+                }
               >
-                <HelpCircle size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
+                <HelpCircle
+                  size={15}
+                  style={{ opacity: 0.65, flexShrink: 0 }}
+                />
                 {t("account.help")}
               </Box>
 
               {/* Home */}
               <Box
                 as="button"
-                onClick={() => { onHome(); onClose(); }}
+                onClick={() => {
+                  onHome();
+                  onClose();
+                }}
                 display="flex"
                 alignItems="center"
                 gap={2}
@@ -399,7 +524,12 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 py="8px"
                 borderRadius="9px"
                 style={menuItemStyle}
-                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
+                _hover={
+                  {
+                    background: "rgba(255,255,255,0.08)",
+                    color: "white",
+                  } as any
+                }
               >
                 <Home size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
                 {t("account.home")}
@@ -408,7 +538,10 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
               {/* About */}
               <Box
                 as="button"
-                onClick={() => { onAbout(); onClose(); }}
+                onClick={() => {
+                  onAbout();
+                  onClose();
+                }}
                 display="flex"
                 alignItems="center"
                 gap={2}
@@ -417,7 +550,12 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 py="8px"
                 borderRadius="9px"
                 style={menuItemStyle}
-                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
+                _hover={
+                  {
+                    background: "rgba(255,255,255,0.08)",
+                    color: "white",
+                  } as any
+                }
               >
                 <Info size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
                 {t("account.about")}
@@ -434,7 +572,10 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
               {/* Sign in button */}
               <Box
                 as="button"
-                onClick={() => { onClose(); navigate("/login"); }}
+                onClick={() => {
+                  onClose();
+                  navigate("/login");
+                }}
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
@@ -444,7 +585,8 @@ export function AccountPanel({ open, user, anchorRef, panelRef, onClose, onLogou
                 borderRadius="10px"
                 mt={1}
                 style={{
-                  background: "linear-gradient(135deg, #1a6b55 0%, #1a4db5 100%)",
+                  background:
+                    "linear-gradient(135deg, #1a6b55 0%, #1a4db5 100%)",
                   color: "rgba(255,255,255,0.95)",
                   fontSize: "0.84rem",
                   fontFamily: "'HarmonyOS Sans', sans-serif",

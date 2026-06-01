@@ -2,9 +2,8 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { Crown, XCircle, Loader } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../../context/AuthContext";
-import { paymentService } from "../../services/payment.service";
 
 const MotionBox = motion.create(Box);
 
@@ -12,28 +11,19 @@ type Status = "loading" | "success" | "error";
 
 export function PaymentResultPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { refreshAccountTier } = useAuth();
   const [status, setStatus] = useState<Status>("loading");
 
   useEffect(() => {
-    const transactionCode = sessionStorage.getItem("vnpay_transaction_code");
-
-    if (!transactionCode) {
+    sessionStorage.removeItem("vnpay_transaction_code");
+    const statusParam = searchParams.get("status");
+    if (statusParam === "success") {
+      refreshAccountTier("Premium");
+      setStatus("success");
+    } else {
       setStatus("error");
-      return;
     }
-
-    paymentService
-      .upgradeSubscription(transactionCode)
-      .then(() => {
-        refreshAccountTier("Premium");
-        sessionStorage.removeItem("vnpay_transaction_code");
-        setStatus("success");
-      })
-      .catch(() => {
-        sessionStorage.removeItem("vnpay_transaction_code");
-        setStatus("error");
-      });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

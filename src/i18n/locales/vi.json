@@ -183,7 +183,8 @@
     "demoMode": "Chế độ Demo",
     "signInPrompt": "Đăng nhập để lưu không gian, đồng bộ tùy chọn và nhiều hơn nữa.",
     "signIn": "Đăng nhập",
-    "language": "Ngôn ngữ"
+    "language": "Ngôn ngữ",
+    "upgradeToPremium": "Nâng cấp Premium"
   },
   "widgetPicker": {
     "title": "WIDGET",

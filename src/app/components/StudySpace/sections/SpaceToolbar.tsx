@@ -1,19 +1,25 @@
+import { useEffect } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ChevronUp, ChevronDown,
   Image as ImageIcon, LayoutGrid, Sparkles, Palette,
-  AudioWaveform, Settings, Wand2, LayoutDashboard, BarChart2,
+  AudioWaveform, Settings, Wand2, LayoutDashboard, BarChart2, Trophy,
 } from "lucide-react";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
+import { coinService }                from "../../../../services/coin.service";
 import type { StudySpaceCtx }         from "../../../hooks/studyspace/useStudySpace";
 
 const MotionBox = motion.create(Box);
 
-interface Props { ctx: StudySpaceCtx; }
+interface Props {
+  ctx: StudySpaceCtx;
+  coinBalance?: number;
+  onCoinBalanceReady?: (balance: number) => void;
+}
 
-export function SpaceToolbar({ ctx }: Props) {
+export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
   const {
     navigate, t,
     currentUser, handleLogout,
@@ -24,6 +30,11 @@ export function SpaceToolbar({ ctx }: Props) {
     avatarBtnRef, accountPanelRef,
     setAboutOpen,
   } = ctx;
+
+  useEffect(() => {
+    if (!currentUser) return;
+    coinService.getBalance(currentUser.email).then((data) => onCoinBalanceReady?.(data.balance));
+  }, [currentUser]);
 
   return (
     <div className="no-capture">
@@ -71,6 +82,7 @@ export function SpaceToolbar({ ctx }: Props) {
       <AccountPanel
         open={accountOpen}
         user={currentUser}
+        coinBalance={coinBalance}
         anchorRef={avatarBtnRef}
         panelRef={accountPanelRef}
         onClose={() => setAccountOpen(false)}
@@ -161,6 +173,7 @@ export function SpaceToolbar({ ctx }: Props) {
                 <ToolbarBtn icon={<AudioWaveform size={22} />}   active={activePanel === "ambient"}  onClick={() => togglePanel("ambient")}  tooltip={t("space.ambientSounds")} />
                 <ToolbarBtn icon={<Wand2 size={22} />}           active={activePanel === "effects"}         onClick={() => togglePanel("effects")}         tooltip={t("effects.title")} />
                 <ToolbarBtn icon={<BarChart2 size={22} />}       active={activePanel === "pomodoro-stats"}  onClick={() => togglePanel("pomodoro-stats")}  tooltip="Phân tích Pomodoro" />
+                <ToolbarBtn icon={<Trophy size={22} />}          active={activePanel === "quest"}           onClick={() => togglePanel("quest")}           tooltip="Nhiệm vụ" />
                 <ToolbarBtn icon={<Settings size={22} />}        active={activePanel === "settings"}        onClick={() => togglePanel("settings")}        tooltip={t("settings.title")} />
 
                 {/* Account avatar button */}
