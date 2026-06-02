@@ -1225,8 +1225,9 @@ export function ThemeStorePanel({
             >
               <ShoppingBag size={14} color="rgba(167,139,250,0.9)" />
             </Box>
-            <Text style={{ fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.85)", letterSpacing: "0.1em" }}>
-              {t("themeStore.title")}
+            <Text style={{ fontSize: "1.25rem", color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>
+              <span style={{ fontFamily: "'Manrope', sans-serif" }}>Aēsthetic</span>
+              <span style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}> Store</span>
             </Text>
           </Flex>
           {canPurchase ? (
