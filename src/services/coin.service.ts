@@ -11,7 +11,7 @@ export interface CoinBalance {
 const MOCK_DATA: Record<string, CoinBalance> = {
   default: {
     userId: "mock-user",
-    balance: 1250,
+    balance: 6500,
     totalEarned: 3400,
     lastUpdated: new Date().toISOString(),
   },

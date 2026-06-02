@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence } from "motion/react";
 import { BackgroundPickerPanel } from "../panels/BackgroundPickerPanel";
 import { WidgetPickerPanel }     from "../panels/WidgetPickerPanel";
@@ -10,7 +11,11 @@ import { RoomManagerPanel }      from "../panels/RoomManagerPanel";
 import { PomodoroStatsPanel }    from "../panels/PomodoroStatsPanel";
 import { QuestPanel }            from "../panels/QuestPanel";
 import { AboutModal }            from "../ui/AboutModal";
+import { TrialBanner }           from "../ui/TrialBanner";
 import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
+import type { StoreItem }        from "../../../../services/aestheticStore.service";
+
+const TRIAL_DURATION = 600; // 10 minutes in seconds
 
 interface Props {
   ctx: StudySpaceCtx;
@@ -28,8 +33,68 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
     space, saveNow,
   } = ctx;
 
+  const [trialItem, setTrialItem]           = useState<StoreItem | null>(null);
+  const [trialSecondsLeft, setTrialSecondsLeft] = useState(0);
+  // ID to auto-open detail view when navigating to store from trial banner
+  const [buyItemId, setBuyItemId]           = useState<string | undefined>(undefined);
+
+  // Countdown tick
+  useEffect(() => {
+    if (!trialItem) return;
+    const timer = setInterval(() => {
+      setTrialSecondsLeft((prev) => {
+        if (prev <= 1) return 0;
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [!!trialItem]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-expire when time runs out
+  useEffect(() => {
+    if (trialItem && trialSecondsLeft === 0) {
+      setTrialItem(null);
+    }
+  }, [trialItem, trialSecondsLeft]);
+
+  const handleStartTrial = useCallback((item: StoreItem) => {
+    setTrialItem(item);
+    setTrialSecondsLeft(TRIAL_DURATION);
+    setBuyItemId(undefined);
+  }, []);
+
+  const handleDiscardTrial = useCallback(() => {
+    setTrialItem(null);
+    setTrialSecondsLeft(0);
+    setBuyItemId(undefined);
+  }, []);
+
+  const handleBuyFromTrial = useCallback(() => {
+    if (trialItem) setBuyItemId(trialItem.id);
+    setActivePanel("theme");
+  }, [trialItem, setActivePanel]);
+
+  const handleTrialEnd = useCallback(() => {
+    setTrialItem(null);
+    setTrialSecondsLeft(0);
+    setBuyItemId(undefined);
+  }, []);
+
   return (
     <div className="no-capture">
+      {/* ── Trial banner (lives outside panel so it persists when store is closed) ── */}
+      <AnimatePresence>
+        {trialItem && trialSecondsLeft > 0 && (
+          <TrialBanner
+            key="trial-banner"
+            item={trialItem}
+            secondsLeft={trialSecondsLeft}
+            onBuy={handleBuyFromTrial}
+            onDiscard={handleDiscardTrial}
+          />
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {activePanel === "image" && (
           <BackgroundPickerPanel
@@ -58,7 +123,13 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
         {activePanel === "theme" && (
           <ThemeStorePanel
             key="theme-panel"
-            onClose={() => setActivePanel(null)}
+            onClose={() => { setActivePanel(null); setBuyItemId(undefined); }}
+            coinBalance={coinBalance}
+            onCoinBalanceChange={onCoinBalanceChange}
+            onStartTrial={handleStartTrial}
+            onTrialEnd={handleTrialEnd}
+            trialItemId={trialItem?.id}
+            initialDetailItemId={buyItemId}
           />
         )}
         {activePanel === "ambient" && (

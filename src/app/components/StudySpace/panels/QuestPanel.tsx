@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { Trophy, Coins } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { questService, type Quest, type QuestCategory } from "../../../../services/quest.service";
@@ -12,10 +13,10 @@ const MotionBox = motion.create(Box);
 const PANEL_W = 420;
 const PANEL_H = 540;
 
-const CATEGORY_LABELS: Record<QuestCategory, string> = {
-  daily: "HÀNG NGÀY",
-  weekly: "HÀNG TUẦN",
-  achievement: "THÀNH TỰU",
+const CATEGORY_KEYS: Record<QuestCategory, string> = {
+  daily: "quest.daily",
+  weekly: "quest.weekly",
+  achievement: "quest.achievement",
 };
 
 const TABS: QuestCategory[] = ["daily", "weekly", "achievement"];
@@ -52,6 +53,7 @@ function QuestCard({
   onClaim: (id: string) => void;
   claiming: boolean;
 }) {
+  const { t } = useTranslation();
   const isClaimed = quest.status === "claimed";
   const isClaimable = quest.status === "claimable";
   const isActive = quest.status === "active";
@@ -151,7 +153,7 @@ function QuestCard({
                     color: isClaimable ? "#4ade80" : "rgba(255,255,255,0.3)",
                   }}
                 >
-                  {isClaimable ? "Sẵn sàng nhận!" : `${quest.progress} / ${quest.target}`}
+                  {isClaimable ? t("quest.claimable") : `${quest.progress} / ${quest.target}`}
                 </Text>
 
                 {isClaimable && (
@@ -172,7 +174,7 @@ function QuestCard({
                       opacity: claiming ? 0.6 : 1,
                     }}
                   >
-                    {claiming ? "…" : "Nhận thưởng"}
+                    {claiming ? "…" : t("quest.claim")}
                   </Box>
                 )}
 
@@ -202,7 +204,7 @@ function QuestCard({
                 color: "rgba(255,255,255,0.22)",
               }}
             >
-              Đã hoàn thành ✓
+              {t("quest.completed")}
             </Text>
           )}
         </Box>
@@ -222,6 +224,7 @@ export function QuestPanel({
 }) {
   const { x, y, ref } = useCenteredPanel(PANEL_W, PANEL_H);
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   const [tab, setTab] = useState<QuestCategory>("daily");
   const [quests, setQuests] = useState<Quest[]>([]);
@@ -291,7 +294,7 @@ export function QuestPanel({
       }}
     >
       {/* ── Header ── */}
-      <Box px="18px" pt="18px" pb="14px" flexShrink={0}>
+      <Box pl="18px" pr="56px" pt="18px" pb="14px" flexShrink={0}>
         <PanelCloseBtn onClose={onClose} />
 
         <Flex align="center" justify="space-between">
@@ -305,7 +308,7 @@ export function QuestPanel({
                 fontFamily: "'HarmonyOS Sans', sans-serif",
               }}
             >
-              NHIỆM VỤ
+              {t("quest.title").toUpperCase()}
             </Text>
           </Flex>
 
@@ -323,21 +326,21 @@ export function QuestPanel({
                 color: "#4ade80",
               }}
             >
-              {claimableCount} có thể nhận
+              {t("quest.canClaim", { count: claimableCount })}
             </Flex>
           )}
         </Flex>
 
         {/* ── Tabs ── */}
         <Flex gap={1} mt="12px">
-          {TABS.map((t) => {
-            const count = quests.filter(q => q.category === t && q.status === "claimable").length;
-            const active = tab === t;
+          {TABS.map((cat) => {
+            const count = quests.filter(q => q.category === cat && q.status === "claimable").length;
+            const active = tab === cat;
             return (
               <Box
-                key={t}
+                key={cat}
                 as="button"
-                onClick={() => setTab(t)}
+                onClick={() => setTab(cat)}
                 flex={1}
                 py="6px"
                 borderRadius="8px"
@@ -346,15 +349,15 @@ export function QuestPanel({
                   fontFamily: "'HarmonyOS Sans', sans-serif",
                   fontWeight: active ? 700 : 500,
                   letterSpacing: "0.06em",
-                  background: active ? `${tabColor[t]}18` : "transparent",
-                  border: active ? `1px solid ${tabColor[t]}40` : "1px solid transparent",
-                  color: active ? tabColor[t] : "rgba(255,255,255,0.35)",
+                  background: active ? `${tabColor[cat]}18` : "transparent",
+                  border: active ? `1px solid ${tabColor[cat]}40` : "1px solid transparent",
+                  color: active ? tabColor[cat] : "rgba(255,255,255,0.35)",
                   cursor: "pointer",
                   transition: "all 0.15s",
                   position: "relative",
                 }}
               >
-                {CATEGORY_LABELS[t]}
+                {t(CATEGORY_KEYS[cat])}
                 {count > 0 && (
                   <Box
                     style={{
@@ -384,7 +387,7 @@ export function QuestPanel({
         {loading ? (
           <Flex h="100%" align="center" justify="center">
             <Text style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.8rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              Đang tải…
+              {t("quest.loading")}
             </Text>
           </Flex>
         ) : (

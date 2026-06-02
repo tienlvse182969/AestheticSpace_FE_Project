@@ -249,9 +249,48 @@
     "errorCode": "Error {{code}}"
   },
   "themeStore": {
-    "title": "THEMES",
-    "comingSoon": "Theme store will be available soon",
-    "subtitle": "Curated color palettes & UI themes are on the way ✦"
+    "title": "AESTHETIC STORE",
+    "tooltip": "Aesthetic Store",
+    "tabAll": "All",
+    "tabDiscovery": "Discovery",
+    "tabThemes": "Themes",
+    "tabStickers": "Stickers",
+    "tabWallpapers": "Wallpapers",
+    "tabSounds": "Sounds",
+    "tabEffects": "Effects",
+    "tabPurchased": "Purchased",
+    "tabWishlist": "Wishlist",
+    "sidebarBrowse": "BROWSE",
+    "sidebarLibrary": "LIBRARY",
+    "sidebarSource": "SOURCE",
+    "sidebarType": "TYPE",
+    "filterAll": "All Sources",
+    "filterOfficial": "Official",
+    "filterCommunity": "Community",
+    "coins": "Coins",
+    "free": "Free",
+    "purchased": "Purchased",
+    "searchPlaceholder": "Search…",
+    "loading": "Loading store…",
+    "empty": "No items found",
+    "detail": {
+      "back": "Back",
+      "includes": "Includes",
+      "wallpaper": "Exclusive wallpaper",
+      "stickers": "{{count}} stickers",
+      "sounds": "{{count}} ambient sounds",
+      "effect": "Visual effect",
+      "widgetStyle": "Custom widget style",
+      "buyNow": "Buy Now",
+      "notEnoughCoins": "Not enough coins"
+    },
+    "trial": {
+      "button": "Try 10 min",
+      "banner": "Trying",
+      "buyNow": "Buy now",
+      "discard": "Discard",
+      "trying": "TRYING"
+    }
   },
   "stickerPicker": {
     "title": "STICKERS",
@@ -370,6 +409,28 @@
     "accentColor": "Accent color",
     "accentColorDesc": "Applied to widgets and UI highlights",
     "custom": "Custom"
+  },
+  "premiumGate": {
+    "title": "Premium Feature",
+    "desc": "Upgrade your plan to unlock this feature and enjoy the full Aesthetic Space experience.",
+    "sticker": "Stickers",
+    "ambient": "Ambient Sounds",
+    "effects": "Visual Effects",
+    "quest": "Quest System",
+    "store": "Aesthetic Store",
+    "upgrade": "Upgrade Now",
+    "later": "Maybe Later"
+  },
+  "quest": {
+    "title": "Quests",
+    "canClaim": "{{count}} claimable",
+    "daily": "DAILY",
+    "weekly": "WEEKLY",
+    "achievement": "ACHIEVEMENTS",
+    "claimable": "Ready to claim!",
+    "claim": "Claim reward",
+    "completed": "Completed ✓",
+    "loading": "Loading…"
   },
   "effects": {
     "title": "EFFECTS",
