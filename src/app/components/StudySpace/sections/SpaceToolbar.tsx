@@ -3,7 +3,7 @@ import { Box, Flex } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ChevronUp, ChevronDown,
-  Image as ImageIcon, LayoutGrid, Sparkles, Palette,
+  Image as ImageIcon, LayoutGrid, Sparkles, ShoppingBag,
   AudioWaveform, Settings, Wand2, LayoutDashboard, BarChart2, Trophy,
 } from "lucide-react";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
@@ -177,7 +177,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                 <ToolbarBtn icon={<LayoutDashboard size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} />
                 <ToolbarBtn icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} />
                 <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} />
-                <ToolbarBtn icon={<Palette size={22} />}         active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("space.themes")} />
+                <ToolbarBtn icon={<ShoppingBag size={22} />}     active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("themeStore.tooltip")} />
                 <ToolbarBtn icon={<Sparkles size={22} />}      active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} />
                 <ToolbarBtn icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} locked={isFree} onClick={() => isFree ? handleLockedClick("ambient") : togglePanel("ambient")} tooltip={t("space.ambientSounds")} />
                 <ToolbarBtn icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} />

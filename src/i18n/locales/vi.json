@@ -249,9 +249,48 @@
     "errorCode": "Lỗi {{code}}"
   },
   "themeStore": {
-    "title": "GIAO DIỆN",
-    "comingSoon": "Cửa hàng giao diện sắp ra mắt",
-    "subtitle": "Bộ màu và giao diện được tuyển chọn đang trên đường đến ✦"
+    "title": "AESTHETIC STORE",
+    "tooltip": "Aesthetic Store",
+    "tabAll": "Tất cả",
+    "tabDiscovery": "Khám phá",
+    "tabThemes": "Giao diện",
+    "tabStickers": "Stickers",
+    "tabWallpapers": "Hình nền",
+    "tabSounds": "Âm thanh",
+    "tabEffects": "Hiệu ứng",
+    "tabPurchased": "Đã mua",
+    "tabWishlist": "Yêu thích",
+    "sidebarBrowse": "DUYỆT",
+    "sidebarLibrary": "THƯ VIỆN",
+    "sidebarSource": "NGUỒN",
+    "sidebarType": "LOẠI",
+    "filterAll": "Tất cả",
+    "filterOfficial": "Chính thức",
+    "filterCommunity": "Cộng đồng",
+    "coins": "Xu",
+    "free": "Miễn phí",
+    "purchased": "Đã mua",
+    "searchPlaceholder": "Tìm kiếm…",
+    "loading": "Đang tải cửa hàng…",
+    "empty": "Không tìm thấy mục nào",
+    "detail": {
+      "back": "Quay lại",
+      "includes": "Bao gồm",
+      "wallpaper": "Hình nền độc quyền",
+      "stickers": "{{count}} stickers",
+      "sounds": "{{count}} âm thanh",
+      "effect": "Hiệu ứng hình ảnh",
+      "widgetStyle": "Kiểu widget riêng",
+      "buyNow": "Mua ngay",
+      "notEnoughCoins": "Không đủ xu"
+    },
+    "trial": {
+      "button": "Dùng thử 10 phút",
+      "banner": "Đang dùng thử",
+      "buyNow": "Mua ngay",
+      "discard": "Từ bỏ",
+      "trying": "ĐANG THỬ"
+    }
   },
   "stickerPicker": {
     "title": "NHÃN DÁN",
@@ -377,6 +416,7 @@
     "ambient": "Âm thanh môi trường",
     "effects": "Hiệu ứng hình ảnh",
     "quest": "Hệ thống nhiệm vụ",
+    "store": "Aesthetic Store",
     "upgrade": "Nâng cấp ngay",
     "later": "Để sau"
   },
