@@ -32,8 +32,9 @@ const CATEGORY_COLORS: Record<string, { color: string; bg: string }> = {
 };
 
 export function SoundsSection() {
-  const [sounds, setSounds]   = useState<AdminSound[]>(ADMIN_SOUNDS);
+  const [sounds, setSounds]     = useState<AdminSound[]>(ADMIN_SOUNDS);
   const [deletedId, setDeletedId] = useState<string | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
   const toggleActive = (id: string) =>
     setSounds(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
@@ -102,12 +103,13 @@ export function SoundsSection() {
               px={5}
               py={4}
               style={{
-                background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent",
+                background: hoveredRow === s.id ? "rgba(78,124,106,0.1)" : "transparent",
                 borderBottom: i < sounds.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                 opacity: isDeleting ? 0 : 1,
                 transition: "opacity 0.3s, background 0.15s",
               }}
-              _hover={{ background: "rgba(255,255,255,0.04)" } as any}
+              onMouseEnter={() => setHoveredRow(s.id)}
+              onMouseLeave={() => setHoveredRow(null)}
             >
               {/* Sound name + icon */}
               <Flex align="center" gap={3} style={{ flex: 3 }}>

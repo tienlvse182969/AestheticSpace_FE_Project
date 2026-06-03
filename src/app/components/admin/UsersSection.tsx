@@ -54,6 +54,7 @@ export function UsersSection() {
   const [query,        setQuery]        = useState("");
   const [openMenu,     setOpenMenu]     = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [hoveredRow,    setHoveredRow]    = useState<string | null>(null);
 
   const fetchUsers = useCallback(async (p: number) => {
     setLoading(true);
@@ -220,12 +221,13 @@ export function UsersSection() {
                 py="14px"
                 position="relative"
                 style={{
-                  background:   i % 2 === 0 ? "transparent" : `${c.cardBg}44`,
+                  background:   hoveredRow === u.id ? "rgba(78,124,106,0.1)" : "transparent",
                   borderBottom: i < filtered.length - 1 ? `1px solid ${c.rowDivider}` : "none",
                   transition:   "background 0.15s",
                   opacity:      actionLoading === u.id ? 0.5 : 1,
                 }}
-                _hover={{ background: c.navHover } as any}
+                onMouseEnter={() => setHoveredRow(u.id)}
+                onMouseLeave={() => setHoveredRow(null)}
               >
                 {/* User */}
                 <Flex align="center" gap={2} style={{ flex: 2, minWidth: 0 }}>

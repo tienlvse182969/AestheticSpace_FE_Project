@@ -3,7 +3,7 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, Users, Palette, Sparkles, AudioWaveform,
-  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut, Globe,
+  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut, Globe, Target,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -11,8 +11,9 @@ import { useAuth } from "../../context/AuthContext";
 import { AdminThemeProvider, useAdminTheme } from "../components/admin/AdminThemeContext";
 import { analyticsAdminService } from "../../services/admin/analytics.admin.service";
 import { AvatarCircle } from "../components/StudySpace/panels/AccountPanel";
-import { DashboardSection } from "../components/admin/DashboardSection";
-import { UsersSection }     from "../components/admin/UsersSection";
+import { DashboardSection }  from "../components/admin/DashboardSection";
+import { UsersSection }      from "../components/admin/UsersSection";
+import { MissionsSection }   from "../components/admin/MissionsSection";
 import { ThemesSection }    from "../components/admin/ThemesSection";
 import { StickersSection }  from "../components/admin/StickersSection";
 import { SoundsSection }    from "../components/admin/SoundsSection";
@@ -20,7 +21,7 @@ import { RevenueSection }   from "../components/admin/RevenueSection";
 
 const MotionBox = motion.create(Box);
 
-type AdminSection = "dashboard" | "users" | "themes" | "stickers" | "sounds" | "revenue";
+type AdminSection = "dashboard" | "users" | "missions" | "themes" | "stickers" | "sounds" | "revenue";
 
 const BASE_NAV_ITEMS: {
   key: AdminSection;
@@ -30,6 +31,7 @@ const BASE_NAV_ITEMS: {
 }[] = [
   { key: "dashboard", labelKey: "admin.nav.dashboard", icon: LayoutDashboard },
   { key: "users",     labelKey: "admin.nav.users",     icon: Users },
+  { key: "missions",  labelKey: "admin.nav.missions",  icon: Target },
   { key: "revenue",   labelKey: "admin.nav.revenue",   icon: BarChart2 },
   { key: "themes",    labelKey: "admin.nav.themes",    icon: Palette,       badge: 6 },
   { key: "stickers",  labelKey: "admin.nav.stickers",  icon: Sparkles,      badge: 8 },
@@ -464,6 +466,7 @@ function AdminPageInner() {
             >
               {activeSection === "dashboard" && <DashboardSection />}
               {activeSection === "users"     && <UsersSection />}
+              {activeSection === "missions"  && <MissionsSection />}
               {activeSection === "revenue"   && <RevenueSection />}
               {activeSection === "themes"    && <ThemesSection />}
               {activeSection === "stickers"  && <StickersSection />}

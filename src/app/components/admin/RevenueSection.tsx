@@ -54,6 +54,7 @@ const totalRefunded = TRANSACTIONS.filter(t => t.status === "refunded").reduce((
 
 export function RevenueSection() {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+  const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
   return (
     <Box>
@@ -294,11 +295,12 @@ export function RevenueSection() {
               px={5}
               py="13px"
               style={{
-                background: i % 2 === 0 ? "rgba(255,255,255,0.01)" : "transparent",
+                background: hoveredRow === tx.id ? "rgba(78,124,106,0.1)" : "transparent",
                 borderBottom: i < TRANSACTIONS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                 transition: "background 0.15s",
               }}
-              _hover={{ background: "rgba(255,255,255,0.04)" } as any}
+              onMouseEnter={() => setHoveredRow(tx.id)}
+              onMouseLeave={() => setHoveredRow(null)}
             >
               {/* ID */}
               <Text style={{ flex: 1.4, fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.04em" }}>
