@@ -432,6 +432,13 @@
     "completed": "Completed ✓",
     "loading": "Loading…"
   },
+  "firstRoom": {
+    "title": "Welcome to your Space!",
+    "subtitle": "Give your first room a name to get started.",
+    "placeholder": "My Study Room",
+    "confirm": "Create Room",
+    "error": "Could not create room. Please try again."
+  },
   "room": {
     "loading": "Loading…",
     "retry": "Retry",

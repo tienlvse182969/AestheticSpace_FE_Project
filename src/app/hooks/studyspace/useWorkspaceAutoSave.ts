@@ -33,6 +33,7 @@ interface WorkspaceSaveParams {
   accentColor?: string;
   musicState?: { source: string; activeUrl: string };
   captureScreenshot?: () => Promise<string | null>;
+  onNewUser?: () => void;
   onRestore: (data: {
     roomId: string;
     bg: BackgroundItem;
@@ -57,6 +58,7 @@ export function useWorkspaceAutoSave({
   accentColor,
   musicState,
   captureScreenshot,
+  onNewUser,
   onRestore,
 }: WorkspaceSaveParams) {
   const [saveStatus,   setSaveStatus]   = useState<SaveStatus>("idle");
@@ -84,26 +86,10 @@ export function useWorkspaceAutoSave({
     workspaceService.getMyWorkspace()
       .then(async (config) => {
         if (!config?.roomId || !config?.jsonConfig) {
-          // New user — auto-select the first available room
-          const rooms = await roomService.getAll().catch(() => []);
-          if (rooms.length === 0) return;
-          const first = rooms[0];
-          const detail = await roomService.getById(first.id).catch(() => null);
-          const bg: BackgroundItem = {
-            id: first.id,
-            url: detail?.backgroundUrl ?? detail?.thumbnailUrl ?? first.thumbnailUrl ?? "",
-            thumb: first.thumbnailUrl ?? "",
-            label: first.name,
-          };
-          const emptyLayout: LayoutConfig = {
-            activeEffect: null,
-            activeWidgets: [],
-            placedStickers: [],
-            stickyNotes: [],
-            widgetPositions: {},
-            todoItems: [],
-          };
-          onRestore({ roomId: first.id, bg, layout: emptyLayout });
+          // New user — show first-room naming modal if handler provided
+          if (onNewUser) {
+            onNewUser();
+          }
           return;
         }
 

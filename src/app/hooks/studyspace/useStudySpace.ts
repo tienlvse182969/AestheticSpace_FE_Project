@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../context/AuthContext";
 import { useAccent } from "../../context/AccentContext";
 import { useWorkspaceAutoSave } from "./useWorkspaceAutoSave";
+import { roomService }          from "../../../services/room.service";
 import { useClockSettings }    from "./useClockSettings";
 import { usePomodoroSettings } from "./usePomodoroSettings";
 import { useSpaceItems }       from "./useSpaceItems";
@@ -41,9 +42,10 @@ export function useStudySpace() {
   const [layoutLocked,   setLayoutLocked]   = useState(false);
   const [aboutOpen,      setAboutOpen]      = useState(false);
   const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
-  const [accountOpen,    setAccountOpen]    = useState(false);
-  const [currentBg,      setCurrentBg]      = useState<BackgroundItem>(BACKGROUNDS[3]);
-  const [roomId,         setRoomId]         = useState<string | null>(null);
+  const [accountOpen,         setAccountOpen]         = useState(false);
+  const [currentBg,           setCurrentBg]           = useState<BackgroundItem>(BACKGROUNDS[3]);
+  const [roomId,              setRoomId]              = useState<string | null>(null);
+  const [showFirstRoomModal,  setShowFirstRoomModal]  = useState(false);
   const [musicSource,    setMusicSource]    = useState<"youtube" | "soundcloud">("youtube");
   const [musicUrl,       setMusicUrl]       = useState("");
 
@@ -131,6 +133,27 @@ export function useStudySpace() {
     } catch { applyLayout(emptyLayout); }
   }, [user, applyLayout]);
 
+  /* ── First-room creation flow ── */
+  const handleNewUser = useCallback(() => {
+    setShowFirstRoomModal(true);
+  }, []);
+
+  const handleFirstRoomCreate = useCallback(async (name: string) => {
+    const created = await roomService.createMyRoom({ name, description: null, thumbnailUrl: null, backgroundUrl: null });
+    const bg: BackgroundItem = {
+      id: created.id,
+      url: created.thumbnailUrl ?? BACKGROUNDS[3].url,
+      thumb: created.thumbnailUrl ?? "",
+      label: created.name,
+    };
+    const emptyLayout: LayoutConfig = {
+      activeEffect: null, activeWidgets: [], placedStickers: [],
+      stickyNotes: [], widgetPositions: {}, todoItems: [],
+    };
+    handleRestore({ roomId: created.id, bg, layout: emptyLayout });
+    setShowFirstRoomModal(false);
+  }, [handleRestore]);
+
   /* ── Screenshot for thumbnail ── */
   const captureScreenshot = useCallback(async (): Promise<string | null> => {
     if (!spaceRef.current) return null;
@@ -169,6 +192,7 @@ export function useStudySpace() {
     accentColor: accent,
     musicState: { source: musicSource, activeUrl: musicUrl },
     captureScreenshot,
+    onNewUser: handleNewUser,
     onRestore: handleRestore,
   });
 
@@ -202,6 +226,7 @@ export function useStudySpace() {
     clock, pomodoro, space,
     WIDGET_POSITIONS,
     applyLayout, handleRestore, handleRoomSelect, captureScreenshot,
+    showFirstRoomModal, handleFirstRoomCreate,
     saveStatus, saveNow, isRestoring,
     accent, setAccent,
   };

@@ -146,6 +146,12 @@ export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManag
       } else {
         const created = await roomService.createMyRoom(body);
         setRooms(prev => [...prev, created]);
+        onSelect(created.id, {
+          id: created.id,
+          url: created.thumbnailUrl ?? "",
+          thumb: created.thumbnailUrl ?? "",
+          label: created.name,
+        });
       }
       closeForm();
     } catch {

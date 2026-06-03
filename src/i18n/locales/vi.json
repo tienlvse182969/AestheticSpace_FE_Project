@@ -431,6 +431,13 @@
     "completed": "Đã hoàn thành ✓",
     "loading": "Đang tải…"
   },
+  "firstRoom": {
+    "title": "Chào mừng đến với Space của bạn!",
+    "subtitle": "Đặt tên cho phòng đầu tiên để bắt đầu.",
+    "placeholder": "Phòng học của tôi",
+    "confirm": "Tạo phòng",
+    "error": "Không thể tạo phòng. Vui lòng thử lại."
+  },
   "room": {
     "loading": "Đang tải…",
     "retry": "Thử lại",
