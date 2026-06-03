@@ -356,7 +356,11 @@
     "nextSessionDesc": "Bắt đầu hiệp {{next}} / {{total}} ({{minutes}} phút)?",
     "startNext": "Hiệp {{next}} 🚀",
     "stop": "Dừng lại",
-    "restart": "Bắt đầu lại"
+    "restart": "Bắt đầu lại",
+    "cancelConfirmTitle": "Hủy phiên tập trung?",
+    "cancelConfirmDesc": "Phiên này sẽ bị xóa và không được tính vào thống kê.",
+    "cancelConfirmBtn": "Hủy phiên",
+    "cancelKeepBtn": "Tiếp tục"
   },
   "clockSettings": {
     "title": "Cài đặt đồng hồ",

@@ -32,6 +32,10 @@ export const pomodoroService = {
     return data.data;
   },
 
+  cancel: async (sessionId: string): Promise<void> => {
+    await api.post("/pomodoro/cancel", { sessionId });
+  },
+
   getStats: async (): Promise<PomodoroStatsDto> => {
     const { data } = await api.get<ApiResponse<PomodoroStatsDto>>("/pomodoro/stats");
     return data.data;

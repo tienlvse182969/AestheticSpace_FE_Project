@@ -357,7 +357,11 @@
     "nextSessionDesc": "Start session {{next}} / {{total}} ({{minutes}} min)?",
     "startNext": "Session {{next}} 🚀",
     "stop": "Stop",
-    "restart": "Start Again"
+    "restart": "Start Again",
+    "cancelConfirmTitle": "Cancel focus session?",
+    "cancelConfirmDesc": "This session will be deleted and won't count toward your stats.",
+    "cancelConfirmBtn": "Cancel Session",
+    "cancelKeepBtn": "Keep Going"
   },
   "clockSettings": {
     "title": "Clock Settings",

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -37,10 +37,13 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
 
   const handleLockedClick = (feature: LockedFeature) => setGateFeature(feature);
 
-  useEffect(() => {
-    if (!currentUser) return;
-    coinService.getBalance().then((data) => onCoinBalanceReady?.(data.balance));
-  }, [currentUser]);
+  const handleAvatarClick = () => {
+    const opening = !accountOpen;
+    setAccountOpen(opening);
+    if (opening && currentUser) {
+      coinService.getBalance().then((data) => onCoinBalanceReady?.(data.balance));
+    }
+  };
 
   return (
     <div className="no-capture">
@@ -189,7 +192,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                 <Box
                   ref={avatarBtnRef as any}
                   as="button"
-                  onClick={() => setAccountOpen(v => !v)}
+                  onClick={handleAvatarClick}
                   display="flex" alignItems="center" justifyContent="center"
                   bg="transparent" border="none" cursor="pointer"
                   title={currentUser ? currentUser.name : t("space.guestTooltip")}
