@@ -10,7 +10,7 @@ const savedLang = typeof localStorage !== "undefined"
 i18n
   .use(initReactI18next)
   .init({
-    resources: {
+    resources: {  
       en: { translation: en },
       vi: { translation: vi },
     },

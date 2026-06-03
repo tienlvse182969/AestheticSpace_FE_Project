@@ -1,26 +1,40 @@
-// TODO: Replace mock data with actual API calls when backend is ready
-// Expected endpoint: GET /users/:userId/coins
+import api from "./api";
+import type { ApiResponse } from "../types/api.types";
 
 export interface CoinBalance {
-  userId: string;
   balance: number;
-  totalEarned: number;
-  lastUpdated: string;
 }
 
-const MOCK_DATA: Record<string, CoinBalance> = {
-  default: {
-    userId: "mock-user",
-    balance: 6500,
-    totalEarned: 3400,
-    lastUpdated: new Date().toISOString(),
-  },
-};
+export interface CoinTransaction {
+  id: string;
+  type: 0 | 1 | 2;
+  amount: number;
+  reason: string | null;
+  relatedPurchaseId: string | null;
+  relatedMissionId: string | null;
+  createdAt: string;
+}
+
+interface TransactionPage {
+  items: CoinTransaction[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrevious: boolean;
+}
 
 export const coinService = {
-  getBalance: async (userId: string): Promise<CoinBalance> => {
-    // Simulates network delay
-    await new Promise((res) => setTimeout(res, 150));
-    return { ...(MOCK_DATA[userId] ?? MOCK_DATA.default), userId };
+  getBalance: async (): Promise<CoinBalance> => {
+    const { data } = await api.get<ApiResponse<CoinBalance>>("/coins/balance");
+    return data.data;
+  },
+
+  getTransactions: async (page = 1, pageSize = 5): Promise<CoinTransaction[]> => {
+    const { data } = await api.get<ApiResponse<TransactionPage>>("/coins/transactions", {
+      params: { page, pageSize },
+    });
+    return data.data?.items ?? [];
   },
 };

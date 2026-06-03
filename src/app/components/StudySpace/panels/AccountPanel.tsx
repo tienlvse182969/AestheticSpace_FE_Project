@@ -166,7 +166,6 @@ export function AccountPanel({
   const [pos, setPos] = useState<{ bottom: number; right: number } | null>(
     null,
   );
-
   useEffect(() => {
     if (!open || !anchorRef.current) return;
     const rect = anchorRef.current.getBoundingClientRect();
@@ -209,7 +208,7 @@ export function AccountPanel({
             border: "1px solid rgba(255,255,255,0.12)",
             borderRadius: "16px",
             padding: "10px",
-            minWidth: "220px",
+            minWidth: "240px",
             boxShadow: "0 16px 48px rgba(0,0,0,0.65)",
             transformOrigin: "bottom right",
           }}

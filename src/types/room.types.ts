@@ -6,6 +6,14 @@ export interface Room {
   isPremium: boolean;
 }
 
+export interface UserRoom {
+  id: string;
+  name: string;
+  description: string | null;
+  thumbnailUrl: string | null;
+  isFavorite: boolean;
+}
+
 export interface RoomAsset {
   id: string;
   name: string | null;
