@@ -3,11 +3,13 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, Users, Palette, Sparkles, AudioWaveform,
-  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut,
+  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut, Globe,
 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import { AdminThemeProvider, useAdminTheme } from "../components/admin/AdminThemeContext";
+import { analyticsAdminService } from "../../services/admin/analytics.admin.service";
 import { AvatarCircle } from "../components/StudySpace/panels/AccountPanel";
 import { DashboardSection } from "../components/admin/DashboardSection";
 import { UsersSection }     from "../components/admin/UsersSection";
@@ -20,30 +22,45 @@ const MotionBox = motion.create(Box);
 
 type AdminSection = "dashboard" | "users" | "themes" | "stickers" | "sounds" | "revenue";
 
-const NAV_ITEMS: {
+const BASE_NAV_ITEMS: {
   key: AdminSection;
-  label: string;
+  labelKey: string;
   icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
   badge?: number;
 }[] = [
-  { key: "dashboard", label: "Dashboard",     icon: LayoutDashboard },
-  { key: "users",     label: "Users",          icon: Users,         badge: 1247 },
-  { key: "revenue",   label: "Revenue",        icon: BarChart2 },
-  { key: "themes",    label: "Themes",         icon: Palette,       badge: 6   },
-  { key: "stickers",  label: "Stickers",       icon: Sparkles,      badge: 8   },
-  { key: "sounds",    label: "Ambient Sounds", icon: AudioWaveform, badge: 8   },
+  { key: "dashboard", labelKey: "admin.nav.dashboard", icon: LayoutDashboard },
+  { key: "users",     labelKey: "admin.nav.users",     icon: Users },
+  { key: "revenue",   labelKey: "admin.nav.revenue",   icon: BarChart2 },
+  { key: "themes",    labelKey: "admin.nav.themes",    icon: Palette,       badge: 6 },
+  { key: "stickers",  labelKey: "admin.nav.stickers",  icon: Sparkles,      badge: 8 },
+  { key: "sounds",    labelKey: "admin.nav.sounds",    icon: AudioWaveform, badge: 8 },
 ];
 
 function AdminPageInner() {
   const [activeSection,    setActiveSection]    = useState<AdminSection>("dashboard");
   const [showAccountPanel, setShowAccountPanel] = useState(false);
+  const [totalUsers,       setTotalUsers]       = useState<number | null>(null);
   const avatarRef      = useRef<HTMLDivElement>(null);
   const panelRef       = useRef<HTMLDivElement>(null);
   const navigate       = useNavigate();
+  const { t, i18n }    = useTranslation();
+  const isVi = i18n.language === "vi";
   const { user, logout } = useAuth();
   const { isDark, toggle, c } = useAdminTheme();
 
+  const NAV_ITEMS = BASE_NAV_ITEMS.map(item => ({
+    ...item,
+    label: t(item.labelKey),
+    ...(item.key === "users" && totalUsers !== null ? { badge: totalUsers } : {}),
+  }));
+
   const current = NAV_ITEMS.find(n => n.key === activeSection)!;
+
+  useEffect(() => {
+    analyticsAdminService.getOverview()
+      .then(d => setTotalUsers(d.totalUsers))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -116,9 +133,9 @@ function AdminPageInner() {
               <ShieldCheck size={14} style={{ color: "#4e7c6a" }} />
             </Flex>
             <Text style={{ fontSize: "0.95rem", color: c.text, letterSpacing: "0.01em" }}>
-              <span style={{ fontFamily: "'Manrope', sans-serif" }}>Aesthetic</span>
+              <span style={{ fontFamily: "'Manrope', sans-serif" }}>Aēsthetic</span>
               {" "}
-              <span style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}>Admin Panel</span>
+              <span style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.nav.adminPanel")}</span>
             </Text>
           </Flex>
         </Box>
@@ -130,7 +147,7 @@ function AdminPageInner() {
             px={2}
             style={{ fontSize: "0.6rem", color: c.textSub, letterSpacing: "0.14em" }}
           >
-            NAVIGATION
+            {t("admin.nav.navigation")}
           </Text>
 
           {NAV_ITEMS.map(item => {
@@ -207,7 +224,7 @@ function AdminPageInner() {
           >
             <ArrowLeft size={14} style={{ color: c.textDim }} />
             <Text style={{ fontSize: "0.8rem", color: c.textDim }}>
-              Back to Home
+              {t("admin.nav.backToHome")}
             </Text>
           </Box>
         </Box>
@@ -232,7 +249,7 @@ function AdminPageInner() {
             {/* Breadcrumb */}
             <Flex align="center" gap={2}>
               <Text style={{ fontSize: "0.7rem", color: c.textSub, letterSpacing: "0.06em" }}>
-                Admin
+                {t("admin.topbar.breadcrumb")}
               </Text>
               <ChevronRight size={12} style={{ color: c.textSub }} />
               <Text style={{ fontSize: "0.7rem", color: c.textMuted }}>
@@ -259,8 +276,27 @@ function AdminPageInner() {
                   borderRadius="full"
                   style={{ background: "#4ade80", boxShadow: "0 0 6px #4ade80" }}
                 />
-                <Text style={{ fontSize: "0.7rem", color: "#4ade80" }}>Live</Text>
+                <Text style={{ fontSize: "0.7rem", color: "#4ade80" }}>{t("admin.topbar.live")}</Text>
               </Flex>
+
+              {/* Language toggle */}
+              <Box
+                as="button"
+                onClick={() => i18n.changeLanguage(isVi ? "en" : "vi")}
+                border="none"
+                cursor="pointer"
+                borderRadius="8px"
+                px={3}
+                py="6px"
+                transition="all 0.18s"
+                style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}`, display: "flex", alignItems: "center", gap: 5 }}
+                _hover={{ background: c.navHover } as any}
+              >
+                <Globe size={13} style={{ color: c.textMuted }} />
+                <Text style={{ fontSize: "0.7rem", color: c.textMuted, fontWeight: 600, userSelect: "none" }}>
+                  {isVi ? "VI" : "EN"}
+                </Text>
+              </Box>
 
               {/* Theme toggle */}
               <Box
@@ -406,7 +442,7 @@ function AdminPageInner() {
                         _hover={{ background: "rgba(248,113,113,0.1)", color: "#f87171" } as any}
                       >
                         <LogOut size={15} style={{ flexShrink: 0 }} />
-                        Đăng xuất
+                        {t("admin.topbar.logout")}
                       </Box>
                     </MotionBox>
                   )}
@@ -414,22 +450,6 @@ function AdminPageInner() {
               </Box>
             </Flex>
           </Flex>
-        </Box>
-
-        {/* Section title */}
-        <Box
-          px={8}
-          pt={6}
-          pb={4}
-          flexShrink={0}
-          style={{ borderBottom: `1px solid ${c.border}`, transition: "border-color 0.3s" }}
-        >
-          <Text style={{ fontSize: "0.62rem", color: c.textSub, letterSpacing: "0.14em" }}>
-            {current.label.toUpperCase()}
-          </Text>
-          <Text style={{ fontSize: "1.45rem", color: c.text, marginTop: 2 }}>
-            {current.label}
-          </Text>
         </Box>
 
         {/* Scrollable content */}

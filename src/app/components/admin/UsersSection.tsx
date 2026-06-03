@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Box, Flex, Text, Input, Spinner } from "@chakra-ui/react";
 import { Search, MoreHorizontal, UserX, UserCheck, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { adminUsersService, type AdminUserDto } from "../../../services/admin/user.admin.services";
@@ -16,30 +17,31 @@ function formatDate(iso: string) {
   return iso.split("T")[0];
 }
 
-function formatLastSeen(iso: string | null): string {
-  if (!iso) return "Never";
-  const diff = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (diff < 60)     return "Just now";
-  if (diff < 3600)   return `${Math.floor(diff / 60)} min ago`;
-  if (diff < 86400)  return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return formatDate(iso);
-}
-
 function getStatus(u: AdminUserDto): "active" | "inactive" | "banned" {
   if (u.isBanned) return "banned";
   if (!u.lastLoginAt) return "inactive";
   return "active";
 }
 
-const STATUS_CFG = {
-  active:   { label: "Active",   color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.25)"  },
-  inactive: { label: "Inactive", color: "#94a3b8", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)" },
-  banned:   { label: "Banned",   color: "#f87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.25)" },
+const STATUS_STYLE = {
+  active:   { color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.25)"  },
+  inactive: { color: "#94a3b8", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)" },
+  banned:   { color: "#f87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.25)" },
 };
 
 export function UsersSection() {
   const { c } = useAdminTheme();
+  const { t } = useTranslation();
+
+  const formatLastSeen = useCallback((iso: string | null): string => {
+    if (!iso) return t("admin.users.lastSeenNever");
+    const diff = (Date.now() - new Date(iso).getTime()) / 1000;
+    if (diff < 60)     return t("admin.users.lastSeenNow");
+    if (diff < 3600)   return t("admin.users.lastSeenMin",  { n: Math.floor(diff / 60) });
+    if (diff < 86400)  return t("admin.users.lastSeenHour", { n: Math.floor(diff / 3600) });
+    if (diff < 604800) return t("admin.users.lastSeenDay",  { n: Math.floor(diff / 86400) });
+    return formatDate(iso);
+  }, [t]);
 
   const [users,        setUsers]        = useState<AdminUserDto[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -64,11 +66,11 @@ export function UsersSection() {
       setHasNext(result.hasNext);
       setHasPrev(result.hasPrevious);
     } catch {
-      setError("Không thể tải danh sách người dùng.");
+      setError(t("admin.users.errorLoad"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => { fetchUsers(page); }, [page, fetchUsers]);
 
@@ -111,13 +113,13 @@ export function UsersSection() {
     <Box>
       {/* Stats */}
       <Flex gap={3} mb={5}>
-        {[
-          { label: "Total",    value: totalCount,   color: c.cardText    },
-          { label: "Active",   value: pageActive,   color: "#4ade80"     },
-          { label: "Inactive", value: pageInactive, color: "#94a3b8"     },
-          { label: "Banned",   value: pageBanned,   color: "#f87171"     },
-          { label: "Premium",  value: pagePremium,  color: "#a78bfa"     },
-        ].map(s => (
+        {([
+          { label: t("admin.users.statTotal"),    value: totalCount,   color: c.cardText },
+          { label: t("admin.users.statActive"),   value: pageActive,   color: "#4ade80"  },
+          { label: t("admin.users.statInactive"), value: pageInactive, color: "#94a3b8"  },
+          { label: t("admin.users.statBanned"),   value: pageBanned,   color: "#f87171"  },
+          { label: t("admin.users.statPremium"),  value: pagePremium,  color: "#a78bfa"  },
+        ] as { label: string; value: number; color: string }[]).map(s => (
           <Box key={s.label} borderRadius="10px" px={4} py={3}
             style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, flex: 1, transition: "background 0.3s" }}>
             <Text style={{ fontSize: "1.3rem", color: s.color, fontWeight: 600 }}>{s.value}</Text>
@@ -133,7 +135,7 @@ export function UsersSection() {
             <Search size={15} style={{ color: c.textDim }} />
           </Box>
           <Input
-            placeholder="Search by name or email..."
+            placeholder={t("admin.users.searchPlaceholder")}
             value={query}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
             style={{
@@ -167,7 +169,11 @@ export function UsersSection() {
       <Box borderRadius="14px" overflow="hidden" style={{ border: `1px solid ${c.cardBorder}` }}>
         {/* Header */}
         <Flex px={5} py={3} style={{ background: c.cardBg, borderBottom: `1px solid ${c.cardBorder}` }}>
-          {["User", "Email", "Plan", "Role", "Status", "Joined", "Last Seen", "Actions"].map((h, i) => (
+          {[
+            t("admin.users.colUser"), t("admin.users.colEmail"), t("admin.users.colPlan"),
+            t("admin.users.colRole"), t("admin.users.colStatus"), t("admin.users.colJoined"),
+            t("admin.users.colLastSeen"), t("admin.users.colActions"),
+          ].map((h, i) => (
             <Text key={h} style={{
               fontSize: "0.65rem", color: c.cardTextMuted, letterSpacing: "0.1em",
               flex: [2, 2.5, 1, 1, 1, 1.2, 1.2, 0.8][i],
@@ -181,7 +187,7 @@ export function UsersSection() {
         {loading ? (
           <Flex align="center" justify="center" py={16} gap={3}>
             <Spinner size="sm" style={{ color: "#4e7c6a" }} />
-            <Text style={{ fontSize: "0.85rem", color: c.cardTextMuted }}>Loading users...</Text>
+            <Text style={{ fontSize: "0.85rem", color: c.cardTextMuted }}>{t("admin.users.loading")}</Text>
           </Flex>
         ) : error ? (
           <Flex align="center" justify="center" py={12} direction="column" gap={3}>
@@ -191,19 +197,19 @@ export function UsersSection() {
               border: "1px solid rgba(78,124,106,0.4)", borderRadius: "8px",
               padding: "6px 16px", cursor: "pointer",
             }}>
-              Thử lại
+              {t("admin.users.retry")}
             </Box>
           </Flex>
         ) : filtered.length === 0 ? (
           <Flex align="center" justify="center" py={12}>
             <Text style={{ fontSize: "0.85rem", color: c.cardTextMuted }}>
-              {query ? "Không tìm thấy người dùng phù hợp" : "Không có dữ liệu"}
+              {query ? t("admin.users.noMatch") : t("admin.users.noData")}
             </Text>
           </Flex>
         ) : (
           filtered.map((u, i) => {
             const status = getStatus(u);
-            const st     = STATUS_CFG[status];
+            const st     = STATUS_STYLE[status];
             const isPro  = u.accountTier === "Premium";
             const isAdminRole = u.role === "Admin";
             return (
@@ -246,7 +252,7 @@ export function UsersSection() {
                     border:     `1px solid ${isPro ? "rgba(167,139,250,0.3)" : c.cardBorder}`,
                   }}>
                     <Text style={{ fontSize: "0.65rem", color: isPro ? "#a78bfa" : c.cardTextMuted }}>
-                      {isPro ? "PREMIUM" : "FREE"}
+                      {isPro ? t("admin.users.planPremium") : t("admin.users.planFree")}
                     </Text>
                   </Box>
                 </Box>
@@ -258,10 +264,10 @@ export function UsersSection() {
                       background: "rgba(78,124,106,0.15)",
                       border:     "1px solid rgba(78,124,106,0.3)",
                     }}>
-                      <Text style={{ fontSize: "0.65rem", color: "#4e7c6a" }}>ADMIN</Text>
+                      <Text style={{ fontSize: "0.65rem", color: "#4e7c6a" }}>{t("admin.users.roleAdmin")}</Text>
                     </Box>
                   ) : (
-                    <Text style={{ fontSize: "0.72rem", color: c.cardTextMuted }}>User</Text>
+                    <Text style={{ fontSize: "0.72rem", color: c.cardTextMuted }}>{t("admin.users.roleUser")}</Text>
                   )}
                 </Box>
 
@@ -270,7 +276,7 @@ export function UsersSection() {
                   <Flex align="center" gap="5px" display="inline-flex" borderRadius="full" px={2} py="2px"
                     style={{ background: st.bg, border: `1px solid ${st.border}` }}>
                     <Box w="5px" h="5px" borderRadius="full" flexShrink={0} style={{ background: st.color }} />
-                    <Text style={{ fontSize: "0.65rem", color: st.color }}>{st.label}</Text>
+                    <Text style={{ fontSize: "0.65rem", color: st.color }}>{t(`admin.users.status${status.charAt(0).toUpperCase() + status.slice(1)}`)}</Text>
                   </Flex>
                 </Box>
 
@@ -331,8 +337,8 @@ export function UsersSection() {
                             _hover={{ background: "rgba(255,255,255,0.05)" } as any}
                           >
                             {u.isBanned
-                              ? <><UserCheck size={13} /><Text style={{ fontSize: "0.8rem", color: "#4ade80" }}>Unban</Text></>
-                              : <><UserX    size={13} /><Text style={{ fontSize: "0.8rem", color: "#f87171" }}>Ban</Text></>
+                              ? <><UserCheck size={13} /><Text style={{ fontSize: "0.8rem", color: "#4ade80" }}>{t("admin.users.actionUnban")}</Text></>
+                              : <><UserX    size={13} /><Text style={{ fontSize: "0.8rem", color: "#f87171" }}>{t("admin.users.actionBan")}</Text></>
                             }
                           </Box>
                         </Box>
@@ -349,7 +355,7 @@ export function UsersSection() {
       {/* Footer: count + pagination */}
       <Flex align="center" justify="space-between" mt={3}>
         <Text style={{ fontSize: "0.72rem", color: c.cardTextMuted }}>
-          {loading ? "Loading..." : `Showing ${filtered.length} of ${totalCount} users`}
+          {loading ? t("admin.users.loading") : t("admin.users.showing", { shown: filtered.length, total: totalCount })}
         </Text>
 
         {totalPages > 1 && (
