@@ -39,7 +39,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
 
   useEffect(() => {
     if (!currentUser) return;
-    coinService.getBalance(currentUser.email).then((data) => onCoinBalanceReady?.(data.balance));
+    coinService.getBalance().then((data) => onCoinBalanceReady?.(data.balance));
   }, [currentUser]);
 
   return (

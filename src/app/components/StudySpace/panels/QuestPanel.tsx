@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { questService, type Quest, type QuestCategory } from "../../../../services/quest.service";
+import { coinService } from "../../../../services/coin.service";
 import { useAuth } from "../../../../context/AuthContext";
 
 const MotionBox = motion.create(Box);
@@ -90,9 +91,17 @@ function QuestCard({
         {/* Icon */}
         <Box
           flexShrink={0}
-          style={{ fontSize: "1.35rem", lineHeight: 1, marginTop: 1 }}
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: "8px",
+            background: `${barColor}18`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
         >
-          {quest.icon}
+          <quest.icon size={15} color={barColor} />
         </Box>
 
         {/* Content */}
@@ -232,24 +241,26 @@ export function QuestPanel({
   const [claimingId, setClaimingId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!user) return;
     setLoading(true);
-    questService.getQuests(user?.email ?? "guest").then((data) => {
+    questService.getQuests().then((data) => {
       setQuests(data);
       setLoading(false);
-    });
-  }, [user?.email]);
+    }).catch(() => setLoading(false));
+  }, [user]);
 
   const handleClaim = async (questId: string) => {
     if (claimingId) return;
     setClaimingId(questId);
     try {
-      const result = await questService.claimReward(user?.email ?? "guest", questId, currentCoinBalance);
+      await questService.claimReward(questId);
       setQuests(prev =>
         prev.map(q => q.id === questId ? { ...q, status: "claimed" } : q)
       );
-      onBalanceChange?.(result.newBalance);
+      const { balance } = await coinService.getBalance();
+      onBalanceChange?.(balance);
     } catch {
-      // no-op for mock
+      // ignore errors silently
     } finally {
       setClaimingId(null);
     }

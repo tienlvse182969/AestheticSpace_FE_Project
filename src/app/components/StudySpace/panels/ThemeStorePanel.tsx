@@ -1101,7 +1101,7 @@ export function ThemeStorePanel({
   // Fetch coin balance if not provided
   useEffect(() => {
     if (coinBalanceProp == null && user) {
-      coinService.getBalance(user.email).then((d) => setLocalCoinBalance(d.balance));
+      coinService.getBalance().then((d) => setLocalCoinBalance(d.balance));
     }
   }, [coinBalanceProp, user]);
 
