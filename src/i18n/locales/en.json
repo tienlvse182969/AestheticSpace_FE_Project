@@ -432,6 +432,23 @@
     "completed": "Completed ✓",
     "loading": "Loading…"
   },
+  "room": {
+    "loading": "Loading…",
+    "retry": "Retry",
+    "emptyOwned": "No rooms yet. Create your first one!",
+    "createBtn": "Create room",
+    "selectTitle": "Select this room",
+    "editTitle": "Edit",
+    "deleteTitle": "Delete",
+    "deleteConfirm": "Delete this room?",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "formCreateHeader": "NEW ROOM",
+    "formEditHeader": "EDIT ROOM",
+    "namePlaceholder": "Room name *",
+    "saveError": "Failed to save room. Please try again.",
+    "save": "Save"
+  },
   "effects": {
     "title": "EFFECTS",
     "rain": "Rain",

@@ -431,6 +431,23 @@
     "completed": "Đã hoàn thành ✓",
     "loading": "Đang tải…"
   },
+  "room": {
+    "loading": "Đang tải…",
+    "retry": "Thử lại",
+    "emptyOwned": "Chưa có phòng nào. Hãy tạo phòng đầu tiên!",
+    "createBtn": "Tạo phòng",
+    "selectTitle": "Chọn phòng này",
+    "editTitle": "Chỉnh sửa",
+    "deleteTitle": "Xóa",
+    "deleteConfirm": "Xóa phòng này?",
+    "cancel": "Hủy",
+    "delete": "Xóa",
+    "formCreateHeader": "TẠO PHÒNG MỚI",
+    "formEditHeader": "CHỈNH SỬA PHÒNG",
+    "namePlaceholder": "Tên phòng *",
+    "saveError": "Không thể lưu phòng. Vui lòng thử lại.",
+    "save": "Lưu"
+  },
   "effects": {
     "title": "HIỆU ỨNG",
     "rain": "Mưa rơi",

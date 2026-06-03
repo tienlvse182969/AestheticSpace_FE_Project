@@ -166,6 +166,13 @@ export function useWorkspaceAutoSave({
         });
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus("idle"), 2000);
+        // Update room thumbnail silently (no-op for preset rooms that aren't owned by the user)
+        if (thumbnail && s.currentBg?.label) {
+          roomService.updateMyRoom(s.roomId!, {
+            name: s.currentBg.label,
+            thumbnailUrl: thumbnail,
+          }).catch(() => {});
+        }
       } catch {
         setSaveStatus("error");
         setTimeout(() => setSaveStatus("idle"), 3000);
