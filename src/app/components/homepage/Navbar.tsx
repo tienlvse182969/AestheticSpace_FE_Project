@@ -12,10 +12,18 @@ function getInitials(name: string) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-function AvatarBubble({ avatarUrl, name, size = 28 }: { avatarUrl: string | null; name: string; size?: number }) {
+function AvatarBubble({ avatarUrl, name, size = 28, accountTier }: { avatarUrl: string | null; name: string; size?: number; accountTier?: string | null }) {
+  const isPremium = accountTier?.toLowerCase() === "premium";
+  const premiumStyle = isPremium
+    ? {
+        border: "2px solid rgba(251,191,36,0.75)",
+        boxShadow: "0 0 8px rgba(251,191,36,0.45), 0 0 18px rgba(251,191,36,0.15)",
+      }
+    : {};
+
   if (avatarUrl) {
     return (
-      <Box w={`${size}px`} h={`${size}px`} borderRadius="full" overflow="hidden" flexShrink={0}>
+      <Box w={`${size}px`} h={`${size}px`} borderRadius="full" overflow="hidden" flexShrink={0} style={{ ...premiumStyle }}>
         <img src={avatarUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </Box>
     );
@@ -30,6 +38,7 @@ function AvatarBubble({ avatarUrl, name, size = 28 }: { avatarUrl: string | null
         fontSize: size < 32 ? "0.6rem" : "0.75rem",
         fontWeight: 600,
         letterSpacing: "0.03em",
+        ...premiumStyle,
       }}
     >
       {getInitials(name)}
@@ -227,7 +236,7 @@ export function Navbar() {
                 style={{ border: `1px solid ${onHero ? "rgba(255,255,255,0.25)" : "rgba(78,124,106,0.3)"}` }}
                 _hover={{ bg: onHero ? "rgba(255,255,255,0.1)" : "rgba(78,124,106,0.08)" }}
               >
-                <AvatarBubble avatarUrl={user.avatarUrl} name={user.name} size={28} />
+                <AvatarBubble avatarUrl={user.avatarUrl} name={user.name} size={28} accountTier={user.accountTier} />
                 <Text fontSize="sm" fontWeight="500" color={onHero ? "white" : "#1a3c34"}
                   style={{ maxWidth: "100px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {user.name}
@@ -261,7 +270,7 @@ export function Navbar() {
                   >
                     {/* User info */}
                     <Flex align="center" gap={3} px={2} py={2} mb={1}>
-                      <AvatarBubble avatarUrl={user.avatarUrl} name={user.name} size={40} />
+                      <AvatarBubble avatarUrl={user.avatarUrl} name={user.name} size={40} accountTier={user.accountTier} />
                       <Box overflow="hidden">
                         <Text style={{
                           color: "rgba(255,255,255,0.95)", fontSize: "0.88rem",
@@ -394,7 +403,7 @@ export function Navbar() {
               <Flex direction="column" gap={1}
                 style={{ background: "rgba(12,18,22,0.06)", borderRadius: "12px", padding: "10px" }}>
                 <Flex align="center" gap={3} px={1} py={1} mb={1}>
-                  <AvatarBubble avatarUrl={user.avatarUrl} name={user.name} size={36} />
+                  <AvatarBubble avatarUrl={user.avatarUrl} name={user.name} size={36} accountTier={user.accountTier} />
                   <Box>
                     <Text fontSize="sm" fontWeight="600" color="#1a3c34">{user.name}</Text>
                     <Text fontSize="xs" color="#6b7280">{user.email}</Text>

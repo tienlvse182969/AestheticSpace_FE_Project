@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { Flame, RotateCcw, Play, Pause, Coffee, Zap, X, BarChart2 } from "lucide-react";
+import { Flame, RotateCcw, Play, Pause, Coffee, Zap, X, BarChart2, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../../../context/AuthContext";
@@ -9,7 +9,7 @@ import { pomodoroService, type PomodoroStatsDto } from "../../../../../services/
 const MotionBox = motion.create(Box);
 
 type Phase  = "idle" | "focus" | "break";
-type Dialog = "break-prompt" | "next-prompt" | null;
+type Dialog = "break-prompt" | "next-prompt" | "cancel-confirm" | null;
 
 const SPRING = { type: "spring", stiffness: 500, damping: 24, mass: 0.9 } as const;
 
@@ -108,11 +108,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
 
   const skipToNext = () => { setSession((s) => s + 1); setDialog(null); startFocus(); };
 
-  const resetAll = () => {
-    // Nếu đang có session active trên backend, end nó trước khi reset
-    if (user && currentSessionId) {
-      pomodoroService.end(currentSessionId).catch(() => {});
-    }
+  const performReset = () => {
     startingRef.current = false;
     setRunning(false);
     setPhase("idle");
@@ -120,6 +116,23 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     setDialog(null);
     setSession(1);
     setCurrentSessionId(null);
+  };
+
+  const resetAll = performReset;
+
+  const handleResetClick = () => {
+    if (user && currentSessionId) {
+      setDialog("cancel-confirm");
+    } else {
+      performReset();
+    }
+  };
+
+  const confirmCancel = () => {
+    if (user && currentSessionId) {
+      pomodoroService.cancel(currentSessionId).catch(() => {});
+    }
+    performReset();
   };
 
   const togglePlay = () => {
@@ -211,7 +224,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
 
       {/* ── Controls ── */}
       <Flex align="center" justify="center" gap={3} mt={4}>
-        <Box as="button" onClick={resetAll}
+        <Box as="button" onClick={handleResetClick}
           borderRadius="full" display="flex" alignItems="center" justifyContent="center"
           style={{ width: 38, height: 38, background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.3)", cursor: "pointer" }}>
           <RotateCcw size={14} color="rgba(var(--accent-light-rgb), 0.85)" />
@@ -358,6 +371,28 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
               style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", cursor: "pointer" }}>
               <X size={11} />
             </Box>
+
+            {dialog === "cancel-confirm" && (
+              <>
+                <AlertTriangle size={28} color="#f97316" style={{ marginBottom: 12, opacity: 0.9 }} />
+                <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
+                  {t("pomodoroWidget.cancelConfirmTitle")}
+                </Text>
+                <Text textAlign="center" mb={5} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.5 }}>
+                  {t("pomodoroWidget.cancelConfirmDesc")}
+                </Text>
+                <Flex gap={2} w="100%">
+                  <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={confirmCancel}
+                    style={{ background: "linear-gradient(135deg,#f97316,#ef4444)", color: "#fff", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(249,115,22,0.3)" }}>
+                    {t("pomodoroWidget.cancelConfirmBtn")}
+                  </Box>
+                  <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={() => setDialog(null)}
+                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
+                    {t("pomodoroWidget.cancelKeepBtn")}
+                  </Box>
+                </Flex>
+              </>
+            )}
 
             {dialog === "break-prompt" && (
               <>

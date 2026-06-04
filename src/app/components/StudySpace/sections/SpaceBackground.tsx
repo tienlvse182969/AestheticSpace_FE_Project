@@ -24,7 +24,7 @@ export function SpaceBackground({ ctx }: Props) {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.7 } as any}
         style={{
-          backgroundImage: `url(${currentBg.url})`,
+          backgroundImage: currentBg.url ? `url(${currentBg.url})` : "none",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",

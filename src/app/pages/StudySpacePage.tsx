@@ -6,6 +6,7 @@ import { SpacePanels }       from "../components/StudySpace/sections/SpacePanels
 import { SpaceWidgets }      from "../components/StudySpace/sections/SpaceWidgets";
 import { SpaceToolbar }      from "../components/StudySpace/sections/SpaceToolbar";
 import { SpaceContextMenu }  from "../components/StudySpace/ui/SpaceContextMenu";
+import { FirstRoomModal }    from "../components/StudySpace/ui/FirstRoomModal";
 
 export function StudySpacePage() {
   const ctx = useStudySpace();
@@ -24,6 +25,9 @@ export function StudySpacePage() {
         <SpaceWidgets    ctx={ctx} />
         <SpacePanels     ctx={ctx} coinBalance={coinBalance} onCoinBalanceChange={setCoinBalance} />
         <SpaceToolbar    ctx={ctx} coinBalance={coinBalance} onCoinBalanceReady={setCoinBalance} />
+        {ctx.showFirstRoomModal && (
+          <FirstRoomModal onConfirm={ctx.handleFirstRoomCreate} />
+        )}
       </Box>
     </SpaceContextMenu>
   );

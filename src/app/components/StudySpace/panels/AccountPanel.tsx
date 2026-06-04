@@ -86,6 +86,14 @@ function AvatarCircle({
   size?: number;
   fontSize?: string;
 }) {
+  const isPremium = user?.accountTier?.toLowerCase() === "premium";
+  const premiumStyle = isPremium
+    ? {
+        border: "2px solid rgba(251,191,36,0.75)",
+        boxShadow: "0 0 8px rgba(251,191,36,0.45), 0 0 18px rgba(251,191,36,0.15)",
+      }
+    : {};
+
   if (user?.avatarUrl) {
     return (
       <Box
@@ -94,7 +102,10 @@ function AvatarCircle({
         borderRadius="full"
         overflow="hidden"
         flexShrink={0}
-        style={{ border: "2px solid rgba(122,171,151,0.55)" }}
+        style={{
+          border: "2px solid rgba(122,171,151,0.55)",
+          ...premiumStyle,
+        }}
       >
         <img
           src={user.avatarUrl}
@@ -121,6 +132,7 @@ function AvatarCircle({
           fontSize,
           letterSpacing: "0.03em",
           userSelect: "none",
+          ...premiumStyle,
         }}
       >
         {getInitials(user.name)}

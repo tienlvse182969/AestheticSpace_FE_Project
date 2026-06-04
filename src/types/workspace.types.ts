@@ -31,7 +31,7 @@ export interface LayoutConfig {
     breakMin: number;
     totalSes: number;
   };
-  todoItems?: Array<{ id: number; text: string; done: boolean }>;
+  todoItems?: Array<{ id: string; text: string; done: boolean }>;
   accentColor?: string;
   musicState?: { source: string; activeUrl: string };
 }
