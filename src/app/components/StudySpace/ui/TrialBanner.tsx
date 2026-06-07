@@ -2,7 +2,15 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { Clock, ShoppingBag, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { StoreItem } from "../../../../services/aestheticStore.service";
+import type { StoreItem, StoreCategory } from "../../../../services/aestheticStore.service";
+
+const CATEGORY_COLORS: Record<StoreCategory, string> = {
+  Theme:        "#8b5cf6",
+  Background:   "#3b82f6",
+  Sticker:      "#ec4899",
+  Effect:       "#22c55e",
+  AmbientSound: "#6366f1",
+};
 
 const MotionBox = motion.create(Box);
 
@@ -21,6 +29,7 @@ export function TrialBanner({ item, secondsLeft, onBuy, onDiscard }: TrialBanner
   const ss = (secondsLeft % 60).toString().padStart(2, "0");
   const urgent = secondsLeft <= 60;
   const pct = Math.max(0, (secondsLeft / TRIAL_SECONDS) * 100);
+  const accentColor = CATEGORY_COLORS[item.category] ?? "#8b5cf6";
 
   return (
     <MotionBox
@@ -71,8 +80,8 @@ export function TrialBanner({ item, secondsLeft, onBuy, onDiscard }: TrialBanner
             h="8px"
             borderRadius="full"
             style={{
-              background: item.accentColor ?? "#8b5cf6",
-              boxShadow: `0 0 8px ${item.accentColor ?? "#8b5cf6"}80`,
+              background: accentColor,
+              boxShadow: `0 0 8px ${accentColor}80`,
               animation: "pulse 2s ease-in-out infinite",
             }}
           />

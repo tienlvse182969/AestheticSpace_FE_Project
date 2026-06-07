@@ -3,7 +3,7 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, Users, Palette, Sparkles, AudioWaveform,
-  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut, Globe, Target,
+  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut, Globe, Target, FolderOpen,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -18,10 +18,11 @@ import { ThemesSection }    from "../components/admin/ThemesSection";
 import { StickersSection }  from "../components/admin/StickersSection";
 import { SoundsSection }    from "../components/admin/SoundsSection";
 import { RevenueSection }   from "../components/admin/RevenueSection";
+import { AssetsSection }    from "../components/admin/AssetsSection";
 
 const MotionBox = motion.create(Box);
 
-type AdminSection = "dashboard" | "users" | "missions" | "themes" | "stickers" | "sounds" | "revenue";
+type AdminSection = "dashboard" | "users" | "missions" | "themes" | "stickers" | "sounds" | "revenue" | "assets";
 
 const BASE_NAV_ITEMS: {
   key: AdminSection;
@@ -36,6 +37,7 @@ const BASE_NAV_ITEMS: {
   { key: "themes",    labelKey: "admin.nav.themes",    icon: Palette,       badge: 6 },
   { key: "stickers",  labelKey: "admin.nav.stickers",  icon: Sparkles,      badge: 8 },
   { key: "sounds",    labelKey: "admin.nav.sounds",    icon: AudioWaveform, badge: 8 },
+  { key: "assets",   labelKey: "admin.nav.assets",   icon: FolderOpen },
 ];
 
 function AdminPageInner() {
@@ -471,6 +473,7 @@ function AdminPageInner() {
               {activeSection === "themes"    && <ThemesSection />}
               {activeSection === "stickers"  && <StickersSection />}
               {activeSection === "sounds"    && <SoundsSection />}
+              {activeSection === "assets"    && <AssetsSection />}
             </MotionBox>
           </AnimatePresence>
         </Box>
