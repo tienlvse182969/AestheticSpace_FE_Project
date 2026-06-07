@@ -2,9 +2,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  ShoppingBag, Star, ChevronLeft, ChevronRight, Coins, Check, Clock,
+  ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
   Sparkles, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
-  BadgeCheck, Users, Download, Package, Crown, Zap, Search, X, Heart,
+  Crown, Search, X, Heart, Package,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
@@ -13,9 +13,7 @@ import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import {
   aestheticStoreService,
   type StoreItem,
-  type StoreItemType,
-  type StoreItemSource,
-  type StoreIncludes,
+  type StoreCategory,
 } from "../../../../services/aestheticStore.service";
 import { useAuth } from "../../../../context/AuthContext";
 import { coinService } from "../../../../services/coin.service";
@@ -24,6 +22,8 @@ const MotionBox = motion.create(Box);
 
 const PANEL_W = 740;
 const PANEL_H = 680;
+
+const PLACEHOLDER_IMG = "https://placehold.co/400x240/1a1a2e/888888?text=No+Preview";
 
 interface Props {
   onClose: () => void;
@@ -35,54 +35,53 @@ interface Props {
   initialDetailItemId?: string;
 }
 
-type TabValue = "all" | "purchased" | "wishlist" | StoreItemType;
-type SourceFilter = "all" | StoreItemSource;
+type TabValue = "all" | "purchased" | "wishlist" | StoreCategory;
 
 const TABS: { value: TabValue; key: string }[] = [
   { value: "all",          key: "themeStore.tabDiscovery" },
-  { value: "theme",        key: "themeStore.tabThemes" },
-  { value: "sticker-pack", key: "themeStore.tabStickers" },
-  { value: "wallpaper",    key: "themeStore.tabWallpapers" },
-  { value: "sound-pack",   key: "themeStore.tabSounds" },
-  { value: "effect-pack",  key: "themeStore.tabEffects" },
+  { value: "Theme",        key: "themeStore.tabThemes" },
+  { value: "Background",   key: "themeStore.tabWallpapers" },
+  { value: "Sticker",      key: "themeStore.tabStickers" },
+  { value: "Effect",       key: "themeStore.tabEffects" },
+  { value: "AmbientSound", key: "themeStore.tabSounds" },
   { value: "purchased",    key: "themeStore.tabPurchased" },
   { value: "wishlist",     key: "themeStore.tabWishlist" },
 ];
 
-function typeColor(type: StoreItemType): string {
-  const map: Record<StoreItemType, string> = {
-    "theme":        "#8b5cf6",
-    "sticker-pack": "#ec4899",
-    "wallpaper":    "#3b82f6",
-    "sound-pack":   "#6366f1",
-    "effect-pack":  "#22c55e",
+function typeColor(category: StoreCategory): string {
+  const map: Record<StoreCategory, string> = {
+    Theme:        "#8b5cf6",
+    Background:   "#3b82f6",
+    Sticker:      "#ec4899",
+    Effect:       "#22c55e",
+    AmbientSound: "#6366f1",
   };
-  return map[type];
+  return map[category] ?? "#8b5cf6";
 }
 
 function tabIcon(value: TabValue, size = 14): React.ReactNode {
   switch (value) {
     case "all":          return <LayoutGrid size={size} />;
-    case "theme":        return <Palette size={size} />;
-    case "sticker-pack": return <Sparkles size={size} />;
-    case "wallpaper":    return <ImageIcon size={size} />;
-    case "sound-pack":   return <Volume2 size={size} />;
-    case "effect-pack":  return <Wand2 size={size} />;
+    case "Theme":        return <Palette size={size} />;
+    case "Background":   return <ImageIcon size={size} />;
+    case "Sticker":      return <Sparkles size={size} />;
+    case "AmbientSound": return <Volume2 size={size} />;
+    case "Effect":       return <Wand2 size={size} />;
     case "purchased":    return <Check size={size} />;
     case "wishlist":     return <Heart size={size} />;
     default:             return null;
   }
 }
 
-function typeLabel(type: StoreItemType, t: (k: string) => string): string {
-  const map: Record<StoreItemType, string> = {
-    "theme":        t("themeStore.tabThemes"),
-    "sticker-pack": t("themeStore.tabStickers"),
-    "wallpaper":    t("themeStore.tabWallpapers"),
-    "sound-pack":   t("themeStore.tabSounds"),
-    "effect-pack":  t("themeStore.tabEffects"),
+function typeLabel(category: StoreCategory, t: (k: string) => string): string {
+  const map: Record<StoreCategory, string> = {
+    Theme:        t("themeStore.tabThemes"),
+    Background:   t("themeStore.tabWallpapers"),
+    Sticker:      t("themeStore.tabStickers"),
+    Effect:       t("themeStore.tabEffects"),
+    AmbientSound: t("themeStore.tabSounds"),
   };
-  return map[type];
+  return map[category] ?? category;
 }
 
 // ── StoreCard ──────────────────────────────────────────────────────────────
@@ -98,7 +97,10 @@ function StoreCard({
   isTrialing?: boolean;
   onClick: () => void;
 }) {
-  const color = typeColor(item.type);
+  const color = typeColor(item.category);
+  const isOwned = item.isOwned === true;
+  const price = item.coinPrice;
+
   return (
     <Box
       as="button"
@@ -123,7 +125,7 @@ function StoreCard({
       {/* Thumbnail */}
       <Box position="relative" overflow="hidden" style={{ aspectRatio: "5/3" }}>
         <img
-          src={item.thumbnail}
+          src={item.assetUrl ?? PLACEHOLDER_IMG}
           alt={item.name}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           draggable={false}
@@ -138,7 +140,7 @@ function StoreCard({
           h="40px"
           style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.5))" }}
         />
-        {/* Type badge */}
+        {/* Category badge */}
         <Box
           position="absolute"
           top="6px"
@@ -155,49 +157,31 @@ function StoreCard({
             backdropFilter: "blur(6px)",
           }}
         >
-          {typeLabel(item.type, t)}
+          {typeLabel(item.category, t)}
         </Box>
-        {/* Source badge */}
-        <Box
-          position="absolute"
-          top="6px"
-          right="6px"
-          style={{
-            padding: "2px 7px",
-            borderRadius: "5px",
-            fontSize: "0.58rem",
-            fontFamily: "'HarmonyOS Sans', sans-serif",
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            background: item.source === "official" ? "rgba(234,179,8,0.88)" : "rgba(20,184,166,0.88)",
-            color: item.source === "official" ? "#1a1200" : "#fff",
-            backdropFilter: "blur(6px)",
-          }}
-        >
-          {item.source === "official" ? "✦ Official" : "Community"}
-        </Box>
-        {/* Featured badge */}
-        {item.isFeatured && (
+        {/* Premium badge */}
+        {item.isPremium && (
           <Box
             position="absolute"
-            bottom="6px"
-            left="6px"
+            top="6px"
+            right="6px"
             style={{
               padding: "2px 7px",
               borderRadius: "5px",
-              fontSize: "0.55rem",
+              fontSize: "0.58rem",
               fontFamily: "'HarmonyOS Sans', sans-serif",
               fontWeight: 700,
-              letterSpacing: "0.06em",
-              background: "rgba(251,191,36,0.92)",
+              letterSpacing: "0.04em",
+              background: "rgba(251,191,36,0.88)",
               color: "#1a1200",
+              backdropFilter: "blur(6px)",
             }}
           >
-            ★ FEATURED
+            ✦ Premium
           </Box>
         )}
         {/* Purchased overlay */}
-        {item.isPurchased && (
+        {isOwned && (
           <Flex
             position="absolute"
             inset={0}
@@ -222,7 +206,7 @@ function StoreCard({
           </Flex>
         )}
         {/* Trialing overlay */}
-        {isTrialing && !item.isPurchased && (
+        {isTrialing && !isOwned && (
           <Flex
             position="absolute"
             inset={0}
@@ -239,7 +223,7 @@ function StoreCard({
                 fontFamily: "'HarmonyOS Sans', sans-serif",
                 fontWeight: 700,
                 letterSpacing: "0.07em",
-                background: `${item.accentColor ?? "#8b5cf6"}cc`,
+                background: `${color}cc`,
                 color: "#fff",
                 backdropFilter: "blur(6px)",
                 animation: "pulse 2s ease-in-out infinite",
@@ -260,7 +244,7 @@ function StoreCard({
             fontWeight: 600,
             color: "rgba(255,255,255,0.92)",
             lineHeight: 1.25,
-            marginBottom: "2px",
+            marginBottom: "6px",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -268,85 +252,31 @@ function StoreCard({
         >
           {item.name}
         </Text>
-        <Text
-          style={{
-            fontSize: "0.66rem",
-            fontFamily: "'HarmonyOS Sans', sans-serif",
-            color: "rgba(255,255,255,0.38)",
-            marginBottom: "7px",
-          }}
-        >
-          by {item.creatorName}
-        </Text>
-        <Flex align="center" justify="space-between">
-          <Flex align="center" gap="4px">
-            {!item.isPurchased && item.price > 0 && (
-              <Coins size={11} color="#facc15" />
-            )}
-            <Text
-              style={{
-                fontSize: "0.76rem",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                fontWeight: 700,
-                color: item.isPurchased
-                  ? "rgba(74,222,128,0.9)"
-                  : item.price === 0
-                  ? "rgba(94,234,212,0.9)"
-                  : "#facc15",
-              }}
-            >
-              {item.isPurchased
-                ? t("themeStore.purchased")
-                : item.price === 0
-                ? t("themeStore.free")
-                : item.price.toLocaleString("vi-VN")}
-            </Text>
-          </Flex>
-          <Flex align="center" gap="3px">
-            <Star size={9} color="rgba(251,191,36,0.7)" fill="rgba(251,191,36,0.7)" />
-            <Text
-              style={{
-                fontSize: "0.63rem",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                color: "rgba(255,255,255,0.38)",
-              }}
-            >
-              {item.rating.toFixed(1)}
-            </Text>
-          </Flex>
+        <Flex align="center" gap="4px">
+          {!isOwned && price != null && price > 0 && (
+            <Coins size={11} color="#facc15" />
+          )}
+          <Text
+            style={{
+              fontSize: "0.76rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              fontWeight: 700,
+              color: isOwned
+                ? "rgba(74,222,128,0.9)"
+                : price == null || price === 0
+                ? "rgba(94,234,212,0.9)"
+                : "#facc15",
+            }}
+          >
+            {isOwned
+              ? t("themeStore.purchased")
+              : price == null || price === 0
+              ? t("themeStore.free")
+              : price.toLocaleString("vi-VN")}
+          </Text>
         </Flex>
       </Box>
     </Box>
-  );
-}
-
-// ── IncludeRow ─────────────────────────────────────────────────────────────
-
-function IncludeRow({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <Flex align="center" gap="8px">
-      <Box
-        w="20px"
-        h="20px"
-        borderRadius="6px"
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
-        flexShrink={0}
-        style={{ background: "rgba(94,234,212,0.1)", border: "1px solid rgba(94,234,212,0.2)" }}
-      >
-        <Box color="rgba(94,234,212,0.8)">{icon}</Box>
-      </Box>
-      <Text
-        style={{
-          fontSize: "0.76rem",
-          fontFamily: "'HarmonyOS Sans', sans-serif",
-          color: "rgba(255,255,255,0.7)",
-        }}
-      >
-        {label}
-      </Text>
-    </Flex>
   );
 }
 
@@ -383,13 +313,11 @@ function ItemDetailView({
   isWishlisted?: boolean;
   onToggleWishlist?: () => void;
 }) {
-  const color = typeColor(item.type);
-  const canAfford = coinBalance >= item.price;
+  const color = typeColor(item.category);
+  const isOwned = item.isOwned === true;
+  const price = item.coinPrice;
+  const canAfford = price == null || price === 0 || coinBalance >= price;
   const canBuy = canPurchase !== false;
-  const inc = item.includes ?? ({} as StoreIncludes);
-
-  const allImages = [item.thumbnail, ...(item.previewImages ?? [])];
-  const [selectedImg, setSelectedImg] = useState(0);
 
   return (
     <MotionBox
@@ -400,32 +328,17 @@ function ItemDetailView({
       inset={0}
       borderRadius="16px"
       overflow="hidden"
-      style={{
-        background: "rgba(10,15,20,0.98)",
-        zIndex: 10,
-      }}
+      style={{ background: "rgba(10,15,20,0.98)", zIndex: 10 }}
     >
       <Box h="100%" display="flex" flexDirection="column">
-        {/* Main image with fade animation */}
+        {/* Main image */}
         <Box position="relative" flexShrink={0} style={{ aspectRatio: "16/7", overflow: "hidden" }}>
-          <AnimatePresence initial={false} mode="crossfade">
-            <MotionBox
-              key={allImages[selectedImg]}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 } as any}
-              position="absolute"
-              inset={0}
-            >
-              <img
-                src={allImages[selectedImg]}
-                alt={item.name}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                draggable={false}
-              />
-            </MotionBox>
-          </AnimatePresence>
+          <img
+            src={item.assetUrl ?? PLACEHOLDER_IMG}
+            alt={item.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            draggable={false}
+          />
           <Box
             position="absolute"
             bottom={0}
@@ -504,189 +417,51 @@ function ItemDetailView({
                 backdropFilter: "blur(6px)",
               }}
             >
-              {typeLabel(item.type, t)}
+              {typeLabel(item.category, t)}
             </Box>
-            <Box
-              style={{
-                padding: "3px 8px",
-                borderRadius: "6px",
-                fontSize: "0.6rem",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                fontWeight: 700,
-                background: item.source === "official" ? "rgba(234,179,8,0.9)" : "rgba(20,184,166,0.9)",
-                color: item.source === "official" ? "#1a1200" : "#fff",
-              }}
-            >
-              {item.source === "official" ? "✦ Official" : "Community"}
-            </Box>
+            {item.isPremium && (
+              <Box
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: "6px",
+                  fontSize: "0.6rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  fontWeight: 700,
+                  background: "rgba(251,191,36,0.9)",
+                  color: "#1a1200",
+                }}
+              >
+                ✦ Premium
+              </Box>
+            )}
           </Flex>
         </Box>
 
-        {/* Preview thumbnail strip */}
-        {allImages.length > 1 && (
-          <Flex
-            flexShrink={0}
-            gap="6px"
-            px="16px"
-            py="10px"
+        {/* Body (scrollable) */}
+        <Box flex={1} overflowY="auto" px="20px" pt="16px" pb="16px">
+          <Text
+            mb="12px"
             style={{
-              overflowX: "auto",
-              scrollbarWidth: "none",
-              borderBottom: "1px solid rgba(255,255,255,0.07)",
+              fontSize: "1.1rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              fontWeight: 700,
+              color: "rgba(255,255,255,0.95)",
+              lineHeight: 1.3,
             }}
           >
-            {allImages.map((img, i) => (
-              <Box
-                key={i}
-                as="button"
-                onClick={() => setSelectedImg(i)}
-                flexShrink={0}
-                borderRadius="7px"
-                overflow="hidden"
-                border="none"
-                cursor="pointer"
-                style={{
-                  width: 88,
-                  height: 54,
-                  outline: selectedImg === i
-                    ? `2px solid ${item.accentColor ?? "#8b5cf6"}`
-                    : "2px solid transparent",
-                  outlineOffset: "1px",
-                  opacity: selectedImg === i ? 1 : 0.5,
-                  transition: "opacity 0.15s, outline-color 0.15s",
-                }}
-                _hover={{ opacity: 1 } as any}
-              >
-                <img
-                  src={img}
-                  alt={`Preview ${i + 1}`}
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                  draggable={false}
-                />
-              </Box>
-            ))}
-          </Flex>
-        )}
-
-        {/* Body (scrollable) */}
-        <Box flex={1} overflowY="auto" px="20px" pt="4px" pb="16px">
-          {/* Title + rating */}
-          <Flex align="flex-start" justify="space-between" mb="4px">
+            {item.name}
+          </Text>
+          {item.description && (
             <Text
               style={{
-                fontSize: "1.1rem",
+                fontSize: "0.78rem",
                 fontFamily: "'HarmonyOS Sans', sans-serif",
-                fontWeight: 700,
-                color: "rgba(255,255,255,0.95)",
-                lineHeight: 1.3,
-                flex: 1,
-                paddingRight: "8px",
+                color: "rgba(255,255,255,0.55)",
+                lineHeight: 1.65,
               }}
             >
-              {item.name}
+              {item.description}
             </Text>
-            <Flex align="center" gap="4px" flexShrink={0} mt="3px">
-              <Star size={12} color="#fbbf24" fill="#fbbf24" />
-              <Text style={{ fontSize: "0.8rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>
-                {item.rating.toFixed(1)}
-              </Text>
-            </Flex>
-          </Flex>
-
-          {/* Creator + downloads */}
-          <Flex align="center" gap="12px" mb="12px">
-            <Flex align="center" gap="5px">
-              {item.source === "official" ? (
-                <BadgeCheck size={12} color="rgba(234,179,8,0.8)" />
-              ) : (
-                <Users size={12} color="rgba(20,184,166,0.8)" />
-              )}
-              <Text style={{ fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.45)" }}>
-                {item.creatorName}
-              </Text>
-            </Flex>
-            <Flex align="center" gap="4px">
-              <Download size={11} color="rgba(255,255,255,0.3)" />
-              <Text style={{ fontSize: "0.68rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.35)" }}>
-                {item.downloads.toLocaleString("vi-VN")}
-              </Text>
-            </Flex>
-          </Flex>
-
-          {/* Description */}
-          <Text
-            mb="16px"
-            style={{
-              fontSize: "0.78rem",
-              fontFamily: "'HarmonyOS Sans', sans-serif",
-              color: "rgba(255,255,255,0.55)",
-              lineHeight: 1.65,
-            }}
-          >
-            {item.description}
-          </Text>
-
-          {/* Includes */}
-          {item.includes && (
-            <Box mb="16px">
-              <Text
-                mb="8px"
-                style={{
-                  fontSize: "0.7rem",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  fontWeight: 700,
-                  color: "rgba(255,255,255,0.4)",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                {t("themeStore.detail.includes").toUpperCase()}
-              </Text>
-              <Flex direction="column" gap="6px">
-                {inc.wallpaper && (
-                  <IncludeRow icon={<ImageIcon size={11} />} label={t("themeStore.detail.wallpaper")} />
-                )}
-                {inc.stickerCount != null && (
-                  <IncludeRow
-                    icon={<Sparkles size={11} />}
-                    label={t("themeStore.detail.stickers", { count: inc.stickerCount })}
-                  />
-                )}
-                {inc.soundCount != null && (
-                  <IncludeRow
-                    icon={<Volume2 size={11} />}
-                    label={t("themeStore.detail.sounds", { count: inc.soundCount })}
-                  />
-                )}
-                {inc.hasEffect && (
-                  <IncludeRow icon={<Wand2 size={11} />} label={t("themeStore.detail.effect")} />
-                )}
-                {inc.widgetStyle && (
-                  <IncludeRow icon={<Package size={11} />} label={t("themeStore.detail.widgetStyle")} />
-                )}
-              </Flex>
-            </Box>
-          )}
-
-          {/* Tags */}
-          {item.tags.length > 0 && (
-            <Flex flexWrap="wrap" gap="5px" mb="16px">
-              {item.tags.map((tag) => (
-                <Box
-                  key={tag}
-                  style={{
-                    padding: "2px 9px",
-                    borderRadius: "20px",
-                    fontSize: "0.64rem",
-                    fontFamily: "'HarmonyOS Sans', sans-serif",
-                    color: "rgba(255,255,255,0.45)",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                  }}
-                >
-                  #{tag}
-                </Box>
-              ))}
-            </Flex>
           )}
         </Box>
 
@@ -720,23 +495,23 @@ function ItemDetailView({
                 {t("themeStore.coins")}
               </Text>
               <Flex align="center" gap="5px">
-                <Coins size={14} color={item.price === 0 ? "rgba(94,234,212,0.8)" : "#facc15"} />
+                <Coins size={14} color={price == null || price === 0 ? "rgba(94,234,212,0.8)" : "#facc15"} />
                 <Text
                   style={{
                     fontSize: "1.1rem",
                     fontFamily: "'HarmonyOS Sans', sans-serif",
                     fontWeight: 700,
-                    color: item.price === 0 ? "rgba(94,234,212,0.9)" : "#facc15",
+                    color: price == null || price === 0 ? "rgba(94,234,212,0.9)" : "#facc15",
                   }}
                 >
-                  {item.price === 0 ? t("themeStore.free") : item.price.toLocaleString("vi-VN")}
+                  {price == null || price === 0 ? t("themeStore.free") : price.toLocaleString("vi-VN")}
                 </Text>
               </Flex>
             </Flex>
 
             {/* Action buttons */}
             <Flex align="center" gap="8px" flexShrink={0}>
-              {item.isPurchased ? (
+              {isOwned ? (
                 <Flex
                   align="center"
                   gap="6px"
@@ -757,7 +532,7 @@ function ItemDetailView({
                 </Flex>
               ) : (
                 <>
-                  {/* Try button — show when no active trial; show disabled state when trialing this item */}
+                  {/* Try button */}
                   {onStartTrial && !hasActiveTrial && (
                     <Box
                       as="button"
@@ -795,9 +570,9 @@ function ItemDetailView({
                       py="9px"
                       borderRadius="10px"
                       style={{
-                        background: `${item.accentColor ?? "#8b5cf6"}18`,
-                        border: `1px solid ${item.accentColor ?? "#8b5cf6"}40`,
-                        color: item.accentColor ?? "#a78bfa",
+                        background: `${color}18`,
+                        border: `1px solid ${color}40`,
+                        color: color,
                         fontSize: "0.78rem",
                         fontFamily: "'HarmonyOS Sans', sans-serif",
                         fontWeight: 500,
@@ -808,15 +583,12 @@ function ItemDetailView({
                         w="6px"
                         h="6px"
                         borderRadius="full"
-                        style={{
-                          background: item.accentColor ?? "#8b5cf6",
-                          animation: "pulse 1.5s ease-in-out infinite",
-                        }}
+                        style={{ background: color, animation: "pulse 1.5s ease-in-out infinite" }}
                       />
                       {t("themeStore.trial.trying")}
                     </Flex>
                   )}
-                  {/* Buy button — premium users; freemium gets upgrade CTA */}
+                  {/* Buy button */}
                   {canBuy ? (
                     <Box
                       as="button"
@@ -904,10 +676,11 @@ const slideTransition = { type: "spring", stiffness: 320, damping: 30, mass: 0.8
 
 function FeaturedCarousel({
   items,
+  t,
   onItemClick,
 }: {
   items: StoreItem[];
-  t: (k: string, opts?: Record<string, unknown>) => string;
+  t: (k: string) => string;
   onItemClick: (item: StoreItem) => void;
 }) {
   const [idx, setIdx] = useState(0);
@@ -918,7 +691,6 @@ function FeaturedCarousel({
     setIdx(newIdx);
   }, []);
 
-  // Auto-advance forward every 5 s
   useEffect(() => {
     if (items.length <= 1) return;
     const timer = setTimeout(() => goTo((idx + 1) % items.length, 1), 5000);
@@ -928,15 +700,11 @@ function FeaturedCarousel({
   const item = items[idx];
   if (!item) return null;
 
+  const price = item.coinPrice;
+
   return (
     <Box mb="10px">
-      <Box
-        position="relative"
-        borderRadius="12px"
-        overflow="hidden"
-        style={{ height: 150 }}
-      >
-        {/* ── Animated slide (content only) ── */}
+      <Box position="relative" borderRadius="12px" overflow="hidden" style={{ height: 150 }}>
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <MotionBox
             key={item.id}
@@ -951,56 +719,35 @@ function FeaturedCarousel({
             cursor="pointer"
             onClick={() => onItemClick(item)}
           >
-            {/* Thumbnail */}
             <img
-              src={item.thumbnail}
+              src={item.assetUrl ?? PLACEHOLDER_IMG}
               alt={item.name}
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               draggable={false}
             />
-            {/* Gradient overlays */}
             <Box position="absolute" inset={0} style={{ background: "linear-gradient(90deg, rgba(5,8,14,0.92) 0%, rgba(5,8,14,0.55) 55%, rgba(5,8,14,0.1) 100%)" }} />
             <Box position="absolute" bottom={0} left={0} right={0} h="50px" style={{ background: "linear-gradient(transparent, rgba(5,8,14,0.75))" }} />
 
-            {/* Info */}
             <Flex position="absolute" inset={0} px="14px" py="11px" direction="column" justify="space-between">
-              {/* Top: badges + stats */}
-              <Flex align="center" justify="space-between">
-                <Flex gap="5px">
-                  {item.isFeatured && (
-                    <Box style={{ padding: "2px 7px", borderRadius: "5px", fontSize: "0.55rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, letterSpacing: "0.06em", background: "rgba(251,191,36,0.92)", color: "#1a1200" }}>
-                      ★ FEATURED
-                    </Box>
-                  )}
-                  <Box style={{ padding: "2px 7px", borderRadius: "5px", fontSize: "0.55rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, background: item.source === "official" ? "rgba(234,179,8,0.88)" : "rgba(20,184,166,0.88)", color: item.source === "official" ? "#1a1200" : "#fff" }}>
-                    {item.source === "official" ? "✦ Official" : "Community"}
+              <Flex align="center" justify="flex-end">
+                {item.isPremium && (
+                  <Box style={{ padding: "2px 7px", borderRadius: "5px", fontSize: "0.55rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, letterSpacing: "0.06em", background: "rgba(251,191,36,0.92)", color: "#1a1200" }}>
+                    ✦ Premium
                   </Box>
-                </Flex>
-                <Flex align="center" gap="10px">
-                  <Flex align="center" gap="3px">
-                    <Star size={10} color="#fbbf24" fill="#fbbf24" />
-                    <Text style={{ fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "#fbbf24" }}>{item.rating.toFixed(1)}</Text>
-                  </Flex>
-                  <Flex align="center" gap="3px">
-                    <Download size={10} color="rgba(255,255,255,0.4)" />
-                    <Text style={{ fontSize: "0.68rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.4)" }}>{item.downloads.toLocaleString("vi-VN")}</Text>
-                  </Flex>
-                </Flex>
+                )}
               </Flex>
-
-              {/* Bottom: name + creator + price */}
               <Box>
                 <Text style={{ fontSize: "0.98rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: "2px" }}>
                   {item.name}
                 </Text>
                 <Flex align="center" justify="space-between">
                   <Text style={{ fontSize: "0.67rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.4)" }}>
-                    by {item.creatorName}
+                    {typeLabel(item.category, t)}
                   </Text>
                   <Flex align="center" gap="4px">
                     <Coins size={11} color="#facc15" />
                     <Text style={{ fontSize: "0.8rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "#facc15" }}>
-                      {item.price.toLocaleString("vi-VN")}
+                      {price == null || price === 0 ? t("themeStore.free") : price.toLocaleString("vi-VN")}
                     </Text>
                   </Flex>
                 </Flex>
@@ -1009,7 +756,6 @@ function FeaturedCarousel({
           </MotionBox>
         </AnimatePresence>
 
-        {/* ── Static controls (stay on top, don't animate) ── */}
         {items.length > 1 && (
           <>
             <Box
@@ -1039,7 +785,6 @@ function FeaturedCarousel({
           </>
         )}
 
-        {/* Dot indicators */}
         <Flex position="absolute" bottom="7px" left="50%" gap="4px" zIndex={10} style={{ transform: "translateX(-50%)" }}>
           {items.map((_, i) => (
             <Box
@@ -1081,17 +826,19 @@ export function ThemeStorePanel({
   const canPurchase = user?.accountTier !== "Free";
 
   const [items, setItems]               = useState<StoreItem[]>([]);
+  const [inventoryItems, setInventoryItems] = useState<StoreItem[]>([]);
   const [gateOpen, setGateOpen]         = useState(false);
-  const [loading, setLoading]           = useState(true);
-  const [activeTab, setActiveTab]             = useState<TabValue>("all");
-  const [sourceFilter, setSourceFilter]       = useState<SourceFilter>("all");
-  const [purchasedTypeFilter, setPurchasedTypeFilter] = useState<"all" | StoreItemType>("all");
-  const [searchQuery, setSearchQuery]               = useState("");
-  const [wishlistIds, setWishlistIds]               = useState<Set<string>>(new Set());
+  const [itemsLoading, setItemsLoading] = useState(true);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  const [activeTab, setActiveTab]       = useState<TabValue>("all");
+  const [searchQuery, setSearchQuery]   = useState("");
+  const [wishlistIds, setWishlistIds]   = useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = useState<StoreItem | null>(null);
   const [purchasing, setPurchasing]     = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [localCoinBalance, setLocalCoinBalance] = useState<number>(coinBalanceProp ?? 0);
+
+  const loading = itemsLoading || inventoryLoading;
 
   // Sync coinBalance prop
   useEffect(() => {
@@ -1105,16 +852,41 @@ export function ThemeStorePanel({
     }
   }, [coinBalanceProp, user]);
 
-  // Fetch store items
+  // Fetch all store items on mount
   useEffect(() => {
-    setLoading(true);
-    aestheticStoreService.getItems().then((data) => {
-      setItems(data);
-      setLoading(false);
-    });
+    setItemsLoading(true);
+    aestheticStoreService.getItems()
+      .then((data) => setItems(data))
+      .catch(() => {})
+      .finally(() => setItemsLoading(false));
   }, []);
 
-  // Auto-open detail view when coming from trial banner "Buy now"
+  // Fetch inventory when switching to purchased tab
+  useEffect(() => {
+    if (activeTab !== "purchased") return;
+    setInventoryLoading(true);
+    aestheticStoreService.getInventory()
+      .then((inv) => {
+        setInventoryItems(inv.map((i) => ({
+          id: i.storeItemId,
+          category: i.category,
+          name: i.name,
+          description: i.description,
+          assetUrl: i.assetUrl,
+          isPremium: i.isPremium,
+          coinPrice: null,
+          realMoneyPriceVnd: null,
+          isActive: true,
+          isOwned: true,
+          canBuyWithCoins: false,
+          canBuyWithMoney: false,
+        })));
+      })
+      .catch(() => {})
+      .finally(() => setInventoryLoading(false));
+  }, [activeTab]);
+
+  // Auto-open detail view from trial banner "Buy now"
   useEffect(() => {
     if (!initialDetailItemId || items.length === 0) return;
     const item = items.find((i) => i.id === initialDetailItemId);
@@ -1122,29 +894,19 @@ export function ThemeStorePanel({
   }, [initialDetailItemId, items]);
 
   const featuredItems = useMemo(() =>
-    [...items]
-      .filter((i) => i.type === "theme")
-      .sort((a, b) => {
-        const scoreA = a.rating * 1000 + a.downloads / 100;
-        const scoreB = b.rating * 1000 + b.downloads / 100;
-        return scoreB - scoreA;
-      })
-      .slice(0, 3),
+    items.filter((i) => i.category === "Theme").slice(0, 3),
   [items]);
 
-  const filteredItems = items.filter((item) => {
-    if (searchQuery && !item.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    if (activeTab === "wishlist") return wishlistIds.has(item.id);
-    if (activeTab === "purchased") {
-      if (!item.isPurchased) return false;
-      if (purchasedTypeFilter !== "all" && item.type !== purchasedTypeFilter) return false;
-      if (sourceFilter !== "all" && item.source !== sourceFilter) return false;
-      return true;
-    }
-    if (activeTab !== "all" && item.type !== activeTab) return false;
-    if (sourceFilter !== "all" && item.source !== sourceFilter) return false;
-    return true;
-  });
+  const filteredItems = useMemo(() => {
+    let source: StoreItem[];
+    if (activeTab === "purchased") source = inventoryItems;
+    else if (activeTab === "wishlist") source = items.filter((i) => wishlistIds.has(i.id));
+    else if (activeTab === "all") source = items;
+    else source = items.filter((i) => i.category === activeTab);
+
+    if (!searchQuery) return source;
+    return source.filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [activeTab, items, inventoryItems, wishlistIds, searchQuery]);
 
   const toggleWishlist = useCallback((itemId: string) => {
     setWishlistIds((prev) => {
@@ -1160,27 +922,21 @@ export function ThemeStorePanel({
     setPurchaseError(null);
     setPurchasing(true);
     try {
-      const result = await aestheticStoreService.purchase(selectedItem.id, localCoinBalance);
-      setLocalCoinBalance(result.newBalance);
-      onCoinBalanceChange?.(result.newBalance);
-      // Update item in list
+      const result = await aestheticStoreService.purchase(selectedItem.id);
+      setLocalCoinBalance(result.remainingCoins);
+      onCoinBalanceChange?.(result.remainingCoins);
       setItems((prev) =>
-        prev.map((i) => (i.id === selectedItem.id ? { ...i, isPurchased: true } : i))
+        prev.map((i) => (i.id === selectedItem.id ? { ...i, isOwned: true } : i))
       );
-      setSelectedItem((prev) => (prev ? { ...prev, isPurchased: true } : null));
-      // If this item was being trialed, end the trial
+      setSelectedItem((prev) => (prev ? { ...prev, isOwned: true } : null));
       if (selectedItem.id === trialItemId) onTrialEnd?.();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Purchase failed";
-      setPurchaseError(
-        msg === "Insufficient coins"
-          ? t("themeStore.detail.notEnoughCoins")
-          : msg
-      );
+      const msg = err instanceof Error ? err.message : t("themeStore.detail.purchaseFailed");
+      setPurchaseError(msg);
     } finally {
       setPurchasing(false);
     }
-  }, [selectedItem, localCoinBalance, onCoinBalanceChange, t]);
+  }, [selectedItem, onCoinBalanceChange, t, trialItemId, onTrialEnd]);
 
   return (
     <MotionBox
@@ -1305,13 +1061,13 @@ export function ThemeStorePanel({
             )}
           </Flex>
 
-          {/* Browse */}
+          {/* Browse section */}
           <Text px="8px" mb="4px" style={{ fontSize: "0.58rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.22)", letterSpacing: "0.1em" }}>
             {t("themeStore.sidebarBrowse")}
           </Text>
           {TABS.filter((tab) => tab.value !== "purchased" && tab.value !== "wishlist").map((tab) => {
             const active = activeTab === tab.value;
-            const color = tab.value !== "all" ? typeColor(tab.value as StoreItemType) : undefined;
+            const color = tab.value !== "all" ? typeColor(tab.value as StoreCategory) : undefined;
             return (
               <Box
                 key={tab.value}
@@ -1327,7 +1083,7 @@ export function ThemeStorePanel({
                 borderRadius="7px"
                 border="none"
                 cursor="pointer"
-                onClick={() => { setActiveTab(tab.value); setPurchasedTypeFilter("all"); }}
+                onClick={() => setActiveTab(tab.value)}
                 style={{
                   background: active ? "rgba(255,255,255,0.1)" : "transparent",
                   color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
@@ -1346,7 +1102,7 @@ export function ThemeStorePanel({
             );
           })}
 
-          {/* Library */}
+          {/* Library section */}
           <Box my="8px" mx="4px" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }} />
           <Text px="8px" mb="4px" style={{ fontSize: "0.58rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.22)", letterSpacing: "0.1em" }}>
             {t("themeStore.sidebarLibrary")}
@@ -1407,90 +1163,10 @@ export function ThemeStorePanel({
               </Box>
             );
           })}
-
         </Box>
 
         {/* ── Right content ── */}
         <Box flex={1} display="flex" flexDirection="column" style={{ minWidth: 0 }}>
-
-          {/* Filter bar — hidden on wishlist tab */}
-          {activeTab !== "wishlist" && (
-          <Box px="12px" pt="10px" pb="8px" flexShrink={0} style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-            {/* Filter pills */}
-            <Flex gap="5px" style={{ overflowX: "auto", scrollbarWidth: "none" }}>
-              {activeTab !== "purchased"
-                ? (["all", "official", "community"] as SourceFilter[]).map((src) => {
-                    const active = sourceFilter === src;
-                    const label = src === "all" ? t("themeStore.filterAll") : src === "official" ? t("themeStore.filterOfficial") : t("themeStore.filterCommunity");
-                    return (
-                      <Box
-                        key={src}
-                        as="button"
-                        onClick={() => setSourceFilter(src)}
-                        display="flex"
-                        alignItems="center"
-                        gap="4px"
-                        px="10px"
-                        py="4px"
-                        borderRadius="20px"
-                        border="none"
-                        cursor="pointer"
-                        flexShrink={0}
-                        style={{
-                          fontFamily: "'HarmonyOS Sans', sans-serif",
-                          fontSize: "0.68rem",
-                          fontWeight: active ? 600 : 400,
-                          color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)",
-                          background: active
-                            ? src === "official" ? "rgba(234,179,8,0.18)" : src === "community" ? "rgba(20,184,166,0.18)" : "rgba(255,255,255,0.1)"
-                            : "rgba(255,255,255,0.04)",
-                          border: active
-                            ? src === "official" ? "1px solid rgba(234,179,8,0.35)" : src === "community" ? "1px solid rgba(20,184,166,0.35)" : "1px solid rgba(255,255,255,0.18)"
-                            : "1px solid rgba(255,255,255,0.08)",
-                          transition: "all 0.15s",
-                        }}
-                      >
-                        {src === "official" && <BadgeCheck size={10} />}
-                        {src === "community" && <Users size={10} />}
-                        {label}
-                      </Box>
-                    );
-                  })
-                : (["all", "theme", "sticker-pack", "wallpaper", "sound-pack", "effect-pack"] as const).map((type) => {
-                    const active = purchasedTypeFilter === type;
-                    const color = type !== "all" ? typeColor(type as StoreItemType) : undefined;
-                    const label = type === "all" ? t("themeStore.tabAll") : typeLabel(type as StoreItemType, t);
-                    return (
-                      <Box
-                        key={type}
-                        as="button"
-                        onClick={() => setPurchasedTypeFilter(type)}
-                        px="10px"
-                        py="4px"
-                        borderRadius="20px"
-                        border="none"
-                        cursor="pointer"
-                        flexShrink={0}
-                        style={{
-                          fontFamily: "'HarmonyOS Sans', sans-serif",
-                          fontSize: "0.68rem",
-                          fontWeight: active ? 700 : 400,
-                          color: active ? "#fff" : "rgba(255,255,255,0.4)",
-                          background: active && color ? `${color}22` : active ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)",
-                          border: active && color ? `1px solid ${color}55` : active ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.08)",
-                          transition: "all 0.15s",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {label}
-                      </Box>
-                    );
-                  })}
-            </Flex>
-          </Box>
-          )}
-
-          {/* Scrollable grid */}
           <Box
             flex={1}
             overflowY="auto"
@@ -1499,41 +1175,41 @@ export function ThemeStorePanel({
             pb="12px"
             style={{ minHeight: 0, scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.12) transparent" }}
           >
-          {/* Featured carousel — only on Discovery tab with All Sources filter */}
-          {activeTab === "all" && sourceFilter === "all" && featuredItems.length > 0 && !loading && !searchQuery && (
-            <FeaturedCarousel
-              items={featuredItems}
-              t={t}
-              onItemClick={(item) => { setSelectedItem(item); setPurchaseError(null); }}
-            />
-          )}
+            {/* Featured carousel — only on Explore (all) tab, no active search */}
+            {activeTab === "all" && featuredItems.length > 0 && !loading && !searchQuery && (
+              <FeaturedCarousel
+                items={featuredItems}
+                t={t}
+                onItemClick={(item) => { setSelectedItem(item); setPurchaseError(null); }}
+              />
+            )}
 
-          {loading ? (
-            <Flex h="200px" align="center" justify="center">
-              <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)", letterSpacing: "0.04em" }}>
-                {t("themeStore.loading")}
-              </Text>
-            </Flex>
-          ) : filteredItems.length === 0 ? (
-            <Flex h="200px" align="center" justify="center" direction="column" gap={2}>
-              <Package size={28} color="rgba(255,255,255,0.15)" />
-              <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)" }}>
-                {t("themeStore.empty")}
-              </Text>
-            </Flex>
-          ) : (
-            <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-              {filteredItems.map((item) => (
-                <StoreCard
-                  key={item.id}
-                  item={item}
-                  t={t}
-                  isTrialing={item.id === trialItemId}
-                  onClick={() => { setSelectedItem(item); setPurchaseError(null); }}
-                />
-              ))}
-            </Box>
-          )}
+            {loading ? (
+              <Flex h="200px" align="center" justify="center">
+                <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)", letterSpacing: "0.04em" }}>
+                  {t("themeStore.loading")}
+                </Text>
+              </Flex>
+            ) : filteredItems.length === 0 ? (
+              <Flex h="200px" align="center" justify="center" direction="column" gap={2}>
+                <Package size={28} color="rgba(255,255,255,0.15)" />
+                <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)" }}>
+                  {t("themeStore.empty")}
+                </Text>
+              </Flex>
+            ) : (
+              <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                {filteredItems.map((item) => (
+                  <StoreCard
+                    key={item.id}
+                    item={item}
+                    t={t}
+                    isTrialing={item.id === trialItemId}
+                    onClick={() => { setSelectedItem(item); setPurchaseError(null); }}
+                  />
+                ))}
+              </Box>
+            )}
           </Box>
         </Box>
       </Flex>
@@ -1551,7 +1227,7 @@ export function ThemeStorePanel({
             onBack={() => { setSelectedItem(null); setPurchaseError(null); }}
             onBuy={handleBuy}
             onStartTrial={
-              onStartTrial && !selectedItem.isPurchased
+              onStartTrial && !selectedItem.isOwned
                 ? () => { onStartTrial(selectedItem); onClose(); }
                 : undefined
             }
@@ -1565,7 +1241,7 @@ export function ThemeStorePanel({
         )}
       </AnimatePresence>
 
-      {/* Premium gate modal — fixed position, escapes overflow:hidden */}
+      {/* Premium gate modal */}
       <PremiumGateModal feature={gateOpen ? "store" : null} onClose={() => setGateOpen(false)} />
     </MotionBox>
   );

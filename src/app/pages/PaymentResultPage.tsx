@@ -4,6 +4,7 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { Crown, XCircle, Loader } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import { paymentService } from "../../services/payment.service";
 
 const MotionBox = motion.create(Box);
 
@@ -16,14 +17,25 @@ export function PaymentResultPage() {
   const [status, setStatus] = useState<Status>("loading");
 
   useEffect(() => {
+    const transactionCode = sessionStorage.getItem("vnpay_transaction_code");
     sessionStorage.removeItem("vnpay_transaction_code");
+
     const statusParam = searchParams.get("status");
-    if (statusParam === "success") {
-      refreshAccountTier("Premium");
-      setStatus("success");
-    } else {
+
+    if (statusParam !== "success" || !transactionCode) {
       setStatus("error");
+      return;
     }
+
+    paymentService
+      .upgradeSubscription(transactionCode)
+      .then(() => {
+        refreshAccountTier("Premium");
+        setStatus("success");
+      })
+      .catch(() => {
+        setStatus("error");
+      });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (

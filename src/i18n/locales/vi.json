@@ -478,6 +478,7 @@
       "stickers": "Nhãn dán",
       "sounds": "Âm thanh",
       "missions": "Nhiệm vụ",
+      "assets": "Tài nguyên",
       "backToHome": "Về trang chủ"
     },
     "topbar": {
@@ -585,6 +586,45 @@
       "actionUnban": "Bỏ cấm",
       "retry": "Thử lại",
       "showing": "Hiển thị {{shown}} / {{total}} người dùng"
+    },
+    "assets": {
+      "statTotal": "Tổng",
+      "statPremium": "Premium",
+      "statFree": "Miễn phí",
+      "filterType": "Tất cả loại",
+      "filterAll": "Tất cả",
+      "filterCategory": "Danh mục...",
+      "createNew": "Thêm tài nguyên",
+      "editAsset": "Sửa tài nguyên",
+      "colName": "Tên",
+      "colType": "Loại",
+      "colCategory": "Danh mục",
+      "colVolume": "Âm lượng",
+      "colPremium": "Hạng",
+      "colActions": "Thao tác",
+      "premium": "Premium",
+      "free": "Miễn phí",
+      "actionEdit": "Sửa",
+      "actionDelete": "Xoá",
+      "loading": "Đang tải tài nguyên...",
+      "errorLoad": "Không thể tải tài nguyên.",
+      "noData": "Không tìm thấy tài nguyên",
+      "retry": "Thử lại",
+      "showing": "Hiển thị {{count}} tài nguyên",
+      "fieldName": "Tên",
+      "fieldUrl": "URL",
+      "fieldDescription": "Mô tả",
+      "fieldType": "Loại",
+      "fieldCategory": "Danh mục",
+      "fieldCategoryPlaceholder": "vd: Rain, Cafe...",
+      "fieldVolume": "Âm lượng mặc định",
+      "fieldPremium": "Premium",
+      "saveError": "Lưu tài nguyên thất bại.",
+      "save": "Lưu",
+      "cancel": "Huỷ",
+      "delete": "Xoá",
+      "deleteConfirm": "Xoá tài nguyên này?",
+      "deleteNote": "Hành động này không thể hoàn tác."
     }
   }
 }

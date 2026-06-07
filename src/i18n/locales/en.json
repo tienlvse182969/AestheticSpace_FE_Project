@@ -479,6 +479,7 @@
       "stickers": "Stickers",
       "sounds": "Ambient Sounds",
       "missions": "Missions",
+      "assets": "Assets",
       "backToHome": "Back to Home"
     },
     "topbar": {
@@ -586,6 +587,45 @@
       "actionUnban": "Unban",
       "retry": "Retry",
       "showing": "Showing {{shown}} of {{total}} users"
+    },
+    "assets": {
+      "statTotal": "Total",
+      "statPremium": "Premium",
+      "statFree": "Free",
+      "filterType": "All Types",
+      "filterAll": "All",
+      "filterCategory": "Category...",
+      "createNew": "Add Asset",
+      "editAsset": "Edit Asset",
+      "colName": "Name",
+      "colType": "Type",
+      "colCategory": "Category",
+      "colVolume": "Volume",
+      "colPremium": "Tier",
+      "colActions": "Actions",
+      "premium": "Premium",
+      "free": "Free",
+      "actionEdit": "Edit",
+      "actionDelete": "Delete",
+      "loading": "Loading assets...",
+      "errorLoad": "Failed to load assets.",
+      "noData": "No assets found",
+      "retry": "Retry",
+      "showing": "Showing {{count}} assets",
+      "fieldName": "Name",
+      "fieldUrl": "URL",
+      "fieldDescription": "Description",
+      "fieldType": "Type",
+      "fieldCategory": "Category",
+      "fieldCategoryPlaceholder": "e.g. Rain, Cafe...",
+      "fieldVolume": "Default Volume",
+      "fieldPremium": "Premium",
+      "saveError": "Failed to save asset.",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleteConfirm": "Delete this asset?",
+      "deleteNote": "This action cannot be undone."
     }
   }
 }
