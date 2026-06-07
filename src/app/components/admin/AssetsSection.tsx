@@ -1,29 +1,42 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Flex, Text, Input, Spinner } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Plus, Pencil, Trash2, RefreshCw, X, MoreHorizontal,
-  Music, Image, Layers, Sticker, ChevronDown,
+  Music, Image, Layers, ChevronDown, UploadCloud, FileAudio, FileImage, CheckCircle,
 } from "lucide-react";
 import {
   adminAssetsService,
   type AssetDto,
   type AssetFormData,
 } from "../../../services/admin/assets.admin.service";
+import {
+  uploadToCloudinary,
+  mimeToAssetType,
+} from "../../../services/cloudinary.service";
 import { useAdminTheme } from "./AdminThemeContext";
 
 const MotionBox = motion.create(Box);
 
 const TYPE_OPTIONS = ["Audio", "Image", "Video", "Sticker", "Effect"];
+
 const TYPE_STYLE: Record<string, { color: string; bg: string; border: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
   Audio:   { color: "#a78bfa", bg: "rgba(167,139,250,0.12)", border: "rgba(167,139,250,0.3)", icon: Music },
   Image:   { color: "#60a5fa", bg: "rgba(96,165,250,0.12)",  border: "rgba(96,165,250,0.3)",  icon: Image },
-  Sticker: { color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.3)",  icon: Sticker },
+  Sticker: { color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.3)",  icon: Image },
   Effect:  { color: "#34d399", bg: "rgba(52,211,153,0.12)",  border: "rgba(52,211,153,0.3)",  icon: Layers },
   Video:   { color: "#f472b6", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.3)", icon: Layers },
 };
 const DEFAULT_TYPE_STYLE = { color: "#94a3b8", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)", icon: Layers };
+
+const ACCEPT_BY_TYPE: Record<string, string> = {
+  Audio:   "audio/*",
+  Image:   "image/*",
+  Sticker: "image/*",
+  Video:   "video/*",
+  Effect:  "image/*,video/*",
+};
 
 const DEFAULT_FORM: AssetFormData = {
   name: "", description: "", url: "",
@@ -31,35 +44,43 @@ const DEFAULT_FORM: AssetFormData = {
   defaultVolume: 50, isPremium: false,
 };
 
-// Table: Name | Type | Category | Volume | Premium | Actions
 const COL_FLEX = [2.5, 1.2, 1.3, 0.9, 0.9, 0.7];
 
 export function AssetsSection() {
   const { c, isDark } = useAdminTheme();
   const { t } = useTranslation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const modalBg = isDark ? "rgba(14,20,28,0.97)" : "rgba(238,243,248,0.97)";
 
+  /* ── list state ── */
   const [assets,        setAssets]        = useState<AssetDto[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [error,         setError]         = useState<string | null>(null);
-
   const [filterType,    setFilterType]    = useState("");
-  const [filterCat,     setFilterCat]    = useState("");
+  const [filterCat,     setFilterCat]     = useState("");
   const [showTypeMenu,  setShowTypeMenu]  = useState(false);
 
+  /* ── form state ── */
   const [showForm,      setShowForm]      = useState(false);
   const [editTarget,    setEditTarget]    = useState<AssetDto | null>(null);
   const [form,          setForm]          = useState<AssetFormData>(DEFAULT_FORM);
   const [formLoading,   setFormLoading]   = useState(false);
   const [formError,     setFormError]     = useState<string | null>(null);
 
+  /* ── upload state ── */
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isDragOver,    setIsDragOver]    = useState(false);
+
+  /* ── row state ── */
   const [viewAsset,     setViewAsset]     = useState<AssetDto | null>(null);
   const [openMenu,      setOpenMenu]      = useState<string | null>(null);
   const [hoveredRow,    setHoveredRow]    = useState<string | null>(null);
   const [deleteId,      setDeleteId]      = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  /* ── fetch ── */
   const fetchAssets = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -85,10 +106,21 @@ export function AssetsSection() {
     return () => document.removeEventListener("mousedown", handler);
   }, [openMenu, showTypeMenu]);
 
+  /* ── helpers ── */
+  const getTypeStyle = (type: string | null) => TYPE_STYLE[type ?? ""] ?? DEFAULT_TYPE_STYLE;
+  const allCategories = [...new Set(assets.map(a => a.category).filter(Boolean))] as string[];
+
+  const resetUpload = () => {
+    setUploadProgress(null);
+    setUploadedFileName(null);
+  };
+
+  /* ── open form ── */
   const openCreate = () => {
     setEditTarget(null);
     setForm(DEFAULT_FORM);
     setFormError(null);
+    resetUpload();
     setShowForm(true);
   };
 
@@ -104,10 +136,48 @@ export function AssetsSection() {
       isPremium:     a.isPremium,
     });
     setFormError(null);
+    resetUpload();
     setShowForm(true);
     setOpenMenu(null);
   };
 
+  /* ── file upload ── */
+  const handleFileSelected = async (file: File) => {
+    const detectedType = mimeToAssetType(file);
+    setUploadedFileName(file.name);
+    setUploadProgress(0);
+    setFormError(null);
+
+    const folder = detectedType === "Audio" ? "aesthetic-space/audio" : "aesthetic-space/images";
+
+    try {
+      const result = await uploadToCloudinary(file, folder, (pct) => setUploadProgress(pct));
+      setForm(f => ({
+        ...f,
+        url:  result.secure_url,
+        type: detectedType === "Other" ? f.type : detectedType,
+        name: f.name || file.name.replace(/\.[^.]+$/, ""),
+      }));
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : t("admin.assets.uploadError"));
+      resetUpload();
+    }
+  };
+
+  const onFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileSelected(file);
+    e.target.value = "";
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileSelected(file);
+  };
+
+  /* ── save ── */
   const handleSave = async () => {
     if (!form.name.trim() || !form.url.trim()) return;
     setFormLoading(true);
@@ -128,6 +198,7 @@ export function AssetsSection() {
     }
   };
 
+  /* ── delete ── */
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleteLoading(true);
@@ -142,8 +213,11 @@ export function AssetsSection() {
     }
   };
 
+  /* ── derived ── */
   const premiumCount = assets.filter(a => a.isPremium).length;
   const freeCount    = assets.filter(a => !a.isPremium).length;
+  const isUploading  = uploadProgress !== null && uploadProgress < 100;
+  const isUploaded   = uploadProgress === 100;
 
   const inputStyle = {
     background: c.cardBg, border: `1px solid ${c.cardBorder}`,
@@ -151,10 +225,7 @@ export function AssetsSection() {
     height: "38px", paddingLeft: "12px", outline: "none", width: "100%",
   };
 
-  const getTypeStyle = (type: string | null) => TYPE_STYLE[type ?? ""] ?? DEFAULT_TYPE_STYLE;
-
-  const allCategories = [...new Set(assets.map(a => a.category).filter(Boolean))] as string[];
-
+  /* ─────────────────────────── render ─────────────────────────── */
   return (
     <Box>
       {/* Stats */}
@@ -176,9 +247,7 @@ export function AssetsSection() {
       <Flex align="center" gap={3} mb={4} wrap="wrap">
         {/* Type filter */}
         <Box position="relative" onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
-          <Box
-            as="button"
-            onClick={() => setShowTypeMenu(p => !p)}
+          <Box as="button" onClick={() => setShowTypeMenu(p => !p)}
             display="flex" alignItems="center" gap={2}
             px={3} py="8px" borderRadius="9px" border="none" cursor="pointer"
             style={{
@@ -186,27 +255,17 @@ export function AssetsSection() {
               border: filterType ? "1px solid rgba(78,124,106,0.35)" : `1px solid ${c.cardBorder}`,
               color: filterType ? "#4e7c6a" : c.textMuted,
               fontSize: "0.8rem", transition: "all 0.18s",
-            }}
-          >
+            }}>
             {filterType || t("admin.assets.filterType")}
             <ChevronDown size={12} />
           </Box>
           <AnimatePresence>
             {showTypeMenu && (
-              <MotionBox
-                position="absolute" top="38px" left={0} zIndex={100}
-                borderRadius="10px" overflow="hidden"
-                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                transition={{ duration: 0.12 } as any}
-                style={{
-                  background: "rgba(15,22,30,0.97)", backdropFilter: "blur(16px)",
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  boxShadow: "0 12px 40px rgba(0,0,0,0.6)", minWidth: 130,
-                }}
-                onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-              >
+              <MotionBox position="absolute" top="38px" left={0} zIndex={100} borderRadius="10px" overflow="hidden"
+                initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: -4 }} transition={{ duration: 0.12 } as any}
+                style={{ background: "rgba(15,22,30,0.97)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 12px 40px rgba(0,0,0,0.6)", minWidth: 140 }}
+                onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                 {["", ...TYPE_OPTIONS].map(tp => (
                   <Box key={tp || "__all__"} as="button" w="full" textAlign="left"
                     onClick={() => { setFilterType(tp); setShowTypeMenu(false); }}
@@ -225,43 +284,30 @@ export function AssetsSection() {
           </AnimatePresence>
         </Box>
 
-        {/* Category search */}
-        <Input
-          value={filterCat}
-          onChange={(e) => setFilterCat(e.target.value)}
+        {/* Category filter */}
+        <Input value={filterCat} onChange={e => setFilterCat(e.target.value)}
           placeholder={t("admin.assets.filterCategory")}
           style={{ ...inputStyle, width: 160, height: 36 }}
           _placeholder={{ color: c.textSub } as any}
-          _focus={{ borderColor: "rgba(78,124,106,0.5)" } as any}
-        />
+          _focus={{ borderColor: "rgba(78,124,106,0.5)" } as any} />
 
         {/* Refresh */}
-        <Box
-          as="button"
-          onClick={fetchAssets}
+        <Box as="button" onClick={fetchAssets}
           display="flex" alignItems="center" justifyContent="center"
           w="38px" h="38px" borderRadius="9px" border="none" cursor="pointer" flexShrink={0}
           style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, color: c.textMuted }}
-          _hover={{ background: c.navActive } as any}
-        >
+          _hover={{ background: c.navActive } as any}>
           <RefreshCw size={14} />
         </Box>
 
         <Box flex={1} />
 
         {/* Create button */}
-        <Box
-          as="button"
-          onClick={openCreate}
+        <Box as="button" onClick={openCreate}
           display="flex" alignItems="center" gap={2}
           px={4} py="8px" borderRadius="9px" border="none" cursor="pointer" flexShrink={0}
-          style={{
-            background: "rgba(78,124,106,0.18)",
-            border: "1px solid rgba(78,124,106,0.4)",
-            color: "#4e7c6a", fontSize: "0.82rem", fontWeight: 600,
-          }}
-          _hover={{ background: "rgba(78,124,106,0.28)" } as any}
-        >
+          style={{ background: "rgba(78,124,106,0.18)", border: "1px solid rgba(78,124,106,0.4)", color: "#4e7c6a", fontSize: "0.82rem", fontWeight: 600 }}
+          _hover={{ background: "rgba(78,124,106,0.28)" } as any}>
           <Plus size={14} />
           {t("admin.assets.createNew")}
         </Box>
@@ -276,10 +322,7 @@ export function AssetsSection() {
             t("admin.assets.colCategory"), t("admin.assets.colVolume"),
             t("admin.assets.colPremium"), t("admin.assets.colActions"),
           ].map((h, i) => (
-            <Text key={h} style={{
-              fontSize: "0.63rem", color: c.cardTextMuted, letterSpacing: "0.1em",
-              flex: COL_FLEX[i],
-            }}>
+            <Text key={h} style={{ fontSize: "0.63rem", color: c.cardTextMuted, letterSpacing: "0.1em", flex: COL_FLEX[i] }}>
               {h.toUpperCase()}
             </Text>
           ))}
@@ -308,9 +351,7 @@ export function AssetsSection() {
             const ts = getTypeStyle(a.type);
             const TypeIcon = ts.icon;
             return (
-              <Flex
-                key={a.id} align="center" px={5} py="13px" position="relative"
-                cursor="pointer"
+              <Flex key={a.id} align="center" px={5} py="13px" position="relative" cursor="pointer"
                 style={{
                   background: hoveredRow === a.id ? "rgba(78,124,106,0.1)" : "transparent",
                   borderBottom: i < assets.length - 1 ? `1px solid ${c.rowDivider}` : "none",
@@ -318,9 +359,9 @@ export function AssetsSection() {
                 }}
                 onClick={() => { setViewAsset(a); setHoveredRow(null); }}
                 onMouseEnter={() => setHoveredRow(a.id)}
-                onMouseLeave={() => setHoveredRow(null)}
-              >
-                {/* Name + URL snippet */}
+                onMouseLeave={() => setHoveredRow(null)}>
+
+                {/* Name + URL */}
                 <Box style={{ flex: COL_FLEX[0], minWidth: 0, paddingRight: 12 }}>
                   <Text style={{ fontSize: "0.82rem", color: c.cardText, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {a.name ?? "—"}
@@ -369,33 +410,23 @@ export function AssetsSection() {
                 {/* Actions */}
                 <Box style={{ flex: COL_FLEX[5] }} position="relative"
                   onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                  <Box
-                    as="button"
+                  <Box as="button"
                     onClick={(e: React.MouseEvent) => { e.stopPropagation(); setOpenMenu(openMenu === a.id ? null : a.id); }}
                     display="flex" alignItems="center" justifyContent="center"
                     w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer"
                     style={{ background: openMenu === a.id ? c.navActive : "transparent", color: c.textMuted }}
-                    _hover={{ background: c.navActive } as any}
-                  >
+                    _hover={{ background: c.navActive } as any}>
                     <MoreHorizontal size={14} />
                   </Box>
 
                   <AnimatePresence>
                     {openMenu === a.id && (
-                      <MotionBox
-                        position="absolute" right={0} top="34px" zIndex={100}
+                      <MotionBox position="absolute" right={0} top="34px" zIndex={100}
                         borderRadius="10px" overflow="hidden"
-                        initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                        transition={{ duration: 0.12 } as any}
-                        style={{
-                          background: "rgba(15,22,30,0.97)", backdropFilter: "blur(16px)",
-                          border: "1px solid rgba(255,255,255,0.1)",
-                          boxShadow: "0 12px 40px rgba(0,0,0,0.6)", minWidth: 130,
-                        }}
-                        onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
-                      >
+                        initial={{ opacity: 0, scale: 0.95, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -4 }} transition={{ duration: 0.12 } as any}
+                        style={{ background: "rgba(15,22,30,0.97)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 12px 40px rgba(0,0,0,0.6)", minWidth: 130 }}
+                        onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}>
                         <Box as="button" w="full" textAlign="left" onClick={() => openEdit(a)}
                           display="flex" alignItems="center" gap={2} px={4} py="10px"
                           border="none" cursor="pointer"
@@ -423,7 +454,7 @@ export function AssetsSection() {
         )}
       </Box>
 
-      {/* Footer count */}
+      {/* Footer */}
       <Flex align="center" mt={3}>
         <Text style={{ fontSize: "0.72rem", color: c.cardTextMuted }}>
           {loading ? t("admin.assets.loading") : t("admin.assets.showing", { count: assets.length })}
@@ -433,38 +464,130 @@ export function AssetsSection() {
       {/* ── Create / Edit Form Modal ── */}
       <AnimatePresence>
         {showForm && (
-          <MotionBox
-            position="fixed" inset={0} zIndex={200}
+          <MotionBox position="fixed" inset={0} zIndex={200}
             display="flex" alignItems="center" justifyContent="center" px={4}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.15 } as any}
-            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
-            onClick={() => !formLoading && setShowForm(false)}
-          >
+            style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
+            onClick={() => !formLoading && !isUploading && setShowForm(false)}>
             <MotionBox
-              initial={{ scale: 0.95, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
+              initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
               transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] } as any}
               style={{
-                width: "100%", maxWidth: 520, maxHeight: "88vh", overflowY: "auto",
+                width: "100%", maxWidth: 540, maxHeight: "90vh", overflowY: "auto",
                 background: modalBg, border: `1px solid ${c.cardBorder}`,
                 borderRadius: 16, boxShadow: "0 24px 80px rgba(0,0,0,0.75)",
               }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}>
               <Box p={6}>
+                {/* Modal header */}
                 <Flex align="center" justify="space-between" mb={5}>
                   <Text style={{ fontSize: "1rem", color: c.cardText, fontWeight: 600 }}>
                     {editTarget ? t("admin.assets.editAsset") : t("admin.assets.createNew")}
                   </Text>
-                  <Box as="button" onClick={() => !formLoading && setShowForm(false)}
+                  <Box as="button" onClick={() => !formLoading && !isUploading && setShowForm(false)}
                     style={{ background: "transparent", border: "none", cursor: "pointer", color: c.textMuted, display: "flex" }}>
                     <X size={18} />
                   </Box>
                 </Flex>
 
                 <Flex direction="column" gap={4}>
+                  {/* ── File Upload Zone ── */}
+                  <Box>
+                    <Text mb="6px" style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
+                      {t("admin.assets.fieldFile")}
+                    </Text>
+
+                    {/* hidden file input */}
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept={ACCEPT_BY_TYPE[form.type] ?? "*/*"}
+                      style={{ display: "none" }}
+                      onChange={onFileInputChange}
+                    />
+
+                    {/* drop zone */}
+                    <Box
+                      borderRadius="10px"
+                      style={{
+                        border: `2px dashed ${isDragOver ? "#4e7c6a" : isUploaded ? "rgba(74,222,128,0.4)" : c.cardBorder}`,
+                        background: isDragOver ? "rgba(78,124,106,0.08)" : isUploaded ? "rgba(74,222,128,0.05)" : c.cardBg,
+                        transition: "all 0.2s",
+                        cursor: isUploading ? "default" : "pointer",
+                        padding: "20px 16px",
+                        textAlign: "center",
+                      }}
+                      onClick={() => !isUploading && fileInputRef.current?.click()}
+                      onDragOver={(e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={onDrop}
+                    >
+                      {isUploading ? (
+                        /* uploading */
+                        <Flex direction="column" align="center" gap={2}>
+                          <Spinner size="sm" style={{ color: "#4e7c6a" }} />
+                          <Text style={{ fontSize: "0.78rem", color: c.cardTextMuted }}>
+                            {t("admin.assets.uploading")} {uploadProgress}%
+                          </Text>
+                          {/* progress bar */}
+                          <Box w="100%" h="3px" borderRadius="full" style={{ background: c.cardBorder }}>
+                            <Box h="3px" borderRadius="full"
+                              style={{ background: "#4e7c6a", width: `${uploadProgress}%`, transition: "width 0.2s" }} />
+                          </Box>
+                          <Text style={{ fontSize: "0.68rem", color: c.cardTextMuted }}>{uploadedFileName}</Text>
+                        </Flex>
+                      ) : isUploaded ? (
+                        /* done */
+                        <Flex direction="column" align="center" gap="6px">
+                          <CheckCircle size={20} style={{ color: "#4ade80" }} />
+                          <Text style={{ fontSize: "0.78rem", color: "#4ade80" }}>
+                            {t("admin.assets.uploadDone")}
+                          </Text>
+                          <Text style={{ fontSize: "0.7rem", color: c.cardTextMuted }}>{uploadedFileName}</Text>
+                          <Text style={{ fontSize: "0.68rem", color: c.textSub }}>
+                            {t("admin.assets.uploadReplace")}
+                          </Text>
+                        </Flex>
+                      ) : (
+                        /* idle */
+                        <Flex direction="column" align="center" gap="8px">
+                          <Flex gap={3} justify="center">
+                            <FileAudio size={22} style={{ color: "#a78bfa", opacity: 0.7 }} />
+                            <FileImage size={22} style={{ color: "#60a5fa", opacity: 0.7 }} />
+                            <UploadCloud size={22} style={{ color: c.textDim }} />
+                          </Flex>
+                          <Text style={{ fontSize: "0.8rem", color: c.cardText }}>
+                            {t("admin.assets.dropZoneTitle")}
+                          </Text>
+                          <Text style={{ fontSize: "0.7rem", color: c.cardTextMuted }}>
+                            {t("admin.assets.dropZoneSub")}
+                          </Text>
+                        </Flex>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {/* URL (auto-filled, still editable) */}
+                  <Box>
+                    <Flex justify="space-between" mb="5px">
+                      <Text style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
+                        {t("admin.assets.fieldUrl")} *
+                      </Text>
+                      {isUploaded && (
+                        <Text style={{ fontSize: "0.65rem", color: "#4ade80" }}>
+                          ✓ {t("admin.assets.autoFilled")}
+                        </Text>
+                      )}
+                    </Flex>
+                    <Input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
+                      placeholder="https://res.cloudinary.com/..."
+                      style={inputStyle}
+                      _placeholder={{ color: c.textSub } as any}
+                      _focus={{ borderColor: "rgba(78,124,106,0.6)" } as any} />
+                  </Box>
+
                   {/* Name */}
                   <Box>
                     <Text mb="5px" style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
@@ -472,18 +595,6 @@ export function AssetsSection() {
                     </Text>
                     <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                       style={inputStyle} _focus={{ borderColor: "rgba(78,124,106,0.6)" } as any} />
-                  </Box>
-
-                  {/* URL */}
-                  <Box>
-                    <Text mb="5px" style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
-                      {t("admin.assets.fieldUrl")} *
-                    </Text>
-                    <Input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
-                      placeholder="https://..."
-                      style={inputStyle}
-                      _placeholder={{ color: c.textSub } as any}
-                      _focus={{ borderColor: "rgba(78,124,106,0.6)" } as any} />
                   </Box>
 
                   {/* Description */}
@@ -522,33 +633,32 @@ export function AssetsSection() {
                       <Text mb="5px" style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
                         {t("admin.assets.fieldCategory")}
                       </Text>
-                      <Input
-                        value={form.category}
-                        onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                      <Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
                         list="asset-categories"
                         placeholder={t("admin.assets.fieldCategoryPlaceholder")}
                         style={inputStyle}
                         _placeholder={{ color: c.textSub } as any}
-                        _focus={{ borderColor: "rgba(78,124,106,0.6)" } as any}
-                      />
+                        _focus={{ borderColor: "rgba(78,124,106,0.6)" } as any} />
                       <datalist id="asset-categories">
                         {allCategories.map(cat => <option key={cat} value={cat} />)}
                       </datalist>
                     </Box>
                   </Flex>
 
-                  {/* Volume */}
-                  <Box>
-                    <Flex justify="space-between" mb="5px">
-                      <Text style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
-                        {t("admin.assets.fieldVolume")}
-                      </Text>
-                      <Text style={{ fontSize: "0.7rem", color: c.cardText }}>{form.defaultVolume}</Text>
-                    </Flex>
-                    <Box as="input" type="range" min={0} max={100} value={form.defaultVolume}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, defaultVolume: Number(e.target.value) }))}
-                      style={{ width: "100%", accentColor: "#4e7c6a" }} />
-                  </Box>
+                  {/* Volume (only for Audio) */}
+                  {form.type === "Audio" && (
+                    <Box>
+                      <Flex justify="space-between" mb="5px">
+                        <Text style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
+                          {t("admin.assets.fieldVolume")}
+                        </Text>
+                        <Text style={{ fontSize: "0.7rem", color: c.cardText }}>{form.defaultVolume}</Text>
+                      </Flex>
+                      <Box as="input" type="range" min={0} max={100} value={form.defaultVolume}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, defaultVolume: Number(e.target.value) }))}
+                        style={{ width: "100%", accentColor: "#4e7c6a" }} />
+                    </Box>
+                  )}
 
                   {/* isPremium toggle */}
                   <Flex align="center" gap={3}>
@@ -561,11 +671,7 @@ export function AssetsSection() {
                         position: "relative", transition: "all 0.2s", flexShrink: 0,
                       }}>
                       <Box position="absolute" w="14px" h="14px" borderRadius="full" top="2px"
-                        style={{
-                          left: form.isPremium ? "18px" : "2px",
-                          background: form.isPremium ? "#fbbf24" : c.textDim,
-                          transition: "left 0.2s",
-                        }} />
+                        style={{ left: form.isPremium ? "18px" : "2px", background: form.isPremium ? "#fbbf24" : c.textDim, transition: "left 0.2s" }} />
                     </Box>
                     <Text style={{ fontSize: "0.82rem", color: c.cardText }}>
                       {t("admin.assets.fieldPremium")}
@@ -577,6 +683,7 @@ export function AssetsSection() {
                   <Text mt={3} style={{ fontSize: "0.78rem", color: "#f87171" }}>{formError}</Text>
                 )}
 
+                {/* Modal footer */}
                 <Flex mt={5} gap={3} justify="flex-end">
                   <Box as="button" onClick={() => setShowForm(false)}
                     px={4} py="8px" borderRadius="9px" border="none" cursor="pointer"
@@ -585,11 +692,12 @@ export function AssetsSection() {
                     {t("admin.assets.cancel")}
                   </Box>
                   <Box as="button" onClick={handleSave}
-                    px={5} py="8px" borderRadius="9px" border="none" cursor="pointer"
+                    px={5} py="8px" borderRadius="9px" border="none"
+                    cursor={formLoading || isUploading || !form.name.trim() || !form.url.trim() ? "not-allowed" : "pointer"}
                     style={{
                       background: "rgba(78,124,106,0.22)", border: "1px solid rgba(78,124,106,0.4)",
                       color: "#4e7c6a", fontSize: "0.83rem", fontWeight: 600,
-                      opacity: formLoading || !form.name.trim() || !form.url.trim() ? 0.5 : 1,
+                      opacity: formLoading || isUploading || !form.name.trim() || !form.url.trim() ? 0.45 : 1,
                     }}
                     _hover={{ background: "rgba(78,124,106,0.32)" } as any}>
                     {formLoading ? <Spinner size="xs" /> : t("admin.assets.save")}
@@ -601,29 +709,19 @@ export function AssetsSection() {
         )}
       </AnimatePresence>
 
-      {/* ── Delete Confirmation Modal ── */}
+      {/* ── Delete Confirm Modal ── */}
       <AnimatePresence>
         {deleteId && (
-          <MotionBox
-            position="fixed" inset={0} zIndex={200}
+          <MotionBox position="fixed" inset={0} zIndex={200}
             display="flex" alignItems="center" justifyContent="center" px={4}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.15 } as any}
             style={{ background: "rgba(0,0,0,0.55)" }}
-            onClick={() => !deleteLoading && setDeleteId(null)}
-          >
-            <MotionBox
-              initial={{ scale: 0.95, y: 10 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 10 }}
+            onClick={() => !deleteLoading && setDeleteId(null)}>
+            <MotionBox initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
               transition={{ duration: 0.15 } as any}
-              style={{
-                width: "100%", maxWidth: 340, background: modalBg,
-                border: `1px solid ${c.cardBorder}`,
-                borderRadius: 14, boxShadow: "0 16px 48px rgba(0,0,0,0.65)",
-              }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
+              style={{ width: "100%", maxWidth: 340, background: modalBg, border: `1px solid ${c.cardBorder}`, borderRadius: 14, boxShadow: "0 16px 48px rgba(0,0,0,0.65)" }}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}>
               <Box p={5}>
                 <Text style={{ fontSize: "0.9rem", color: c.cardText, fontWeight: 600, marginBottom: 6 }}>
                   {t("admin.assets.deleteConfirm")}
@@ -640,10 +738,7 @@ export function AssetsSection() {
                   </Box>
                   <Box as="button" onClick={handleDelete}
                     px={4} py="7px" borderRadius="8px" border="none" cursor="pointer"
-                    style={{
-                      background: "rgba(248,113,113,0.15)", border: "1px solid rgba(248,113,113,0.3)",
-                      color: "#f87171", fontSize: "0.8rem", opacity: deleteLoading ? 0.6 : 1,
-                    }}
+                    style={{ background: "rgba(248,113,113,0.15)", border: "1px solid rgba(248,113,113,0.3)", color: "#f87171", fontSize: "0.8rem", opacity: deleteLoading ? 0.6 : 1 }}
                     _hover={{ background: "rgba(248,113,113,0.25)" } as any}>
                     {deleteLoading ? "…" : t("admin.assets.delete")}
                   </Box>
@@ -657,50 +752,32 @@ export function AssetsSection() {
       {/* ── Detail Modal ── */}
       <AnimatePresence>
         {viewAsset && (
-          <MotionBox
-            position="fixed" inset={0} zIndex={200}
+          <MotionBox position="fixed" inset={0} zIndex={200}
             display="flex" alignItems="center" justifyContent="center" px={4}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.15 } as any}
             style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
-            onClick={() => setViewAsset(null)}
-          >
-            <MotionBox
-              initial={{ scale: 0.96, y: 14 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.96, y: 14 }}
+            onClick={() => setViewAsset(null)}>
+            <MotionBox initial={{ scale: 0.96, y: 14 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 14 }}
               transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] } as any}
-              style={{
-                width: "100%", maxWidth: 460,
-                background: modalBg, border: `1px solid ${c.cardBorder}`,
-                borderRadius: 16, boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
-              }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            >
+              style={{ width: "100%", maxWidth: 460, background: modalBg, border: `1px solid ${c.cardBorder}`, borderRadius: 16, boxShadow: "0 24px 80px rgba(0,0,0,0.7)" }}
+              onClick={(e: React.MouseEvent) => e.stopPropagation()}>
               <Box p={6}>
                 <Flex align="flex-start" justify="space-between" mb={5} gap={3}>
                   <Box minW={0}>
-                    <Text style={{ fontSize: "1.05rem", color: c.cardText, fontWeight: 700, lineHeight: 1.3 }}>
-                      {viewAsset.name ?? "—"}
-                    </Text>
+                    <Text style={{ fontSize: "1.05rem", color: c.cardText, fontWeight: 700 }}>{viewAsset.name ?? "—"}</Text>
                     {viewAsset.type && (
                       <Box mt="5px" display="inline-flex" alignItems="center" gap="4px" borderRadius="full" px={2} py="1px"
                         style={{ background: getTypeStyle(viewAsset.type).bg, border: `1px solid ${getTypeStyle(viewAsset.type).border}` }}>
-                        <Text style={{ fontSize: "0.68rem", color: getTypeStyle(viewAsset.type).color }}>
-                          {viewAsset.type}
-                        </Text>
+                        <Text style={{ fontSize: "0.68rem", color: getTypeStyle(viewAsset.type).color }}>{viewAsset.type}</Text>
                       </Box>
                     )}
                   </Box>
                   <Flex align="center" gap={2} flexShrink={0}>
-                    <Box as="button"
-                      onClick={() => { setViewAsset(null); openEdit(viewAsset); }}
+                    <Box as="button" onClick={() => { setViewAsset(null); openEdit(viewAsset); }}
                       display="flex" alignItems="center" gap="5px"
                       px={3} py="6px" borderRadius="8px" border="none" cursor="pointer"
-                      style={{
-                        background: "rgba(78,124,106,0.15)", border: "1px solid rgba(78,124,106,0.35)",
-                        color: "#4e7c6a", fontSize: "0.78rem",
-                      }}
+                      style={{ background: "rgba(78,124,106,0.15)", border: "1px solid rgba(78,124,106,0.35)", color: "#4e7c6a", fontSize: "0.78rem" }}
                       _hover={{ background: "rgba(78,124,106,0.25)" } as any}>
                       <Pencil size={12} />
                       {t("admin.assets.actionEdit")}
@@ -712,24 +789,30 @@ export function AssetsSection() {
                   </Flex>
                 </Flex>
 
-                {viewAsset.description && (
-                  <Box mb={4} px={3} py="10px" borderRadius="8px"
-                    style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
-                    <Text style={{ fontSize: "0.82rem", color: c.cardTextSub, lineHeight: 1.6 }}>
-                      {viewAsset.description}
-                    </Text>
+                {/* Preview */}
+                {viewAsset.url && viewAsset.type === "Audio" && (
+                  <Box mb={4}>
+                    <audio controls src={viewAsset.url} style={{ width: "100%", height: 36 }} />
+                  </Box>
+                )}
+                {viewAsset.url && (viewAsset.type === "Image" || viewAsset.type === "Sticker") && (
+                  <Box mb={4} borderRadius="8px" overflow="hidden"
+                    style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, maxHeight: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <img src={viewAsset.url} alt={viewAsset.name ?? ""} style={{ maxHeight: 160, maxWidth: "100%", objectFit: "contain" }} />
                   </Box>
                 )}
 
-                {/* URL */}
+                {viewAsset.description && (
+                  <Box mb={4} px={3} py="10px" borderRadius="8px"
+                    style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
+                    <Text style={{ fontSize: "0.82rem", color: c.cardTextSub, lineHeight: 1.6 }}>{viewAsset.description}</Text>
+                  </Box>
+                )}
+
                 <Box mb={3} px={3} py="10px" borderRadius="8px"
                   style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, wordBreak: "break-all" }}>
-                  <Text style={{ fontSize: "0.62rem", color: c.cardTextMuted, letterSpacing: "0.08em", marginBottom: 4 }}>
-                    URL
-                  </Text>
-                  <Text style={{ fontSize: "0.78rem", color: c.cardText, fontFamily: "monospace" }}>
-                    {viewAsset.url ?? "—"}
-                  </Text>
+                  <Text style={{ fontSize: "0.62rem", color: c.cardTextMuted, letterSpacing: "0.08em", marginBottom: 4 }}>URL</Text>
+                  <Text style={{ fontSize: "0.75rem", color: c.cardText, fontFamily: "monospace" }}>{viewAsset.url ?? "—"}</Text>
                 </Box>
 
                 <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 12 }}>
@@ -742,21 +825,18 @@ export function AssetsSection() {
                       <Text style={{ fontSize: "0.62rem", color: c.cardTextMuted, letterSpacing: "0.08em", marginBottom: 4 }}>
                         {item.label.toUpperCase()}
                       </Text>
-                      <Text style={{ fontSize: "0.85rem", color: c.cardText, fontWeight: 600 }}>
-                        {item.value}
-                      </Text>
+                      <Text style={{ fontSize: "0.85rem", color: c.cardText, fontWeight: 600 }}>{item.value}</Text>
                     </Box>
                   ))}
                 </Box>
 
-                <Flex mt={3} align="center" justify="flex-end">
+                <Flex mt={3} justify="flex-end">
                   <Flex align="center" gap="6px" borderRadius="full" px={3} py="4px"
                     style={{
                       background: viewAsset.isPremium ? "rgba(251,191,36,0.1)" : "rgba(74,222,128,0.1)",
                       border: viewAsset.isPremium ? "1px solid rgba(251,191,36,0.25)" : "1px solid rgba(74,222,128,0.2)",
                     }}>
-                    <Box w="6px" h="6px" borderRadius="full" flexShrink={0}
-                      style={{ background: viewAsset.isPremium ? "#fbbf24" : "#4ade80" }} />
+                    <Box w="6px" h="6px" borderRadius="full" style={{ background: viewAsset.isPremium ? "#fbbf24" : "#4ade80" }} />
                     <Text style={{ fontSize: "0.72rem", color: viewAsset.isPremium ? "#fbbf24" : "#4ade80" }}>
                       {viewAsset.isPremium ? t("admin.assets.premium") : t("admin.assets.free")}
                     </Text>
