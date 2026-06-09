@@ -18,23 +18,37 @@ type LoopMode = "none" | "all" | "one";
 
 interface MusicPlayerProps {
   initialSource?: MusicSource;
-  initialUrl?: string;
-  onStateChange?: (source: MusicSource, activeUrl: string) => void;
+  initialYtUrl?: string;
+  initialScUrl?: string;
+  onStateChange?: (source: MusicSource, ytUrl: string, scUrl: string) => void;
 }
 
-export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: MusicPlayerProps) {
-  /* ── source & URL ── */
-  const [source,    setSource]    = useState<MusicSource>(initialSource ?? "youtube");
-  const [inputUrl,  setInputUrl]  = useState("");
-  const [activeUrl, setActiveUrl] = useState(initialUrl ?? "");
+export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, onStateChange }: MusicPlayerProps) {
+  /* ── source & per-service URLs ── */
+  const [source,   setSource]   = useState<MusicSource>(initialSource ?? "youtube");
+  const [inputUrl, setInputUrl] = useState("");
+  const [ytUrl,    setYtUrl]    = useState(initialYtUrl ?? "");
+  const [scUrl,    setScUrl]    = useState(initialScUrl ?? "");
 
-  /* ── playback ── */
+  /* ── per-service metadata ── */
+  const [ytTrackName,  setYtTrackName]  = useState("");
+  const [ytArtistName, setYtArtistName] = useState("");
+  const [ytThumbUrl,   setYtThumbUrl]   = useState("");
+  const [scTrackName,  setScTrackName]  = useState("");
+  const [scArtistName, setScArtistName] = useState("");
+  const [scThumbUrl,   setScThumbUrl]   = useState("");
+
+  /* ── per-service player state ── */
+  const [ytReady,       setYtReady]       = useState(false);
+  const [scReady,       setScReady]       = useState(false);
+  const [ytCurrentTime, setYtCurrentTime] = useState(0);
+  const [ytDuration,    setYtDuration]    = useState(0);
+  const [scCurrentTime, setScCurrentTime] = useState(0);
+  const [scDuration,    setScDuration]    = useState(0);
+  const [ytIsLive,      setYtIsLive]      = useState(false);
+
+  /* ── shared playback state ── */
   const [isPlaying,   setIsPlaying]   = useState(false);
-  const [isLive,      setIsLive]      = useState(false);
-  const [trackName,   setTrackName]   = useState("");
-  const [artistName,  setArtistName]  = useState("");
-  const [thumbUrl,    setThumbUrl]    = useState("");
-  const [playerReady, setPlayerReady] = useState(false);
   const [playerError, setPlayerError] = useState<string | null>(null);
 
   /* ── controls ── */
@@ -42,10 +56,18 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
   const [shuffle,  setShuffle]  = useState(false);
 
   /* ── seek ── */
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration,    setDuration]    = useState(0);
-  const [isSeeking,   setIsSeeking]   = useState(false);
-  const [seekValue,   setSeekValue]   = useState(0);
+  const [isSeeking, setIsSeeking] = useState(false);
+  const [seekValue, setSeekValue] = useState(0);
+
+  /* ── derived from current source ── */
+  const activeUrl   = source === "youtube" ? ytUrl        : scUrl;
+  const trackName   = source === "youtube" ? ytTrackName  : scTrackName;
+  const artistName  = source === "youtube" ? ytArtistName : scArtistName;
+  const thumbUrl    = source === "youtube" ? ytThumbUrl   : scThumbUrl;
+  const playerReady = source === "youtube" ? ytReady      : scReady;
+  const currentTime = source === "youtube" ? ytCurrentTime : scCurrentTime;
+  const duration    = source === "youtube" ? ytDuration    : scDuration;
+  const isLive      = source === "youtube" ? ytIsLive      : false;
 
   /* ── refs ── */
   const ytContainerRef  = useRef<HTMLDivElement>(null);
@@ -61,8 +83,8 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
   const [scKey, setScKey] = useState(0);
 
   /* keep refs in sync */
-  useEffect(() => { loopModeRef.current = loopMode; }, [loopMode]);
-  useEffect(() => { shuffleRef.current  = shuffle;   }, [shuffle]);
+  useEffect(() => { loopModeRef.current  = loopMode;  }, [loopMode]);
+  useEffect(() => { shuffleRef.current   = shuffle;   }, [shuffle]);
   useEffect(() => { isSeekingRef.current = isSeeking; }, [isSeeking]);
 
   /* ─── seek polling ─── */
@@ -77,12 +99,10 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
           const ct    = ytPlayerRef.current.getCurrentTime?.() ?? 0;
           const dur   = ytPlayerRef.current.getDuration?.()    ?? 0;
           const state = ytPlayerRef.current.getPlayerState?.() ?? -1;
-          setCurrentTime(ct);
-          if (dur > 0) setDuration(dur);
-          /* detect live stream */
+          setYtCurrentTime(ct);
+          if (dur > 0) setYtDuration(dur);
           const live = ytPlayerRef.current.getVideoData?.()?.isLive === true || dur > 86400;
-          setIsLive(live);
-          /* fallback: catch ENDED state in case onStateChange missed it */
+          setYtIsLive(live);
           if (state === 0 && loopModeRef.current === "one") {
             const vid = ytPlayerRef.current.getVideoData?.()?.video_id;
             if (vid) ytPlayerRef.current.loadVideoById({ videoId: vid, startSeconds: 0 });
@@ -91,10 +111,10 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
         } catch {}
       } else if (source === "soundcloud" && scWidgetRef.current) {
         scWidgetRef.current.getPosition((pos: number) => {
-          if (!isSeekingRef.current) setCurrentTime(pos / 1000);
+          if (!isSeekingRef.current) setScCurrentTime(pos / 1000);
         });
         scWidgetRef.current.getDuration((dur: number) => {
-          if (dur > 0) setDuration(dur / 1000);
+          if (dur > 0) setScDuration(dur / 1000);
         });
       }
     }, 500);
@@ -104,25 +124,25 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
 
   /* ─── apply loop + shuffle to YT player ─── */
   useEffect(() => {
-    if (source !== "youtube" || !playerReady) return;
+    if (source !== "youtube" || !ytReady) return;
     try { ytPlayerRef.current?.setLoop?.(loopMode === "all"); } catch {}
-  }, [loopMode, source, playerReady]);
+  }, [loopMode, source, ytReady]);
 
   useEffect(() => {
-    if (source !== "youtube" || !playerReady) return;
+    if (source !== "youtube" || !ytReady) return;
     try { ytPlayerRef.current?.setShuffle?.(shuffle); } catch {}
-  }, [shuffle, source, playerReady]);
+  }, [shuffle, source, ytReady]);
 
-  /* ─── YouTube player init ─── */
+  /* ─── YouTube player init — only re-runs when ytUrl changes, not on source switch ─── */
   useEffect(() => {
-    if (source !== "youtube") return;
-    if (!activeUrl) return;
-    setPlayerReady(false);
+    if (!ytUrl) return;
+    setYtReady(false);
     setPlayerError(null);
-    setCurrentTime(0);
-    setDuration(0);
+    setYtCurrentTime(0);
+    setYtDuration(0);
+    setYtIsLive(false);
 
-    const parsed = parseYouTubeUrl(activeUrl);
+    const parsed = parseYouTubeUrl(ytUrl);
     if (!parsed) { setPlayerError("Invalid YouTube URL"); return; }
 
     let destroyed = false;
@@ -146,63 +166,59 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
         playerVars,
         events: {},
       };
-      /* Only pass videoId when we actually have one — passing undefined causes "Invalid video id" */
       if (parsed.videoId) playerConfig.videoId = parsed.videoId;
 
       playerConfig.events = {
-          onReady: (e: any) => {
-            if (destroyed) return;
-            setPlayerReady(true);
-            if (loopModeRef.current === "all") try { e.target.setLoop?.(true); } catch {}
-            if (shuffleRef.current)           try { e.target.setShuffle?.(true); } catch {}
-            const data = e.target.getVideoData?.();
-            if (data?.title)  setTrackName(data.title);
-            if (data?.author) setArtistName(data.author);
-            const vid = parsed.videoId ?? data?.video_id;
-            if (vid) setThumbUrl(`https://img.youtube.com/vi/${vid}/mqdefault.jpg`);
-            if (autoplayOnReadyRef.current) {
-              autoplayOnReadyRef.current = false;
-              try { e.target.playVideo(); } catch {}
-            }
-          },
-          onStateChange: (e: any) => {
-            if (destroyed) return;
-            const YT = (window as any).YT;
-            /* loop one: replay on end */
-            if (e.data === YT.PlayerState.ENDED && loopModeRef.current === "one") {
-              const idx = e.target.getPlaylistIndex?.() ?? -1;
-              if (idx >= 0) {
-                /* playlist: slight delay so YouTube's auto-advance doesn't race-win */
-                setTimeout(() => { try { e.target.playVideoAt(idx); } catch {} }, 80);
+        onReady: (e: any) => {
+          if (destroyed) return;
+          setYtReady(true);
+          if (loopModeRef.current === "all") try { e.target.setLoop?.(true); } catch {}
+          if (shuffleRef.current)           try { e.target.setShuffle?.(true); } catch {}
+          const data = e.target.getVideoData?.();
+          if (data?.title)  setYtTrackName(data.title);
+          if (data?.author) setYtArtistName(data.author);
+          const vid = parsed.videoId ?? data?.video_id;
+          if (vid) setYtThumbUrl(`https://img.youtube.com/vi/${vid}/mqdefault.jpg`);
+          if (autoplayOnReadyRef.current) {
+            autoplayOnReadyRef.current = false;
+            try { e.target.playVideo(); } catch {}
+          }
+        },
+        onStateChange: (e: any) => {
+          if (destroyed) return;
+          const YT = (window as any).YT;
+          if (e.data === YT.PlayerState.ENDED && loopModeRef.current === "one") {
+            const idx = e.target.getPlaylistIndex?.() ?? -1;
+            if (idx >= 0) {
+              setTimeout(() => { try { e.target.playVideoAt(idx); } catch {} }, 80);
+            } else {
+              const vid = e.target.getVideoData?.()?.video_id;
+              if (vid) {
+                e.target.loadVideoById({ videoId: vid, startSeconds: 0 });
               } else {
-                /* single video: loadVideoById is more reliable than seekTo+play after ENDED */
-                const vid = e.target.getVideoData?.()?.video_id;
-                if (vid) {
-                  e.target.loadVideoById({ videoId: vid, startSeconds: 0 });
-                } else {
-                  e.target.seekTo(0, true);
-                  e.target.playVideo();
-                }
+                e.target.seekTo(0, true);
+                e.target.playVideo();
               }
-              return;
             }
-            const playing = e.data === YT.PlayerState.PLAYING;
-            setIsPlaying(playing);
-            if (playing) {
-              const data = e.target.getVideoData?.();
-              if (data?.title)    setTrackName(data.title);
-              if (data?.author)   setArtistName(data.author);
-              if (data?.video_id) setThumbUrl(`https://img.youtube.com/vi/${data.video_id}/mqdefault.jpg`);
-              const dur = e.target.getDuration?.() ?? 0;
-              if (dur > 0) setDuration(dur);
-              setIsLive(data?.isLive === true || dur > 86400);
-            }
-          },
-          onError: () => {
-            if (destroyed) return;
-            setPlayerError("Playback error — try another URL or preset");
-            setIsPlaying(false);
-          },
+            return;
+          }
+          const playing = e.data === YT.PlayerState.PLAYING;
+          setIsPlaying(playing);
+          if (playing) {
+            const data = e.target.getVideoData?.();
+            if (data?.title)    setYtTrackName(data.title);
+            if (data?.author)   setYtArtistName(data.author);
+            if (data?.video_id) setYtThumbUrl(`https://img.youtube.com/vi/${data.video_id}/mqdefault.jpg`);
+            const dur = e.target.getDuration?.() ?? 0;
+            if (dur > 0) setYtDuration(dur);
+            setYtIsLive(data?.isLive === true || dur > 86400);
+          }
+        },
+        onError: () => {
+          if (destroyed) return;
+          setPlayerError("Playback error — try another URL or preset");
+          setIsPlaying(false);
+        },
       };
 
       ytPlayerRef.current = new (window as any).YT.Player(ytContainerRef.current, playerConfig);
@@ -210,7 +226,7 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
 
     return () => { destroyed = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, activeUrl]);
+  }, [ytUrl]);
 
   /* ─── SoundCloud widget init ─── */
   const initScWidget = useCallback(() => {
@@ -226,10 +242,10 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
 
     widget.bind(SC.Widget.Events.READY, () => {
       if (scTimeoutRef.current) clearTimeout(scTimeoutRef.current);
-      setPlayerReady(true);
+      setScReady(true);
       setPlayerError(null);
       widget.getCurrentSound((sound: any) => {
-        if (sound?.title) setTrackName(sound.title.split(" - ")[0]);
+        if (sound?.title) setScTrackName(sound.title.split(" - ")[0]);
       });
       if (autoplayOnReadyRef.current) {
         autoplayOnReadyRef.current = false;
@@ -239,9 +255,9 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
     widget.bind(SC.Widget.Events.PLAY, () => {
       setIsPlaying(true);
       widget.getCurrentSound((sound: any) => {
-        if (sound?.title)          setTrackName(sound.title.split(" - ")[0]);
-        if (sound?.user?.username) setArtistName(sound.user.username);
-        if (sound?.artwork_url)    setThumbUrl(sound.artwork_url.replace("-large", "-t300x300"));
+        if (sound?.title)          setScTrackName(sound.title.split(" - ")[0]);
+        if (sound?.user?.username) setScArtistName(sound.user.username);
+        if (sound?.artwork_url)    setScThumbUrl(sound.artwork_url.replace("-large", "-t300x300"));
       });
     });
     widget.bind(SC.Widget.Events.PAUSE,  () => setIsPlaying(false));
@@ -252,12 +268,13 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ─── SoundCloud init — only re-runs when scUrl/scKey changes, not on source switch ─── */
   useEffect(() => {
-    if (source !== "soundcloud") return;
-    setPlayerReady(false);
+    if (!scUrl) return;
+    setScReady(false);
     setPlayerError(null);
-    setCurrentTime(0);
-    setDuration(0);
+    setScCurrentTime(0);
+    setScDuration(0);
 
     const existing = document.querySelector('script[src="https://w.soundcloud.com/player/api.js"]');
     if (existing) {
@@ -272,7 +289,7 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
     script.onload = initScWidget;
     document.head.appendChild(script);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [source, scKey]);
+  }, [scUrl, scKey]);
 
   /* ─── cleanup on unmount ─── */
   useEffect(() => {
@@ -299,7 +316,8 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
     setIsSeeking(true);
   };
   const handleSeekCommit = (val: number) => {
-    setCurrentTime(val);
+    if (source === "youtube") setYtCurrentTime(val);
+    else setScCurrentTime(val);
     setIsSeeking(false);
     if (source === "youtube") ytPlayerRef.current?.seekTo?.(val, true);
     else scWidgetRef.current?.seekTo?.(val * 1000);
@@ -310,43 +328,50 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
   };
   const handleShuffleToggle = () => setShuffle(v => !v);
 
-  const stopAndReset = () => {
+  /* Switch service: only pause current, preserve all state on both sides */
+  const handleSourceSwitch = (next: MusicSource) => {
+    if (next === source) return;
     if (source === "youtube") ytPlayerRef.current?.pauseVideo();
     else scWidgetRef.current?.pause();
     setIsPlaying(false);
-    setIsLive(false);
-    setPlayerReady(false);
     setPlayerError(null);
-    setCurrentTime(0);
-    setDuration(0);
-  };
-
-  const handleSourceSwitch = (next: MusicSource) => {
-    if (next === source) return;
-    stopAndReset();
-    setTrackName("");
-    setArtistName("");
-    setThumbUrl("");
-    setActiveUrl("");
-    setInputUrl("");
     setSource(next);
-    if (next === "soundcloud") setScKey(k => k + 1);
-    onStateChange?.(next, "");
+    onStateChange?.(next, ytUrl, scUrl);
   };
 
   const handleUrlSubmit = () => {
     const raw = inputUrl.trim();
     if (!raw) return;
-    if (source === "youtube" && !parseYouTubeUrl(raw)) { setPlayerError("Invalid YouTube URL"); return; }
-    if (source === "soundcloud" && !raw.includes("soundcloud.com")) { setPlayerError("Invalid SoundCloud URL"); return; }
-    stopAndReset();
+    if (source === "youtube") {
+      if (!parseYouTubeUrl(raw)) { setPlayerError("Invalid YouTube URL"); return; }
+      ytPlayerRef.current?.pauseVideo();
+      setYtReady(false);
+      setYtCurrentTime(0);
+      setYtDuration(0);
+      setYtIsLive(false);
+      setYtTrackName("Loading…");
+      setYtArtistName("");
+      setYtThumbUrl("");
+      setYtUrl(raw);
+    } else {
+      if (!raw.includes("soundcloud.com")) { setPlayerError("Invalid SoundCloud URL"); return; }
+      scWidgetRef.current?.pause();
+      setScReady(false);
+      setScCurrentTime(0);
+      setScDuration(0);
+      setScTrackName("Loading…");
+      setScArtistName("");
+      setScThumbUrl("");
+      setScUrl(raw);
+      setScKey(k => k + 1);
+    }
+    setPlayerError(null);
+    setIsPlaying(false);
     autoplayOnReadyRef.current = true;
-    setTrackName("Loading…");
-    setArtistName("");
-    setActiveUrl(raw);
     setInputUrl("");
-    if (source === "soundcloud") setScKey(k => k + 1);
-    onStateChange?.(source, raw);
+    const newYtUrl = source === "youtube"    ? raw : ytUrl;
+    const newScUrl = source === "soundcloud" ? raw : scUrl;
+    onStateChange?.(source, newYtUrl, newScUrl);
   };
 
   /* ─── derived ─── */
@@ -367,7 +392,7 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
       padding: "14px 14px 16px",
       position: "relative",
     }}>
-      {/* seek bar thumb style */}
+      {/* seek bar thumb + vinyl animation styles */}
       <style>{`
         .music-seek::-webkit-slider-thumb {
           -webkit-appearance: none;
@@ -386,14 +411,25 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
           cursor: pointer;
           border: none;
         }
+        @keyframes vinyl-spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        .vinyl-disc {
+          animation: vinyl-spin 4.5s linear infinite;
+          animation-play-state: paused;
+        }
+        .vinyl-disc.playing {
+          animation-play-state: running;
+        }
       `}</style>
 
       {/* hidden YouTube container — always in DOM */}
       <div ref={ytContainerRef} style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", pointerEvents: "none" }} />
 
-      {/* hidden SoundCloud iframe */}
-      {source === "soundcloud" && activeUrl && (
-        <iframe key={scKey} ref={scIframeRef} allow="autoplay" src={buildScWidgetSrc(activeUrl)} title="SoundCloud Player"
+      {/* hidden SoundCloud iframe — always mounted when scUrl is set, not just when source === soundcloud */}
+      {scUrl && (
+        <iframe key={scKey} ref={scIframeRef} allow="autoplay" src={buildScWidgetSrc(scUrl)} title="SoundCloud Player"
           style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", border: "none", pointerEvents: "none" }} />
       )}
 
@@ -478,39 +514,130 @@ export function MusicPlayerWidget({ initialSource, initialUrl, onStateChange }: 
         </Flex>
       ) : (
         <>
-          {/* ── Album art (centered, large) ── */}
-          <Flex justify="center" mb="10px" mt="4px">
-            <Box
-              w="84px" h="84px" borderRadius="12px"
-              style={{
-                ...(thumbUrl
-                  ? { backgroundImage: `url(${thumbUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
-                  : { backgroundColor: "rgba(255,255,255,0.06)" }
-                ),
-                boxShadow: "0 6px 20px rgba(0,0,0,0.55)",
-                flexShrink: 0,
-              }}
-            />
-          </Flex>
+          {/* ── Vinyl disc (left) + track info (right) ── */}
+          <Flex align="center" gap="12px" mb="10px" mt="4px">
 
-          {/* ── Track name + artist (centered) ── */}
-          <Box textAlign="center" mb="10px">
-            <Text style={{
-              color: "rgba(255,255,255,0.9)", fontSize: "0.85rem",
-              fontFamily: "'HarmonyOS Sans', sans-serif",
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              marginBottom: "3px",
-            }}>
-              {trackName}
-            </Text>
-            <Text style={{
-              color: "rgba(255,255,255,0.38)", fontSize: "0.7rem",
-              fontFamily: "'HarmonyOS Sans', sans-serif",
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            }}>
-              {!playerReady ? "Loading…" : artistName || "—"}
-            </Text>
-          </Box>
+            {/* left: disc + tonearm */}
+            <Box style={{ position: "relative", width: "112px", height: "110px", flexShrink: 0, overflow: "visible" }}>
+
+              {/* rotating disc */}
+              <Box
+                className={`vinyl-disc${isPlaying ? " playing" : ""}`}
+                style={{
+                  position: "absolute",
+                  left: 0, top: "7px",
+                  width: "96px", height: "96px",
+                  borderRadius: "50%",
+                  background: `radial-gradient(circle,
+                    #1c1c1c 0% 20%,
+                    rgba(255,255,255,0.10) 20% 20.8%,
+                    #111 20.8% 25%,
+                    rgba(255,255,255,0.055) 25% 25.8%,
+                    #111 25.8% 31%,
+                    rgba(255,255,255,0.045) 31% 31.8%,
+                    #111 31.8% 38%,
+                    rgba(255,255,255,0.038) 38% 38.8%,
+                    #111 38.8% 46%,
+                    rgba(255,255,255,0.03) 46% 46.8%,
+                    #111 46.8% 100%
+                  )`,
+                  boxShadow: "0 8px 28px rgba(0,0,0,0.70)",
+                }}
+              >
+                {/* center label */}
+                <Box style={{
+                  position: "absolute",
+                  top: "50%", left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "40px", height: "40px",
+                  borderRadius: "50%",
+                  ...(thumbUrl
+                    ? { backgroundImage: `url(${thumbUrl})`, backgroundSize: "cover", backgroundPosition: "center" }
+                    : { background: "rgba(255,255,255,0.09)" }
+                  ),
+                  boxShadow: "0 0 0 1.5px rgba(255,255,255,0.12)",
+                  zIndex: 1,
+                }} />
+                {/* center hole */}
+                <Box style={{
+                  position: "absolute",
+                  top: "50%", left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "5px", height: "5px",
+                  borderRadius: "50%",
+                  background: "#080808",
+                  zIndex: 2,
+                }} />
+              </Box>
+
+              {/* fixed reflection — does not rotate */}
+              <Box style={{
+                position: "absolute",
+                left: 0, top: "7px",
+                width: "96px", height: "96px",
+                borderRadius: "50%",
+                background: "radial-gradient(circle at 35% 28%, rgba(255,255,255,0.10), transparent 55%)",
+                pointerEvents: "none",
+                zIndex: 3,
+              }} />
+
+              {/* tonearm pivot circle */}
+              <Box style={{
+                position: "absolute",
+                top: "1px", left: "94px",
+                width: "12px", height: "12px",
+                borderRadius: "50%",
+                background: "radial-gradient(circle at 38% 32%, #f0d060, #c09a3e, #5a4015)",
+                boxShadow: "0 1px 5px rgba(0,0,0,0.65)",
+                zIndex: 11,
+                pointerEvents: "none",
+              }} />
+              {/* tonearm body — rotates around its top-center */}
+              <Box style={{
+                position: "absolute",
+                top: "7px", left: "98.5px",
+                width: "3px", height: "60px",
+                borderRadius: "1.5px",
+                background: "linear-gradient(to right, #7a5820, #d4b058, #c8a040, #7a5820)",
+                transformOrigin: "1.5px 0px",
+                transform: isPlaying ? "rotate(22deg)" : "rotate(-15deg)",
+                transition: "transform 0.85s ease",
+                boxShadow: "1px 2px 5px rgba(0,0,0,0.5)",
+                zIndex: 10,
+                pointerEvents: "none",
+              }}>
+                {/* stylus head */}
+                <Box style={{
+                  position: "absolute",
+                  bottom: "-3px", left: "50%",
+                  transform: "translateX(-50%)",
+                  width: "7px", height: "7px",
+                  borderRadius: "50%",
+                  background: "radial-gradient(circle at 35% 30%, #e8c040, #b08020)",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.55)",
+                }} />
+              </Box>
+            </Box>
+
+            {/* right: track info */}
+            <Box style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{
+                color: "rgba(255,255,255,0.9)", fontSize: "0.84rem",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                marginBottom: "5px",
+              }}>
+                {trackName}
+              </Text>
+              <Text style={{
+                color: "rgba(255,255,255,0.38)", fontSize: "0.7rem",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+              }}>
+                {!playerReady ? "Loading…" : artistName || "—"}
+              </Text>
+            </Box>
+          </Flex>
         </>
       )}
 

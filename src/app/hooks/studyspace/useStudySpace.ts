@@ -47,7 +47,8 @@ export function useStudySpace() {
   const [roomId,              setRoomId]              = useState<string | null>(null);
   const [showFirstRoomModal,  setShowFirstRoomModal]  = useState(false);
   const [musicSource,    setMusicSource]    = useState<"youtube" | "soundcloud">("youtube");
-  const [musicUrl,       setMusicUrl]       = useState("");
+  const [musicYtUrl,     setMusicYtUrl]     = useState("");
+  const [musicScUrl,     setMusicScUrl]     = useState("");
 
   const avatarBtnRef    = useRef<HTMLDivElement>(null);
   const accountPanelRef = useRef<HTMLDivElement>(null);
@@ -76,8 +77,11 @@ export function useStudySpace() {
     if (layout.activeEffect !== undefined) setActiveEffect(layout.activeEffect as EffectType);
     if (layout.accentColor) setAccent(layout.accentColor);
     if (layout.musicState) {
-      setMusicSource(layout.musicState.source as "youtube" | "soundcloud");
-      setMusicUrl(layout.musicState.activeUrl);
+      const ms = layout.musicState;
+      setMusicSource(ms.source as "youtube" | "soundcloud");
+      // Support new format (both URLs stored) with fallback for old saves (single activeUrl)
+      setMusicYtUrl(ms.ytUrl ?? (ms.source === "youtube"    ? ms.activeUrl : ""));
+      setMusicScUrl(ms.scUrl ?? (ms.source === "soundcloud" ? ms.activeUrl : ""));
     }
     if (layout.clockSettings) {
       clock.setMode(layout.clockSettings.mode as any);
@@ -190,7 +194,7 @@ export function useStudySpace() {
     },
     todoItems: space.todoItems,
     accentColor: accent,
-    musicState: { source: musicSource, activeUrl: musicUrl },
+    musicState: { source: musicSource, activeUrl: musicSource === "youtube" ? musicYtUrl : musicScUrl, ytUrl: musicYtUrl, scUrl: musicScUrl },
     captureScreenshot,
     onNewUser: handleNewUser,
     onRestore: handleRestore,
@@ -221,7 +225,8 @@ export function useStudySpace() {
     currentBg, setCurrentBg,
     roomId, setRoomId,
     musicSource, setMusicSource,
-    musicUrl, setMusicUrl,
+    musicYtUrl, setMusicYtUrl,
+    musicScUrl, setMusicScUrl,
     avatarBtnRef, accountPanelRef, spaceRef,
     clock, pomodoro, space,
     WIDGET_POSITIONS,
