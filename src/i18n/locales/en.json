@@ -223,7 +223,12 @@
     "ocean": "Ocean",
     "nowMixing": "Now mixing: {{label}}",
     "layersActive": "{{count}} layer(s) active",
-    "noSounds": "No sounds active — tap a card to start"
+    "noSounds": "No sounds active — tap a card to start",
+    "loadError": "Failed to load sounds",
+    "tabDefault": "Default",
+    "tabPurchased": "Purchased",
+    "noPurchased": "No purchased sounds yet",
+    "noPurchasedHint": "Visit the store to find ambient sounds"
   },
   "backgrounds": {
     "rooms": "Rooms",
@@ -277,6 +282,8 @@
     "free": "Free",
     "purchased": "Purchased",
     "apply": "Apply",
+    "addToSpace": "Add to Space",
+    "ambientSoundHint": "Open Ambient Sounds panel to apply",
     "searchPlaceholder": "Search…",
     "loading": "Loading store…",
     "empty": "No items found",
@@ -309,7 +316,11 @@
   "stickerPicker": {
     "title": "STICKERS",
     "hint": "Click to place on your space",
-    "comingSoon": "More stickers will be available soon ✦"
+    "comingSoon": "More stickers will be available soon ✦",
+    "tabDefault": "Default",
+    "tabPurchased": "Purchased",
+    "noPurchased": "No purchased stickers yet",
+    "noPurchasedHint": "Visit the store to find stickers"
   },
   "about": {
     "label": "ABOUT",

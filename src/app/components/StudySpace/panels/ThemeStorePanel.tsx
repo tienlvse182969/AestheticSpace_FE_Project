@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
   Sparkles, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
-  Crown, Search, X, Heart, Package, Play, Pause,
+  Crown, Search, X, Heart, Package, Play, Pause, PlusCircle,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
@@ -630,7 +630,27 @@ function ItemDetailView({
                     <Check size={14} />
                     {t("themeStore.purchased")}
                   </Flex>
-                  {onApplyItem && (
+                  {item.category === "AmbientSound" ? (
+                    <Flex
+                      align="center"
+                      gap="6px"
+                      px="12px"
+                      py="9px"
+                      borderRadius="10px"
+                      style={{
+                        background: "rgba(99,102,241,0.1)",
+                        border: "1px solid rgba(99,102,241,0.25)",
+                        color: "rgba(165,180,252,0.85)",
+                        fontSize: "0.75rem",
+                        fontFamily: "'HarmonyOS Sans', sans-serif",
+                        fontStyle: "italic",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      <Volume2 size={12} />
+                      {t("themeStore.ambientSoundHint")}
+                    </Flex>
+                  ) : onApplyItem && (
                     <Box
                       as="button"
                       onClick={() => onApplyItem(item)}
@@ -643,19 +663,23 @@ function ItemDetailView({
                       alignItems="center"
                       gap="7px"
                       style={{
-                        background: "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(6,182,212,0.85))",
+                        background: item.category === "Sticker"
+                          ? "linear-gradient(135deg, rgba(236,72,153,0.9), rgba(168,85,247,0.85))"
+                          : "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(6,182,212,0.85))",
                         color: "#fff",
                         fontSize: "0.8rem",
                         fontFamily: "'HarmonyOS Sans', sans-serif",
                         fontWeight: 600,
-                        boxShadow: "0 4px 14px rgba(59,130,246,0.3)",
+                        boxShadow: item.category === "Sticker"
+                          ? "0 4px 14px rgba(236,72,153,0.3)"
+                          : "0 4px 14px rgba(59,130,246,0.3)",
                         transition: "filter 0.15s",
                         whiteSpace: "nowrap",
                       }}
                       _hover={{ filter: "brightness(1.1)" } as any}
                     >
-                      <Wand2 size={13} />
-                      {t("themeStore.apply")}
+                      {item.category === "Sticker" ? <PlusCircle size={13} /> : <Wand2 size={13} />}
+                      {item.category === "Sticker" ? t("themeStore.addToSpace") : t("themeStore.apply")}
                     </Box>
                   )}
                 </Flex>

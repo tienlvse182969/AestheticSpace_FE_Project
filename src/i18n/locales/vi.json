@@ -223,7 +223,12 @@
     "ocean": "Đại dương",
     "nowMixing": "Đang phát: {{label}}",
     "layersActive": "{{count}} lớp âm thanh",
-    "noSounds": "Chưa có âm thanh — nhấn thẻ để bắt đầu"
+    "noSounds": "Chưa có âm thanh — nhấn thẻ để bắt đầu",
+    "loadError": "Không thể tải âm thanh",
+    "tabDefault": "Mặc định",
+    "tabPurchased": "Đã mua",
+    "noPurchased": "Chưa có âm thanh nào đã mua",
+    "noPurchasedHint": "Ghé store để tìm âm thanh môi trường"
   },
   "backgrounds": {
     "rooms": "Phòng học",
@@ -277,6 +282,8 @@
     "free": "Miễn phí",
     "purchased": "Đã mua",
     "apply": "Áp dụng",
+    "addToSpace": "Thêm vào Space",
+    "ambientSoundHint": "Mở bảng Âm Thanh để áp dụng",
     "searchPlaceholder": "Tìm kiếm…",
     "loading": "Đang tải cửa hàng…",
     "empty": "Không tìm thấy mục nào",
@@ -309,7 +316,11 @@
   "stickerPicker": {
     "title": "NHÃN DÁN",
     "hint": "Nhấn để đặt vào không gian",
-    "comingSoon": "Sẽ có thêm nhãn dán sớm ✦"
+    "comingSoon": "Sẽ có thêm nhãn dán sớm ✦",
+    "tabDefault": "Mặc định",
+    "tabPurchased": "Đã mua",
+    "noPurchased": "Chưa có nhãn dán nào đã mua",
+    "noPurchasedHint": "Ghé store để tìm nhãn dán"
   },
   "about": {
     "label": "GIỚI THIỆU",

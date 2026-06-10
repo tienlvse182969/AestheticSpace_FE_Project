@@ -112,8 +112,11 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
     if (item.category === "Background" && item.assetUrl) {
       setCurrentBg({ id: item.id, url: item.assetUrl, thumb: item.assetUrl, label: item.name });
       saveNow();
+    } else if (item.category === "Sticker" && item.assetUrl) {
+      space.placeSticker(item.assetUrl);
+      saveNow();
     }
-  }, [setCurrentBg, saveNow]);
+  }, [setCurrentBg, saveNow, space]);
 
   return (
     <div className="no-capture">
