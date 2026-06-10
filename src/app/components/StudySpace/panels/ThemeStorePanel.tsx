@@ -31,6 +31,7 @@ interface Props {
   onCoinBalanceChange?: (newBalance: number) => void;
   onStartTrial?: (item: StoreItem) => void;
   onTrialEnd?: () => void;
+  onApplyItem?: (item: StoreItem) => void;
   trialItemId?: string;
   initialDetailItemId?: string;
 }
@@ -297,6 +298,7 @@ function ItemDetailView({
   onLockedBuy,
   isWishlisted,
   onToggleWishlist,
+  onApplyItem,
 }: {
   item: StoreItem;
   t: (k: string, opts?: Record<string, unknown>) => string;
@@ -312,6 +314,7 @@ function ItemDetailView({
   onLockedBuy?: () => void;
   isWishlisted?: boolean;
   onToggleWishlist?: () => void;
+  onApplyItem?: (item: StoreItem) => void;
 }) {
   const color = typeColor(item.category);
   const isOwned = item.isOwned === true;
@@ -608,23 +611,53 @@ function ItemDetailView({
             {/* Action buttons */}
             <Flex align="center" gap="8px" flexShrink={0}>
               {isOwned ? (
-                <Flex
-                  align="center"
-                  gap="6px"
-                  px="18px"
-                  py="9px"
-                  borderRadius="10px"
-                  style={{
-                    background: "rgba(74,222,128,0.1)",
-                    border: "1px solid rgba(74,222,128,0.3)",
-                    color: "rgba(74,222,128,0.9)",
-                    fontSize: "0.8rem",
-                    fontFamily: "'HarmonyOS Sans', sans-serif",
-                    fontWeight: 600,
-                  }}
-                >
-                  <Check size={14} />
-                  {t("themeStore.purchased")}
+                <Flex align="center" gap="8px">
+                  <Flex
+                    align="center"
+                    gap="6px"
+                    px="12px"
+                    py="9px"
+                    borderRadius="10px"
+                    style={{
+                      background: "rgba(74,222,128,0.1)",
+                      border: "1px solid rgba(74,222,128,0.3)",
+                      color: "rgba(74,222,128,0.9)",
+                      fontSize: "0.8rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Check size={14} />
+                    {t("themeStore.purchased")}
+                  </Flex>
+                  {onApplyItem && (
+                    <Box
+                      as="button"
+                      onClick={() => onApplyItem(item)}
+                      px="16px"
+                      py="9px"
+                      borderRadius="10px"
+                      border="none"
+                      cursor="pointer"
+                      display="flex"
+                      alignItems="center"
+                      gap="7px"
+                      style={{
+                        background: "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(6,182,212,0.85))",
+                        color: "#fff",
+                        fontSize: "0.8rem",
+                        fontFamily: "'HarmonyOS Sans', sans-serif",
+                        fontWeight: 600,
+                        boxShadow: "0 4px 14px rgba(59,130,246,0.3)",
+                        transition: "filter 0.15s",
+                        whiteSpace: "nowrap",
+                      }}
+                      _hover={{ filter: "brightness(1.1)" } as any}
+                    >
+                      <Wand2 size={13} />
+                      {t("themeStore.apply")}
+                    </Box>
+                  )}
                 </Flex>
               ) : (
                 <>
@@ -912,6 +945,7 @@ export function ThemeStorePanel({
   onCoinBalanceChange,
   onStartTrial,
   onTrialEnd,
+  onApplyItem,
   trialItemId,
   initialDetailItemId,
 }: Props) {
@@ -1335,6 +1369,7 @@ export function ThemeStorePanel({
             onLockedBuy={() => setGateOpen(true)}
             isWishlisted={wishlistIds.has(selectedItem.id)}
             onToggleWishlist={() => toggleWishlist(selectedItem.id)}
+            onApplyItem={onApplyItem}
           />
         )}
       </AnimatePresence>

@@ -108,6 +108,13 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
     setActivePanel("theme");
   }, [expiredItem, setActivePanel]);
 
+  const handleApplyItem = useCallback((item: StoreItem) => {
+    if (item.category === "Background" && item.assetUrl) {
+      setCurrentBg({ id: item.id, url: item.assetUrl, thumb: item.assetUrl, label: item.name });
+      saveNow();
+    }
+  }, [setCurrentBg, saveNow]);
+
   return (
     <div className="no-capture">
       {/* ── Trial banner (persists when store is closed) ── */}
@@ -168,6 +175,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onCoinBalanceChange={onCoinBalanceChange}
             onStartTrial={handleStartTrial}
             onTrialEnd={handleTrialEnd}
+            onApplyItem={handleApplyItem}
             trialItemId={trialItem?.id}
             initialDetailItemId={buyItemId}
           />

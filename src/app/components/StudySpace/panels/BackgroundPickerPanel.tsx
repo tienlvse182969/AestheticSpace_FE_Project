@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
-import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, Palette, Sparkles } from "lucide-react";
+import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Construction } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { BACKGROUNDS } from "../constants";
 import type { BackgroundItem } from "../types";
+import { aestheticStoreService } from "../../../../services/aestheticStore.service";
 
 const MotionBox = motion.create(Box);
 
@@ -270,14 +271,41 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
     };
   };
 
+  /* ── Purchased backgrounds ── */
+  const [purchasedFilter, setPurchasedFilter] = useState<"store" | "theme">("store");
+  const [purchasedItems,  setPurchasedItems]  = useState<BackgroundItem[]>([]);
+  const [purchasedLoading, setPurchasedLoading] = useState(false);
+  const [purchasedError,   setPurchasedError]   = useState(false);
+
+  const fetchPurchased = useCallback(async () => {
+    setPurchasedLoading(true);
+    setPurchasedError(false);
+    try {
+      const inv = await aestheticStoreService.getInventory();
+      setPurchasedItems(
+        inv
+          .filter(i => i.category === "Background" && i.assetUrl)
+          .map(i => ({ id: i.storeItemId, url: i.assetUrl!, thumb: i.assetUrl!, label: i.name }))
+      );
+    } catch {
+      setPurchasedError(true);
+    } finally {
+      setPurchasedLoading(false);
+    }
+  }, []);
+
   const TABS = [
     { id: "discover",  label: t("backgrounds.discover") },
     { id: "favorites", label: favorites.length > 0 ? t("backgrounds.favoritesCount", { count: favorites.length }) : t("backgrounds.favorites") },
-    { id: "themes",    label: t("backgrounds.themes") },
+    { id: "purchased", label: t("backgrounds.purchased") },
   ] as const;
 
   type TabId = typeof TABS[number]["id"];
   const [tab, setTab] = useState<TabId>("discover");
+
+  useEffect(() => {
+    if (tab === "purchased" && purchasedFilter === "store") fetchPurchased();
+  }, [tab, purchasedFilter, fetchPurchased]);
 
   return (
     <MotionBox
@@ -614,79 +642,130 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
           )
         )}
 
-        {/* ── THEMES TAB ── */}
-        {tab === "themes" && (
-          <Flex direction="column" align="center" justify="center" gap={5} py={8}>
-            {/* Icon ring */}
-            <Box
-              position="relative"
-              w="72px"
-              h="72px"
-              borderRadius="full"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              style={{
-                background: "radial-gradient(circle at 40% 35%, rgba(168,85,247,0.22), rgba(99,102,241,0.14) 70%, transparent)",
-                border: "1px solid rgba(168,85,247,0.22)",
-                boxShadow: "0 0 32px rgba(168,85,247,0.12)",
-              }}
-            >
-              <Palette size={28} color="rgba(192,132,252,0.75)" />
-              {/* Sparkle decoration */}
-              <Box
-                position="absolute"
-                top="-4px"
-                right="-4px"
-                style={{ color: "rgba(251,191,36,0.7)" }}
-              >
-                <Sparkles size={14} />
-              </Box>
-            </Box>
+        {/* ── PURCHASED TAB ── */}
+        {tab === "purchased" && (
+          <>
+            {/* Sub-filter pills */}
+            <Flex gap={2} mb={4}>
+              {(["store", "theme"] as const).map(f => (
+                <Box
+                  key={f}
+                  as="button"
+                  onClick={() => setPurchasedFilter(f)}
+                  style={{
+                    background: purchasedFilter === f
+                      ? "rgba(255,255,255,0.15)"
+                      : "rgba(255,255,255,0.06)",
+                    border: purchasedFilter === f
+                      ? "1px solid rgba(255,255,255,0.32)"
+                      : "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "20px",
+                    color: purchasedFilter === f ? "#fff" : "rgba(255,255,255,0.45)",
+                    fontSize: "0.74rem",
+                    padding: "4px 14px",
+                    cursor: "pointer",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    fontWeight: purchasedFilter === f ? 600 : 400,
+                    transition: "all 0.15s",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {f === "store" ? t("backgrounds.purchasedStore") : t("backgrounds.purchasedTheme")}
+                </Box>
+              ))}
+            </Flex>
 
-            {/* Badge */}
-            <Box
-              px={3}
-              py={1}
-              borderRadius="full"
-              style={{
-                background: "rgba(168,85,247,0.12)",
-                border: "1px solid rgba(168,85,247,0.3)",
-              }}
-            >
-              <Text style={{
-                fontSize: "0.65rem",
-                color: "rgba(192,132,252,0.9)",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-              }}>
-                {t("backgrounds.inDevelopment")}
-              </Text>
-            </Box>
+            {/* ── Store-bought backgrounds ── */}
+            {purchasedFilter === "store" && (
+              purchasedLoading ? (
+                <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Box key={i} borderRadius="8px" className="animate-pulse"
+                      style={{ aspectRatio: "16/9", background: "rgba(255,255,255,0.07)" }} />
+                  ))}
+                </Box>
+              ) : purchasedError ? (
+                <Flex direction="column" align="center" justify="center" gap={3} py={10}>
+                  <AlertCircle size={24} color="rgba(248,113,113,0.55)" />
+                  <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {t("backgrounds.errorCode", { code: "load" })}
+                  </Text>
+                  <Box
+                    as="button" onClick={fetchPurchased}
+                    display="flex" alignItems="center" gap={2}
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.16)",
+                      borderRadius: "7px",
+                      color: "rgba(255,255,255,0.6)",
+                      fontSize: "0.76rem",
+                      padding: "5px 14px",
+                      cursor: "pointer",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                    }}
+                  >
+                    <RefreshCw size={12} /> Retry
+                  </Box>
+                </Flex>
+              ) : purchasedItems.length === 0 ? (
+                <Flex align="center" justify="center" h="180px" direction="column" gap={2}>
+                  <ShoppingBag size={22} color="rgba(255,255,255,0.15)" />
+                  <Text style={{ color: "rgba(255,255,255,0.28)", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {t("backgrounds.noPurchased")}
+                  </Text>
+                  <Text style={{ color: "rgba(255,255,255,0.18)", fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {t("backgrounds.noPurchasedHint")}
+                  </Text>
+                </Flex>
+              ) : (
+                <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                  {purchasedItems.map(bg => (
+                    <PhotoCard
+                      key={bg.id}
+                      bg={bg}
+                      isActive={bg.id === currentBgId}
+                      isFav={isFav(bg.id)}
+                      onSelect={() => onSelect(bg)}
+                      onToggleFav={(e) => toggleFav(bg, e)}
+                      favLabel={isFav(bg.id) ? t("backgrounds.removeFromFavorites") : t("backgrounds.addToFavorites")}
+                    />
+                  ))}
+                </Box>
+              )
+            )}
 
-            {/* Title */}
-            <Box textAlign="center">
-              <Text style={{
-                fontSize: "1.05rem",
-                color: "rgba(255,255,255,0.82)",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                letterSpacing: "0.01em",
-                marginBottom: "6px",
-              }}>
-                {t("backgrounds.themesTitle")}
-              </Text>
-              <Text style={{
-                fontSize: "0.78rem",
-                color: "rgba(255,255,255,0.35)",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                lineHeight: 1.65,
-                maxWidth: "300px",
-              }}>
-                {t("backgrounds.themesDesc")}
-              </Text>
-            </Box>
-          </Flex>
+            {/* ── Theme-bundled backgrounds ── */}
+            {purchasedFilter === "theme" && (
+              <Flex direction="column" align="center" justify="center" gap={4} py={8}>
+                <Box
+                  w="60px" h="60px" borderRadius="full"
+                  display="flex" alignItems="center" justifyContent="center"
+                  style={{
+                    background: "radial-gradient(circle at 40% 35%, rgba(168,85,247,0.2), rgba(99,102,241,0.1) 70%)",
+                    border: "1px solid rgba(168,85,247,0.2)",
+                  }}
+                >
+                  <Construction size={24} color="rgba(192,132,252,0.7)" />
+                </Box>
+                <Box
+                  px={3} py="3px" borderRadius="full"
+                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)" }}
+                >
+                  <Text style={{ fontSize: "0.62rem", color: "rgba(192,132,252,0.85)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                    {t("backgrounds.inDevelopment")}
+                  </Text>
+                </Box>
+                <Box textAlign="center">
+                  <Text style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.75)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: "6px" }}>
+                    {t("backgrounds.themesTitle")}
+                  </Text>
+                  <Text style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.32)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.65, maxWidth: "280px" }}>
+                    {t("backgrounds.themesDesc")}
+                  </Text>
+                </Box>
+              </Flex>
+            )}
+          </>
         )}
       </Box>
     </MotionBox>
