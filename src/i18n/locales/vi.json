@@ -289,7 +289,14 @@
       "banner": "Đang dùng thử",
       "buyNow": "Mua ngay",
       "discard": "Từ bỏ",
-      "trying": "ĐANG THỬ"
+      "trying": "ĐANG THỬ",
+      "expired": {
+        "title": "Hết thời gian dùng thử",
+        "body": "Thời gian dùng thử \"{{name}}\" đã kết thúc.",
+        "prompt": "Mua để tiếp tục sử dụng hình nền này.",
+        "buyNow": "Mua ngay",
+        "dismiss": "Để sau"
+      }
     }
   },
   "stickerPicker": {

@@ -12,6 +12,7 @@ export interface AdminStoreItemDto {
   name: string | null;
   description: string | null;
   assetUrl: string | null;
+  previewImageUrl: string | null;
   themeStickerItemId: string | null;
   themeBackgroundItemId: string | null;
   themeEffectItemId: string | null;
@@ -45,6 +46,7 @@ export interface CreateStoreItemBody {
   name: string | null;
   description: string | null;
   assetUrl: string | null;
+  previewImageUrl?: string | null;
   themeBackgroundItemId?: string | null;
   themeStickerItemId?: string | null;
   themeAmbientSoundItemId?: string | null;

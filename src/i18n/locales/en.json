@@ -289,7 +289,14 @@
       "banner": "Trying",
       "buyNow": "Buy now",
       "discard": "Discard",
-      "trying": "TRYING"
+      "trying": "TRYING",
+      "expired": {
+        "title": "Trial Ended",
+        "body": "Your 10-minute trial for \"{{name}}\" has ended.",
+        "prompt": "Purchase to keep using this background.",
+        "buyNow": "Buy Now",
+        "dismiss": "Maybe Later"
+      }
     }
   },
   "stickerPicker": {

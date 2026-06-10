@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
   Sparkles, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
-  Crown, Search, X, Heart, Package,
+  Crown, Search, X, Heart, Package, Play, Pause,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
@@ -319,6 +319,56 @@ function ItemDetailView({
   const canAfford = price == null || price === 0 || coinBalance >= price;
   const canBuy = canPurchase !== false;
 
+  const PREVIEW_SEC = 10;
+  const audioRef        = useRef<HTMLAudioElement | null>(null);
+  const previewStartRef = useRef(0);
+  const [audioPlaying,  setAudioPlaying]  = useState(false);
+  const [audioProgress, setAudioProgress] = useState(0); // 0..PREVIEW_SEC
+
+  useEffect(() => {
+    if (item.category !== "AmbientSound" || !item.assetUrl) return;
+    const a = new Audio(item.assetUrl);
+    audioRef.current = a;
+
+    a.addEventListener("loadedmetadata", () => {
+      const start = Math.max(0, a.duration / 2 - PREVIEW_SEC / 2);
+      previewStartRef.current = start;
+      a.currentTime = start;
+    });
+
+    a.addEventListener("timeupdate", () => {
+      const elapsed = a.currentTime - previewStartRef.current;
+      if (elapsed >= PREVIEW_SEC) {
+        a.pause();
+        a.currentTime = previewStartRef.current;
+        setAudioPlaying(false);
+        setAudioProgress(0);
+      } else {
+        setAudioProgress(Math.max(0, elapsed));
+      }
+    });
+
+    return () => { a.pause(); a.src = ""; audioRef.current = null; };
+  }, [item.id, item.category, item.assetUrl]);
+
+  const toggleAudio = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (audioPlaying) {
+      a.pause();
+      setAudioPlaying(false);
+    } else {
+      const elapsed = a.currentTime - previewStartRef.current;
+      if (elapsed >= PREVIEW_SEC || elapsed < 0) {
+        a.currentTime = previewStartRef.current;
+        setAudioProgress(0);
+      }
+      a.play().then(() => setAudioPlaying(true)).catch(() => {});
+    }
+  };
+
+  const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
   return (
     <MotionBox
       initial={{ x: "100%", opacity: 0 }}
@@ -333,12 +383,19 @@ function ItemDetailView({
       <Box h="100%" display="flex" flexDirection="column">
         {/* Main image */}
         <Box position="relative" flexShrink={0} style={{ aspectRatio: "16/7", overflow: "hidden" }}>
-          <img
-            src={item.assetUrl ?? PLACEHOLDER_IMG}
-            alt={item.name}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            draggable={false}
-          />
+          {item.category === "AmbientSound" ? (
+            <Flex w="100%" h="100%" align="center" justify="center"
+              style={{ background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)" }}>
+              <Volume2 size={52} color="rgba(255,255,255,0.12)" />
+            </Flex>
+          ) : (
+            <img
+              src={item.assetUrl ?? PLACEHOLDER_IMG}
+              alt={item.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              draggable={false}
+            />
+          )}
           <Box
             position="absolute"
             bottom={0}
@@ -462,6 +519,45 @@ function ItemDetailView({
             >
               {item.description}
             </Text>
+          )}
+
+          {/* Inline audio preview for AmbientSound */}
+          {item.category === "AmbientSound" && item.assetUrl && (
+            <Box mt="16px" px="4px">
+              <Flex align="center" gap="12px">
+                <Box
+                  as="button"
+                  onClick={toggleAudio}
+                  w="38px" h="38px" borderRadius="full" border="none" cursor="pointer" flexShrink={0}
+                  display="flex" alignItems="center" justifyContent="center"
+                  style={{
+                    background: audioPlaying ? `${color}30` : "rgba(255,255,255,0.08)",
+                    outline: audioPlaying ? `1px solid ${color}60` : "1px solid rgba(255,255,255,0.14)",
+                    color: audioPlaying ? color : "rgba(255,255,255,0.7)",
+                    transition: "all 0.18s",
+                  }}
+                >
+                  {audioPlaying ? <Pause size={15} /> : <Play size={15} />}
+                </Box>
+                <Box flex={1}>
+                  <Box
+                    h="3px" borderRadius="full" overflow="hidden" mb="5px"
+                    style={{ background: "rgba(255,255,255,0.1)" }}
+                  >
+                    <Box h="full" borderRadius="full"
+                      style={{ width: `${(audioProgress / PREVIEW_SEC) * 100}%`, background: color, transition: "width 0.1s" }} />
+                  </Box>
+                  <Flex justify="space-between">
+                    <Text style={{ fontSize: "0.62rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)" }}>
+                      {fmtTime(audioProgress)}
+                    </Text>
+                    <Text style={{ fontSize: "0.62rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)" }}>
+                      {fmtTime(PREVIEW_SEC)}
+                    </Text>
+                  </Flex>
+                </Box>
+              </Flex>
+            </Box>
           )}
         </Box>
 
@@ -1228,6 +1324,8 @@ export function ThemeStorePanel({
             onBuy={handleBuy}
             onStartTrial={
               onStartTrial && !selectedItem.isOwned
+                && selectedItem.category !== "Sticker"
+                && selectedItem.category !== "AmbientSound"
                 ? () => { onStartTrial(selectedItem); onClose(); }
                 : undefined
             }
