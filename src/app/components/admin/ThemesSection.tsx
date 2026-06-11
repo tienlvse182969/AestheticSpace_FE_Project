@@ -48,13 +48,14 @@ const EMPTY_FORM = {
   name:                   "",
   description:            "",
   assetUrl:               "",
+  previewUrl:             "",
   themeBackgroundUrl:     "",
   themeStickerUrl:        "",
   themeAmbientUrl:        "",
   themeBackgroundItemId:  "",
   themeStickerItemId:     "",
   themeAmbientSoundItemId: "",
-  isPremium:              false,
+  isPremium:              true,
   coinPrice:              "",
   realMoneyPriceVnd:      "",
   isActive:               true,
@@ -246,12 +247,30 @@ export function ThemesSection() {
   const [page, setPage] = useState(1);
   const [tab,  setTab]  = useState<TabType>("all");
 
+  /* ── Theme child IDs (items auto-created as part of a Theme) ─────────── */
+  const [themeChildIds, setThemeChildIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    adminStoreService.getItems({ category: "Theme", includeInactive: true, page: 1, pageSize: 500 })
+      .then(r => {
+        const ids = new Set<string>();
+        r.items.forEach(item => {
+          if (item.themeBackgroundItemId)   ids.add(item.themeBackgroundItemId);
+          if (item.themeStickerItemId)       ids.add(item.themeStickerItemId);
+          if (item.themeAmbientSoundItemId)  ids.add(item.themeAmbientSoundItemId);
+        });
+        setThemeChildIds(ids);
+      })
+      .catch(() => {});
+  }, []);
+
   /* ── Create / Edit ────────────────────────────────────────────────────── */
   const [showForm,    setShowForm]    = useState(false);
   const [editTarget,  setEditTarget]  = useState<AdminStoreItemDto | null>(null);
   const [form,        setForm]        = useState({ ...EMPTY_FORM });
   const [formLoading, setFormLoading] = useState(false);
   const [formError,   setFormError]   = useState<string | null>(null);
+  const [priceErrors, setPriceErrors] = useState({ coin: false, vnd: false });
 
   /* ── Approve ──────────────────────────────────────────────────────────── */
   const [approveTarget,  setApproveTarget]  = useState<AdminStoreItemDto | null>(null);
@@ -301,6 +320,7 @@ export function ThemesSection() {
     setForm({ ...EMPTY_FORM });
     setEditTarget(null);
     setFormError(null);
+    setPriceErrors({ coin: false, vnd: false });
     setShowForm(true);
   };
 
@@ -311,6 +331,7 @@ export function ThemesSection() {
       name:                   item.name ?? "",
       description:            item.description ?? "",
       assetUrl:               item.assetUrl ?? "",
+      previewUrl:             item.previewImageUrl ?? "",
       themeBackgroundUrl:     "",
       themeStickerUrl:        "",
       themeAmbientUrl:        "",
@@ -324,14 +345,27 @@ export function ThemesSection() {
     });
     setEditTarget(item);
     setFormError(null);
+    setPriceErrors({ coin: false, vnd: false });
     setShowForm(true);
   };
 
   /* ── CRUD ─────────────────────────────────────────────────────────────── */
   const handleFormSave = async () => {
     if (!form.name.trim()) { setFormError("Name is required."); return; }
+
+    const coinNum = Number(form.coinPrice);
+    const vndNum  = Number(form.realMoneyPriceVnd);
+    const coinInvalid = !form.coinPrice.trim() || isNaN(coinNum) || coinNum <= 0;
+    const vndInvalid  = !form.realMoneyPriceVnd.trim() || isNaN(vndNum) || vndNum <= 0;
+    if (coinInvalid || vndInvalid) {
+      setPriceErrors({ coin: coinInvalid, vnd: vndInvalid });
+      setFormError("Coin Price and VND Price are required and must be greater than 0.");
+      return;
+    }
+
     setFormLoading(true);
     setFormError(null);
+    setPriceErrors({ coin: false, vnd: false });
 
     let bgId  = form.themeBackgroundItemId   || null;
     let stId  = form.themeStickerItemId      || null;
@@ -375,6 +409,7 @@ export function ThemesSection() {
         name:                   form.name.trim() || null,
         description:            form.description.trim() || null,
         assetUrl:               form.assetUrl.trim() || null,
+        previewImageUrl:        form.previewUrl.trim() || null,
         themeBackgroundItemId:  bgId,
         themeStickerItemId:     stId,
         themeAmbientSoundItemId: ambId,
@@ -391,6 +426,15 @@ export function ThemesSection() {
         const created = await adminStoreService.createItem(body);
         setItems(prev => [created, ...prev]);
         setTotalCount(n => n + 1);
+        if (form.category === "Theme") {
+          setThemeChildIds(prev => {
+            const next = new Set(prev);
+            if (bgId)  next.add(bgId);
+            if (stId)  next.add(stId);
+            if (ambId) next.add(ambId);
+            return next;
+          });
+        }
       }
       setShowForm(false);
     } catch (e: any) {
@@ -453,7 +497,9 @@ export function ThemesSection() {
     } catch { } finally { setDeleteLoading(false); }
   };
 
-  const displayItems = tab === "pending" ? pendingItems : items;
+  const displayItems = tab === "pending"
+    ? pendingItems
+    : items.filter(item => !themeChildIds.has(item.id));
 
   /* ── Render ───────────────────────────────────────────────────────────── */
   return (
@@ -746,7 +792,7 @@ export function ThemesSection() {
                         }));
                       }}
                       style={inputSt}>
-                      {(Object.keys(CATEGORY_META) as StoreCategory[]).map(cat => (
+                      {(Object.keys(CATEGORY_META) as StoreCategory[]).filter(cat => cat !== "Effect").map(cat => (
                         <option key={cat} value={cat} style={{ color: "#111", background: "#fff" }}>{CATEGORY_META[cat].label}</option>
                       ))}
                     </Box>
@@ -810,32 +856,62 @@ export function ThemesSection() {
                       />
                     </>
                   ) : form.category === "Background" ? (
-                    <FileUploadField
-                      accept="image/*"
-                      label="BACKGROUND IMAGE"
-                      value={form.assetUrl}
-                      folder="store/backgrounds"
-                      onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
-                      onError={(msg) => setFormError(msg)}
-                    />
+                    <>
+                      <FileUploadField
+                        accept="image/*"
+                        label="BACKGROUND IMAGE"
+                        value={form.assetUrl}
+                        folder="store/backgrounds"
+                        onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
+                        onError={(msg) => setFormError(msg)}
+                      />
+                      <FileUploadField
+                        accept="image/*"
+                        label="PREVIEW IMAGE (Optional)"
+                        value={form.previewUrl}
+                        folder="store/previews"
+                        onChange={(url) => setForm(f => ({ ...f, previewUrl: url }))}
+                        onError={(msg) => setFormError(msg)}
+                      />
+                    </>
                   ) : form.category === "Sticker" ? (
-                    <FileUploadField
-                      accept="image/*"
-                      label="STICKER IMAGE"
-                      value={form.assetUrl}
-                      folder="store/stickers"
-                      onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
-                      onError={(msg) => setFormError(msg)}
-                    />
+                    <>
+                      <FileUploadField
+                        accept="image/*"
+                        label="STICKER IMAGE"
+                        value={form.assetUrl}
+                        folder="store/stickers"
+                        onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
+                        onError={(msg) => setFormError(msg)}
+                      />
+                      <FileUploadField
+                        accept="image/*"
+                        label="PREVIEW IMAGE (Optional)"
+                        value={form.previewUrl}
+                        folder="store/previews"
+                        onChange={(url) => setForm(f => ({ ...f, previewUrl: url }))}
+                        onError={(msg) => setFormError(msg)}
+                      />
+                    </>
                   ) : form.category === "AmbientSound" ? (
-                    <FileUploadField
-                      accept="audio/*"
-                      label="AUDIO FILE"
-                      value={form.assetUrl}
-                      folder="store/ambient"
-                      onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
-                      onError={(msg) => setFormError(msg)}
-                    />
+                    <>
+                      <FileUploadField
+                        accept="audio/*"
+                        label="AUDIO FILE"
+                        value={form.assetUrl}
+                        folder="store/ambient"
+                        onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
+                        onError={(msg) => setFormError(msg)}
+                      />
+                      <FileUploadField
+                        accept="image/*"
+                        label="PREVIEW IMAGE (Optional)"
+                        value={form.previewUrl}
+                        folder="store/previews"
+                        onChange={(url) => setForm(f => ({ ...f, previewUrl: url }))}
+                        onError={(msg) => setFormError(msg)}
+                      />
+                    </>
                   ) : (
                     /* Effect — keep plain URL field for now */
                     <Box mb={3}>
@@ -849,23 +925,30 @@ export function ThemesSection() {
                   {/* Prices */}
                   <Flex gap={3} mb={3}>
                     <Box flex={1}>
-                      <Text as="label" style={labelSt}>COIN PRICE</Text>
-                      <Box as="input" type="number" min={0} value={form.coinPrice}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, coinPrice: e.target.value }))}
-                        placeholder="e.g. 50" style={inputSt} />
+                      <Text as="label" style={{ ...labelSt, color: priceErrors.coin ? "#dc2626" : labelSt.color }}>COIN PRICE *</Text>
+                      <Box as="input" {...{ type: "number", min: 0 }} value={form.coinPrice}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setForm(f => ({ ...f, coinPrice: e.target.value }));
+                          if (priceErrors.coin) setPriceErrors(p => ({ ...p, coin: false }));
+                        }}
+                        placeholder="e.g. 50"
+                        style={{ ...inputSt, border: priceErrors.coin ? "1px solid #dc2626" : inputSt.border }} />
                     </Box>
                     <Box flex={1}>
-                      <Text as="label" style={labelSt}>VND PRICE</Text>
-                      <Box as="input" type="number" min={0} value={form.realMoneyPriceVnd}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, realMoneyPriceVnd: e.target.value }))}
-                        placeholder="e.g. 29000" style={inputSt} />
+                      <Text as="label" style={{ ...labelSt, color: priceErrors.vnd ? "#dc2626" : labelSt.color }}>VND PRICE *</Text>
+                      <Box as="input" {...{ type: "number", min: 0 }} value={form.realMoneyPriceVnd}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setForm(f => ({ ...f, realMoneyPriceVnd: e.target.value }));
+                          if (priceErrors.vnd) setPriceErrors(p => ({ ...p, vnd: false }));
+                        }}
+                        placeholder="e.g. 29000"
+                        style={{ ...inputSt, border: priceErrors.vnd ? "1px solid #dc2626" : inputSt.border }} />
                     </Box>
                   </Flex>
 
                   {/* Toggles */}
                   <Flex gap={5} mb={5}>
-                    <Toggle value={form.isPremium} onChange={() => setForm(f => ({ ...f, isPremium: !f.isPremium }))} label="Premium" textColor={c.textMuted} />
-                    <Toggle value={form.isActive}  onChange={() => setForm(f => ({ ...f, isActive:  !f.isActive  }))} label="Active"  textColor={c.textMuted} />
+                    <Toggle value={form.isActive} onChange={() => setForm(f => ({ ...f, isActive: !f.isActive }))} label="Active" textColor={c.textMuted} />
                   </Flex>
 
                   {formError && (

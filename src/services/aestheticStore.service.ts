@@ -16,6 +16,9 @@ export interface StoreItem {
   isOwned: boolean | null;
   canBuyWithCoins: boolean;
   canBuyWithMoney: boolean;
+  themeBackgroundItemId?: string | null;
+  themeStickerItemId?: string | null;
+  themeAmbientSoundItemId?: string | null;
 }
 
 export interface InventoryItem {

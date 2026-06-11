@@ -9,6 +9,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { PremiumGateModal } from "../ui/PremiumGateModal";
+import { StorePaymentModal } from "../ui/StorePaymentModal";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import {
   aestheticStoreService,
@@ -286,11 +287,11 @@ function StoreCard({
 function ItemDetailView({
   item,
   t,
-  coinBalance,
   purchasing,
   purchaseError,
   onBack,
   onBuy,
+  onOpenPaymentModal,
   onStartTrial,
   isTrialing,
   hasActiveTrial,
@@ -302,11 +303,11 @@ function ItemDetailView({
 }: {
   item: StoreItem;
   t: (k: string, opts?: Record<string, unknown>) => string;
-  coinBalance: number;
   purchasing: boolean;
   purchaseError: string | null;
   onBack: () => void;
   onBuy: () => void;
+  onOpenPaymentModal?: () => void;
   onStartTrial?: () => void;
   isTrialing?: boolean;
   hasActiveTrial?: boolean;
@@ -319,7 +320,7 @@ function ItemDetailView({
   const color = typeColor(item.category);
   const isOwned = item.isOwned === true;
   const price = item.coinPrice;
-  const canAfford = price == null || price === 0 || coinBalance >= price;
+  const isFree = price == null || price === 0;
   const canBuy = canPurchase !== false;
 
   const PREVIEW_SEC = 10;
@@ -564,7 +565,7 @@ function ItemDetailView({
           )}
         </Box>
 
-        {/* Footer: price + buy */}
+        {/* Footer */}
         <Box
           flexShrink={0}
           px="20px"
@@ -587,31 +588,28 @@ function ItemDetailView({
               {purchaseError}
             </Text>
           )}
-          <Flex align="center" justify="space-between" gap="10px">
-            {/* Price */}
-            <Flex direction="column" gap="2px" flexShrink={0}>
-              <Text style={{ fontSize: "0.65rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.35)" }}>
-                {t("themeStore.coins")}
-              </Text>
-              <Flex align="center" gap="5px">
-                <Coins size={14} color={price == null || price === 0 ? "rgba(94,234,212,0.8)" : "#facc15"} />
-                <Text
+          <Flex align="center" justify="flex-end" gap="8px">
+            {isOwned ? (
+              <Flex align="center" gap="8px">
+                <Flex
+                  align="center"
+                  gap="6px"
+                  px="12px"
+                  py="9px"
+                  borderRadius="10px"
                   style={{
-                    fontSize: "1.1rem",
+                    background: "rgba(74,222,128,0.1)",
+                    border: "1px solid rgba(74,222,128,0.3)",
+                    color: "rgba(74,222,128,0.9)",
+                    fontSize: "0.8rem",
                     fontFamily: "'HarmonyOS Sans', sans-serif",
-                    fontWeight: 700,
-                    color: price == null || price === 0 ? "rgba(94,234,212,0.9)" : "#facc15",
+                    fontWeight: 600,
                   }}
                 >
-                  {price == null || price === 0 ? t("themeStore.free") : price.toLocaleString("vi-VN")}
-                </Text>
-              </Flex>
-            </Flex>
-
-            {/* Action buttons */}
-            <Flex align="center" gap="8px" flexShrink={0}>
-              {isOwned ? (
-                <Flex align="center" gap="8px">
+                  <Check size={14} />
+                  {t("themeStore.purchased")}
+                </Flex>
+                {item.category === "AmbientSound" ? (
                   <Flex
                     align="center"
                     gap="6px"
@@ -619,197 +617,187 @@ function ItemDetailView({
                     py="9px"
                     borderRadius="10px"
                     style={{
-                      background: "rgba(74,222,128,0.1)",
-                      border: "1px solid rgba(74,222,128,0.3)",
-                      color: "rgba(74,222,128,0.9)",
+                      background: "rgba(99,102,241,0.1)",
+                      border: "1px solid rgba(99,102,241,0.25)",
+                      color: "rgba(165,180,252,0.85)",
+                      fontSize: "0.75rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontStyle: "italic",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <Volume2 size={12} />
+                    {t("themeStore.ambientSoundHint")}
+                  </Flex>
+                ) : onApplyItem && (
+                  <Box
+                    as="button"
+                    onClick={() => onApplyItem(item)}
+                    px="16px"
+                    py="9px"
+                    borderRadius="10px"
+                    border="none"
+                    cursor="pointer"
+                    display="flex"
+                    alignItems="center"
+                    gap="7px"
+                    style={{
+                      background: item.category === "Sticker"
+                        ? "linear-gradient(135deg, rgba(236,72,153,0.9), rgba(168,85,247,0.85))"
+                        : "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(6,182,212,0.85))",
+                      color: "#fff",
                       fontSize: "0.8rem",
                       fontFamily: "'HarmonyOS Sans', sans-serif",
                       fontWeight: 600,
+                      boxShadow: item.category === "Sticker"
+                        ? "0 4px 14px rgba(236,72,153,0.3)"
+                        : "0 4px 14px rgba(59,130,246,0.3)",
+                      transition: "filter 0.15s",
+                      whiteSpace: "nowrap",
+                    }}
+                    _hover={{ filter: "brightness(1.1)" } as any}
+                  >
+                    {item.category === "Sticker" ? <PlusCircle size={13} /> : <Wand2 size={13} />}
+                    {item.category === "Sticker" ? t("themeStore.addToSpace") : t("themeStore.apply")}
+                  </Box>
+                )}
+              </Flex>
+            ) : (
+              <>
+                {/* Try button */}
+                {onStartTrial && !hasActiveTrial && (
+                  <Box
+                    as="button"
+                    onClick={onStartTrial}
+                    px="14px"
+                    py="9px"
+                    borderRadius="10px"
+                    border="none"
+                    cursor="pointer"
+                    display="flex"
+                    alignItems="center"
+                    gap="6px"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.14)",
+                      color: "rgba(255,255,255,0.7)",
+                      fontSize: "0.78rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 500,
+                      transition: "all 0.15s",
+                      whiteSpace: "nowrap",
+                    }}
+                    _hover={{ background: "rgba(255,255,255,0.1)", color: "#fff" } as any}
+                  >
+                    <Clock size={13} />
+                    {t("themeStore.trial.button")}
+                  </Box>
+                )}
+                {/* Trialing indicator */}
+                {isTrialing && (
+                  <Flex
+                    align="center"
+                    gap="6px"
+                    px="14px"
+                    py="9px"
+                    borderRadius="10px"
+                    style={{
+                      background: `${color}18`,
+                      border: `1px solid ${color}40`,
+                      color: color,
+                      fontSize: "0.78rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 500,
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    <Check size={14} />
-                    {t("themeStore.purchased")}
+                    <Box
+                      w="6px"
+                      h="6px"
+                      borderRadius="full"
+                      style={{ background: color, animation: "pulse 1.5s ease-in-out infinite" }}
+                    />
+                    {t("themeStore.trial.trying")}
                   </Flex>
-                  {item.category === "AmbientSound" ? (
-                    <Flex
-                      align="center"
-                      gap="6px"
-                      px="12px"
-                      py="9px"
-                      borderRadius="10px"
-                      style={{
-                        background: "rgba(99,102,241,0.1)",
-                        border: "1px solid rgba(99,102,241,0.25)",
-                        color: "rgba(165,180,252,0.85)",
-                        fontSize: "0.75rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        fontStyle: "italic",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <Volume2 size={12} />
-                      {t("themeStore.ambientSoundHint")}
-                    </Flex>
-                  ) : onApplyItem && (
-                    <Box
-                      as="button"
-                      onClick={() => onApplyItem(item)}
-                      px="16px"
-                      py="9px"
-                      borderRadius="10px"
-                      border="none"
-                      cursor="pointer"
-                      display="flex"
-                      alignItems="center"
-                      gap="7px"
-                      style={{
-                        background: item.category === "Sticker"
-                          ? "linear-gradient(135deg, rgba(236,72,153,0.9), rgba(168,85,247,0.85))"
-                          : "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(6,182,212,0.85))",
-                        color: "#fff",
-                        fontSize: "0.8rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        fontWeight: 600,
-                        boxShadow: item.category === "Sticker"
-                          ? "0 4px 14px rgba(236,72,153,0.3)"
-                          : "0 4px 14px rgba(59,130,246,0.3)",
-                        transition: "filter 0.15s",
-                        whiteSpace: "nowrap",
-                      }}
-                      _hover={{ filter: "brightness(1.1)" } as any}
-                    >
-                      {item.category === "Sticker" ? <PlusCircle size={13} /> : <Wand2 size={13} />}
-                      {item.category === "Sticker" ? t("themeStore.addToSpace") : t("themeStore.apply")}
-                    </Box>
-                  )}
-                </Flex>
-              ) : (
-                <>
-                  {/* Try button */}
-                  {onStartTrial && !hasActiveTrial && (
-                    <Box
-                      as="button"
-                      onClick={onStartTrial}
-                      px="14px"
-                      py="9px"
-                      borderRadius="10px"
-                      border="none"
-                      cursor="pointer"
-                      display="flex"
-                      alignItems="center"
-                      gap="6px"
-                      style={{
-                        background: "rgba(255,255,255,0.06)",
-                        border: "1px solid rgba(255,255,255,0.14)",
-                        color: "rgba(255,255,255,0.7)",
-                        fontSize: "0.78rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        fontWeight: 500,
-                        transition: "all 0.15s",
-                        whiteSpace: "nowrap",
-                      }}
-                      _hover={{ background: "rgba(255,255,255,0.1)", color: "#fff" } as any}
-                    >
-                      <Clock size={13} />
-                      {t("themeStore.trial.button")}
-                    </Box>
-                  )}
-                  {/* Trialing indicator */}
-                  {isTrialing && (
-                    <Flex
-                      align="center"
-                      gap="6px"
-                      px="14px"
-                      py="9px"
-                      borderRadius="10px"
-                      style={{
-                        background: `${color}18`,
-                        border: `1px solid ${color}40`,
-                        color: color,
-                        fontSize: "0.78rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        fontWeight: 500,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      <Box
-                        w="6px"
-                        h="6px"
-                        borderRadius="full"
-                        style={{ background: color, animation: "pulse 1.5s ease-in-out infinite" }}
-                      />
-                      {t("themeStore.trial.trying")}
-                    </Flex>
-                  )}
-                  {/* Buy button */}
-                  {canBuy ? (
-                    <Box
-                      as="button"
-                      onClick={onBuy}
-                      disabled={purchasing || !canAfford}
-                      px="16px"
-                      py="9px"
-                      borderRadius="10px"
-                      border="none"
-                      cursor={purchasing || !canAfford ? "not-allowed" : "pointer"}
-                      display="flex"
-                      alignItems="center"
-                      gap="7px"
-                      style={{
-                        background: !canAfford
-                          ? "rgba(255,255,255,0.06)"
-                          : purchasing
-                          ? "rgba(139,92,246,0.4)"
-                          : "linear-gradient(135deg, rgba(139,92,246,0.9) 0%, rgba(59,130,246,0.9) 100%)",
-                        color: !canAfford ? "rgba(255,255,255,0.3)" : "#fff",
-                        fontSize: "0.8rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        fontWeight: 600,
-                        transition: "all 0.18s",
-                        boxShadow: canAfford && !purchasing ? "0 4px 14px rgba(139,92,246,0.35)" : "none",
-                        opacity: purchasing ? 0.7 : 1,
-                        whiteSpace: "nowrap",
-                      }}
-                      _hover={canAfford && !purchasing ? { filter: "brightness(1.1)", transform: "translateY(-1px)" } as any : {}}
-                    >
-                      <ShoppingBag size={13} />
-                      {!canAfford
-                        ? t("themeStore.detail.notEnoughCoins")
-                        : purchasing
-                        ? "..."
-                        : t("themeStore.detail.buyNow")}
-                    </Box>
-                  ) : (
-                    <Box
-                      as="button"
-                      onClick={onLockedBuy}
-                      px="16px"
-                      py="9px"
-                      borderRadius="10px"
-                      border="none"
-                      cursor="pointer"
-                      display="flex"
-                      alignItems="center"
-                      gap="7px"
-                      style={{
-                        background: "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.28) 100%)",
-                        border: "1px solid rgba(251,191,36,0.45)",
-                        color: "#fbbf24",
-                        fontSize: "0.78rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        fontWeight: 700,
-                        whiteSpace: "nowrap",
-                        transition: "all 0.15s",
-                      }}
-                      _hover={{ opacity: 0.85 } as any}
-                    >
-                      <Crown size={13} />
-                      {t("premiumGate.upgrade")}
-                    </Box>
-                  )}
-                </>
-              )}
-            </Flex>
+                )}
+                {/* Merged price + action button */}
+                {canBuy ? (
+                  <Box
+                    as="button"
+                    onClick={isFree ? onBuy : () => onOpenPaymentModal?.()}
+                    px="16px"
+                    py="9px"
+                    borderRadius="10px"
+                    border="none"
+                    cursor={purchasing ? "not-allowed" : "pointer"}
+                    display="flex"
+                    alignItems="center"
+                    gap="7px"
+                    style={{
+                      background: purchasing
+                        ? "rgba(139,92,246,0.4)"
+                        : isFree
+                        ? "linear-gradient(135deg, rgba(20,184,166,0.9) 0%, rgba(6,182,212,0.9) 100%)"
+                        : "linear-gradient(135deg, rgba(139,92,246,0.9) 0%, rgba(59,130,246,0.9) 100%)",
+                      color: "#fff",
+                      fontSize: "0.8rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 600,
+                      transition: "all 0.18s",
+                      boxShadow: !purchasing
+                        ? isFree
+                          ? "0 4px 14px rgba(20,184,166,0.35)"
+                          : "0 4px 14px rgba(139,92,246,0.35)"
+                        : "none",
+                      opacity: purchasing ? 0.7 : 1,
+                      whiteSpace: "nowrap",
+                    }}
+                    _hover={!purchasing ? { filter: "brightness(1.1)", transform: "translateY(-1px)" } as any : {}}
+                  >
+                    {purchasing ? "..." : isFree ? (
+                      <>
+                        <ShoppingBag size={13} />
+                        {t("themeStore.detail.get")}
+                      </>
+                    ) : (
+                      <>
+                        <Coins size={13} color="rgba(250,204,21,0.9)" />
+                        <Text style={{ fontSize: "0.88rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(250,204,21,0.95)" }}>
+                          {price.toLocaleString("vi-VN")}
+                        </Text>
+                      </>
+                    )}
+                  </Box>
+                ) : (
+                  <Box
+                    as="button"
+                    onClick={onLockedBuy}
+                    px="16px"
+                    py="9px"
+                    borderRadius="10px"
+                    border="none"
+                    cursor="pointer"
+                    display="flex"
+                    alignItems="center"
+                    gap="7px"
+                    style={{
+                      background: "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.28) 100%)",
+                      border: "1px solid rgba(251,191,36,0.45)",
+                      color: "#fbbf24",
+                      fontSize: "0.78rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 700,
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s",
+                    }}
+                    _hover={{ opacity: 0.85 } as any}
+                  >
+                    <Crown size={13} />
+                    {t("premiumGate.upgrade")}
+                  </Box>
+                )}
+              </>
+            )}
           </Flex>
         </Box>
       </Box>
@@ -990,6 +978,7 @@ export function ThemeStorePanel({
   const [selectedItem, setSelectedItem] = useState<StoreItem | null>(null);
   const [purchasing, setPurchasing]     = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [localCoinBalance, setLocalCoinBalance] = useState<number>(coinBalanceProp ?? 0);
 
   const loading = itemsLoading || inventoryLoading;
@@ -1047,6 +1036,18 @@ export function ThemeStorePanel({
     if (item) setSelectedItem(item);
   }, [initialDetailItemId, items]);
 
+  const themeChildIds = useMemo(() => {
+    const ids = new Set<string>();
+    items.forEach((item) => {
+      if (item.category === "Theme") {
+        if (item.themeBackgroundItemId)   ids.add(item.themeBackgroundItemId);
+        if (item.themeStickerItemId)       ids.add(item.themeStickerItemId);
+        if (item.themeAmbientSoundItemId)  ids.add(item.themeAmbientSoundItemId);
+      }
+    });
+    return ids;
+  }, [items]);
+
   const featuredItems = useMemo(() =>
     items.filter((i) => i.category === "Theme").slice(0, 3),
   [items]);
@@ -1055,12 +1056,12 @@ export function ThemeStorePanel({
     let source: StoreItem[];
     if (activeTab === "purchased") source = inventoryItems;
     else if (activeTab === "wishlist") source = items.filter((i) => wishlistIds.has(i.id));
-    else if (activeTab === "all") source = items;
-    else source = items.filter((i) => i.category === activeTab);
+    else if (activeTab === "all") source = items.filter((i) => !themeChildIds.has(i.id));
+    else source = items.filter((i) => i.category === activeTab && !themeChildIds.has(i.id));
 
     if (!searchQuery) return source;
     return source.filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [activeTab, items, inventoryItems, wishlistIds, searchQuery]);
+  }, [activeTab, items, inventoryItems, wishlistIds, searchQuery, themeChildIds]);
 
   const toggleWishlist = useCallback((itemId: string) => {
     setWishlistIds((prev) => {
@@ -1375,11 +1376,11 @@ export function ThemeStorePanel({
             key={selectedItem.id}
             item={selectedItem}
             t={t}
-            coinBalance={localCoinBalance}
             purchasing={purchasing}
             purchaseError={purchaseError}
             onBack={() => { setSelectedItem(null); setPurchaseError(null); }}
             onBuy={handleBuy}
+            onOpenPaymentModal={() => { setPurchaseError(null); setPaymentModalOpen(true); }}
             onStartTrial={
               onStartTrial && !selectedItem.isOwned
                 && selectedItem.category !== "Sticker"
@@ -1397,6 +1398,18 @@ export function ThemeStorePanel({
           />
         )}
       </AnimatePresence>
+
+      {/* Store payment modal */}
+      {paymentModalOpen && selectedItem && (
+        <StorePaymentModal
+          item={selectedItem}
+          coinBalance={localCoinBalance}
+          onClose={() => { setPaymentModalOpen(false); setPurchaseError(null); }}
+          onPayWithCoins={() => { setPaymentModalOpen(false); handleBuy(); }}
+          isPayingWithCoins={purchasing}
+          purchaseError={purchaseError}
+        />
+      )}
 
       {/* Premium gate modal */}
       <PremiumGateModal feature={gateOpen ? "store" : null} onClose={() => setGateOpen(false)} />
