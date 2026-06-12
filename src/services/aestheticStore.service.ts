@@ -19,6 +19,7 @@ export interface StoreItem {
   themeBackgroundItemId?: string | null;
   themeStickerItemId?: string | null;
   themeAmbientSoundItemId?: string | null;
+  previewUrl?: string | null;
 }
 
 export interface InventoryItem {

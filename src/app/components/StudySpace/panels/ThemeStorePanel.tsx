@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
@@ -44,7 +44,6 @@ const TABS: { value: TabValue; key: string }[] = [
   { value: "Theme",        key: "themeStore.tabThemes" },
   { value: "Background",   key: "themeStore.tabWallpapers" },
   { value: "Sticker",      key: "themeStore.tabStickers" },
-  { value: "Effect",       key: "themeStore.tabEffects" },
   { value: "AmbientSound", key: "themeStore.tabSounds" },
   { value: "purchased",    key: "themeStore.tabPurchased" },
   { value: "wishlist",     key: "themeStore.tabWishlist" },
@@ -323,6 +322,27 @@ function ItemDetailView({
   const isFree = price == null || price === 0;
   const canBuy = canPurchase !== false;
 
+  const previewImgs: string[] = (() => {
+    if (!item.previewUrl) return [];
+    try {
+      const p = JSON.parse(item.previewUrl);
+      if (Array.isArray(p)) return p.filter(Boolean);
+    } catch {}
+    return [item.previewUrl];
+  })();
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (lightboxIdx === null) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxIdx(null);
+      if (e.key === "ArrowRight") setLightboxIdx(i => i !== null ? Math.min(i + 1, previewImgs.length - 1) : null);
+      if (e.key === "ArrowLeft")  setLightboxIdx(i => i !== null ? Math.max(i - 1, 0) : null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxIdx, previewImgs.length]);
+
   const PREVIEW_SEC = 10;
   const audioRef        = useRef<HTMLAudioElement | null>(null);
   const previewStartRef = useRef(0);
@@ -523,6 +543,53 @@ function ItemDetailView({
             >
               {item.description}
             </Text>
+          )}
+
+          {/* Preview images — Mac App Store style horizontal strip */}
+          {previewImgs.length > 0 && (
+            <Box mt="16px" mx="-20px">
+              <Box
+                overflowX="auto"
+                px="20px"
+                pb="4px"
+                style={{
+                  scrollbarWidth: "none",
+                  scrollSnapType: "x mandatory",
+                  WebkitOverflowScrolling: "touch",
+                  display: "flex",
+                  gap: "10px",
+                  paddingRight: previewImgs.length > 1 ? "44px" : "20px",
+                }}
+              >
+                {previewImgs.map((url, i) => (
+                  <Box
+                    key={i}
+                    flexShrink={0}
+                    borderRadius="12px"
+                    overflow="hidden"
+                    cursor="pointer"
+                    onClick={() => setLightboxIdx(i)}
+                    style={{
+                      width: "260px",
+                      height: "160px",
+                      scrollSnapAlign: "start",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.45)",
+                      border: "1px solid rgba(255,255,255,0.07)",
+                      background: "rgba(255,255,255,0.04)",
+                      transition: "transform 0.15s, box-shadow 0.15s",
+                    }}
+                    _hover={{ transform: "scale(1.02)", boxShadow: "0 6px 28px rgba(0,0,0,0.6)" } as any}
+                  >
+                    <img
+                      src={url}
+                      alt={`preview-${i + 1}`}
+                      style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      draggable={false}
+                    />
+                  </Box>
+                ))}
+              </Box>
+            </Box>
           )}
 
           {/* Inline audio preview for AmbientSound */}
@@ -801,6 +868,146 @@ function ItemDetailView({
           </Flex>
         </Box>
       </Box>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxIdx !== null && previewImgs[lightboxIdx] && (
+          <>
+            {/* Backdrop */}
+            <MotionBox
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 } as any}
+              position="fixed"
+              inset={0}
+              zIndex={200}
+              onClick={() => setLightboxIdx(null)}
+              style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", cursor: "zoom-out" }}
+            />
+            {/* Image container */}
+            <MotionBox
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] } as any}
+              position="fixed"
+              inset={0}
+              zIndex={201}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              style={{ pointerEvents: "none" }}
+            >
+              <Box
+                position="relative"
+                style={{
+                  maxWidth: "min(900px, 92vw)",
+                  maxHeight: "80vh",
+                  pointerEvents: "auto",
+                }}
+              >
+                <img
+                  src={previewImgs[lightboxIdx]}
+                  alt={`preview-${lightboxIdx + 1}`}
+                  style={{
+                    display: "block",
+                    maxWidth: "100%",
+                    maxHeight: "80vh",
+                    borderRadius: "14px",
+                    boxShadow: "0 24px 80px rgba(0,0,0,0.7)",
+                    objectFit: "contain",
+                  }}
+                  draggable={false}
+                />
+
+                {/* Close */}
+                <Box
+                  as="button"
+                  onClick={() => setLightboxIdx(null)}
+                  position="absolute"
+                  top="-14px"
+                  right="-14px"
+                  w="32px" h="32px"
+                  borderRadius="full"
+                  border="none"
+                  cursor="pointer"
+                  display="flex" alignItems="center" justifyContent="center"
+                  style={{ background: "rgba(20,20,20,0.9)", color: "rgba(255,255,255,0.8)", backdropFilter: "blur(8px)" }}
+                >
+                  <X size={14} />
+                </Box>
+
+                {/* Prev */}
+                {lightboxIdx > 0 && (
+                  <Box
+                    as="button"
+                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i => i !== null ? i - 1 : null); }}
+                    position="absolute"
+                    top="50%" left="-20px"
+                    w="40px" h="40px"
+                    borderRadius="full"
+                    border="none"
+                    cursor="pointer"
+                    display="flex" alignItems="center" justifyContent="center"
+                    style={{ background: "rgba(20,20,20,0.85)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)", transform: "translateY(-50%)" }}
+                  >
+                    <ChevronLeft size={18} />
+                  </Box>
+                )}
+
+                {/* Next */}
+                {lightboxIdx < previewImgs.length - 1 && (
+                  <Box
+                    as="button"
+                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i => i !== null ? i + 1 : null); }}
+                    position="absolute"
+                    top="50%" right="-20px"
+                    w="40px" h="40px"
+                    borderRadius="full"
+                    border="none"
+                    cursor="pointer"
+                    display="flex" alignItems="center" justifyContent="center"
+                    style={{ background: "rgba(20,20,20,0.85)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)", transform: "translateY(-50%)" }}
+                  >
+                    <ChevronRight size={18} />
+                  </Box>
+                )}
+
+                {/* Counter */}
+                {previewImgs.length > 1 && (
+                  <Box
+                    position="absolute"
+                    bottom="-36px"
+                    left="50%"
+                    style={{ transform: "translateX(-50%)" }}
+                  >
+                    <Flex gap="6px">
+                      {previewImgs.map((_, i) => (
+                        <Box
+                          key={i}
+                          as="button"
+                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i); }}
+                          border="none"
+                          cursor="pointer"
+                          borderRadius="full"
+                          style={{
+                            width: i === lightboxIdx ? "20px" : "6px",
+                            height: "6px",
+                            background: i === lightboxIdx ? "#fff" : "rgba(255,255,255,0.35)",
+                            transition: "all 0.2s",
+                            padding: 0,
+                          }}
+                        />
+                      ))}
+                    </Flex>
+                  </Box>
+                )}
+              </Box>
+            </MotionBox>
+          </>
+        )}
+      </AnimatePresence>
     </MotionBox>
   );
 }
@@ -1056,7 +1263,7 @@ export function ThemeStorePanel({
     let source: StoreItem[];
     if (activeTab === "purchased") source = inventoryItems;
     else if (activeTab === "wishlist") source = items.filter((i) => wishlistIds.has(i.id));
-    else if (activeTab === "all") source = items.filter((i) => !themeChildIds.has(i.id));
+    else if (activeTab === "all") source = items.filter((i) => !themeChildIds.has(i.id) && i.category !== "Effect");
     else source = items.filter((i) => i.category === activeTab && !themeChildIds.has(i.id));
 
     if (!searchQuery) return source;
@@ -1136,10 +1343,19 @@ export function ThemeStorePanel({
             >
               <ShoppingBag size={14} color="rgba(167,139,250,0.9)" />
             </Box>
-            <Text style={{ fontSize: "1.25rem", color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>
-              <span style={{ fontFamily: "'Manrope', sans-serif" }}>Aēsthetic</span>
-              <span style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}> Store</span>
-            </Text>
+            <Flex align="center" gap="6px">
+              <Text style={{ fontSize: "1.25rem", color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>
+                <span style={{ fontFamily: "'Manrope', sans-serif" }}>Aēsthetic</span>
+                <span style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}> Store</span>
+              </Text>
+              <Box px="5px" py="2px" borderRadius="4px"
+                style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.3) 0%, rgba(59,130,246,0.3) 100%)", border: "1px solid rgba(139,92,246,0.45)" }}
+              >
+                <Text style={{ fontSize: "0.6rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(167,139,250,0.95)", letterSpacing: "0.06em" }}>
+                  BETA
+                </Text>
+              </Box>
+            </Flex>
           </Flex>
           {canPurchase ? (
             <Flex align="center" gap="5px" px="10px" py="4px" borderRadius="20px"
@@ -1188,12 +1404,13 @@ export function ThemeStorePanel({
             style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.09)" }}
           >
             <Search size={12} color="rgba(255,255,255,0.3)" flexShrink={0} />
-            <Box
-              as="input"
+            <Input
               flex={1}
               value={searchQuery}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               placeholder={t("themeStore.searchPlaceholder")}
+              variant="unstyled"
+              _focusVisible={{ boxShadow: "none" }}
               style={{
                 background: "transparent",
                 border: "none",

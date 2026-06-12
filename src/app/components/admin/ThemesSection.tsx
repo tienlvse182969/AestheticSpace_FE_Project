@@ -48,7 +48,7 @@ const EMPTY_FORM = {
   name:                   "",
   description:            "",
   assetUrl:               "",
-  previewUrl:             "",
+  previewUrls:            [] as string[],
   themeBackgroundUrl:     "",
   themeStickerUrl:        "",
   themeAmbientUrl:        "",
@@ -60,6 +60,15 @@ const EMPTY_FORM = {
   realMoneyPriceVnd:      "",
   isActive:               true,
 };
+
+function parsePreviewUrls(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter((u): u is string => !!u);
+  } catch {}
+  return [raw];
+}
 
 /* ── Small reusable pieces ─────────────────────────────────────────────── */
 
@@ -172,6 +181,84 @@ function FileUploadField({ accept, label, value, folder, onChange, onError, exis
         <Box as="input" id={inputId} type="file" accept={accept}
           onChange={handleFile} style={{ display: "none" }} />
       </Box>
+      {progress !== null && (
+        <Box mt={2} h="3px" borderRadius="full" overflow="hidden" style={{ background: c.rowDivider }}>
+          <Box h="full" borderRadius="full"
+            style={{ width: `${progress}%`, background: "#4e7c6a", transition: "width 0.15s" }} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+/* Multi-preview image upload */
+function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
+  values: string[];
+  onChange: (urls: string[]) => void;
+  onError: (msg: string) => void;
+  max?: number;
+}) {
+  const { c, isDark } = useAdminTheme();
+  const [progress, setProgress] = useState<number | null>(null);
+  const inputId = "multi-preview-upload";
+
+  const labelSt: React.CSSProperties = {
+    fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.08em",
+    fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 6, display: "block",
+  };
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setProgress(0);
+    try {
+      const result = await uploadToCloudinary(file, "store/previews", pct => setProgress(pct));
+      onChange([...values, result.secure_url]);
+    } catch (err: any) {
+      onError(err.message ?? "Upload failed");
+    } finally {
+      setProgress(null);
+      e.target.value = "";
+    }
+  };
+
+  const remove = (idx: number) => onChange(values.filter((_, i) => i !== idx));
+
+  return (
+    <Box mb={3}>
+      <Text as="label" style={labelSt}>PREVIEW IMAGES (Optional · max {max})</Text>
+      {values.length > 0 && (
+        <Flex gap="8px" flexWrap="wrap" mb={2}>
+          {values.map((url, idx) => (
+            <Box key={idx} position="relative" w="80px" h="56px" borderRadius="8px" overflow="hidden"
+              style={{ border: `1px solid ${c.cardBorder}`, flexShrink: 0 }}>
+              <Box as="img" src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Box
+                as="button"
+                onClick={() => remove(idx)}
+                position="absolute" top="2px" right="2px"
+                w="16px" h="16px" borderRadius="full" border="none" cursor="pointer"
+                display="flex" alignItems="center" justifyContent="center"
+                style={{ background: "rgba(0,0,0,0.65)", color: "#fff", padding: 0 }}
+              >
+                <X size={9} />
+              </Box>
+            </Box>
+          ))}
+        </Flex>
+      )}
+      {values.length < max && (
+        <Box as="label" htmlFor={inputId} display="inline-flex" alignItems="center" gap={2}
+          px={3} py="7px" borderRadius="8px" cursor="pointer"
+          style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}`, color: c.textMuted, opacity: progress !== null ? 0.6 : 1 }}>
+          <Upload size={13} />
+          <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+            Add preview
+          </Text>
+          <Box as="input" id={inputId} type="file" accept="image/*"
+            onChange={handleFile} style={{ display: "none" }} />
+        </Box>
+      )}
       {progress !== null && (
         <Box mt={2} h="3px" borderRadius="full" overflow="hidden" style={{ background: c.rowDivider }}>
           <Box h="full" borderRadius="full"
@@ -331,7 +418,7 @@ export function ThemesSection() {
       name:                   item.name ?? "",
       description:            item.description ?? "",
       assetUrl:               item.assetUrl ?? "",
-      previewUrl:             item.previewImageUrl ?? "",
+      previewUrls:            parsePreviewUrls(item.previewUrl),
       themeBackgroundUrl:     "",
       themeStickerUrl:        "",
       themeAmbientUrl:        "",
@@ -409,7 +496,7 @@ export function ThemesSection() {
         name:                   form.name.trim() || null,
         description:            form.description.trim() || null,
         assetUrl:               form.assetUrl.trim() || null,
-        previewImageUrl:        form.previewUrl.trim() || null,
+        previewUrl:             form.previewUrls.length > 0 ? JSON.stringify(form.previewUrls) : null,
         themeBackgroundItemId:  bgId,
         themeStickerItemId:     stId,
         themeAmbientSoundItemId: ambId,
@@ -821,7 +908,7 @@ export function ThemesSection() {
                     <>
                       <FileUploadField
                         accept="image/*"
-                        label="PREVIEW IMAGE (Optional)"
+                        label="THEME THUMBNAIL (Optional)"
                         value={form.assetUrl}
                         folder="store/themes"
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
@@ -854,6 +941,11 @@ export function ThemesSection() {
                         onError={(msg) => setFormError(msg)}
                         existingId={form.themeAmbientSoundItemId}
                       />
+                      <MultiPreviewUpload
+                        values={form.previewUrls}
+                        onChange={(urls) => setForm(f => ({ ...f, previewUrls: urls }))}
+                        onError={(msg) => setFormError(msg)}
+                      />
                     </>
                   ) : form.category === "Background" ? (
                     <>
@@ -865,12 +957,9 @@ export function ThemesSection() {
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
                         onError={(msg) => setFormError(msg)}
                       />
-                      <FileUploadField
-                        accept="image/*"
-                        label="PREVIEW IMAGE (Optional)"
-                        value={form.previewUrl}
-                        folder="store/previews"
-                        onChange={(url) => setForm(f => ({ ...f, previewUrl: url }))}
+                      <MultiPreviewUpload
+                        values={form.previewUrls}
+                        onChange={(urls) => setForm(f => ({ ...f, previewUrls: urls }))}
                         onError={(msg) => setFormError(msg)}
                       />
                     </>
@@ -884,12 +973,9 @@ export function ThemesSection() {
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
                         onError={(msg) => setFormError(msg)}
                       />
-                      <FileUploadField
-                        accept="image/*"
-                        label="PREVIEW IMAGE (Optional)"
-                        value={form.previewUrl}
-                        folder="store/previews"
-                        onChange={(url) => setForm(f => ({ ...f, previewUrl: url }))}
+                      <MultiPreviewUpload
+                        values={form.previewUrls}
+                        onChange={(urls) => setForm(f => ({ ...f, previewUrls: urls }))}
                         onError={(msg) => setFormError(msg)}
                       />
                     </>
@@ -903,17 +989,14 @@ export function ThemesSection() {
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
                         onError={(msg) => setFormError(msg)}
                       />
-                      <FileUploadField
-                        accept="image/*"
-                        label="PREVIEW IMAGE (Optional)"
-                        value={form.previewUrl}
-                        folder="store/previews"
-                        onChange={(url) => setForm(f => ({ ...f, previewUrl: url }))}
+                      <MultiPreviewUpload
+                        values={form.previewUrls}
+                        onChange={(urls) => setForm(f => ({ ...f, previewUrls: urls }))}
                         onError={(msg) => setFormError(msg)}
                       />
                     </>
                   ) : (
-                    /* Effect — keep plain URL field for now */
+                    /* Effect */
                     <Box mb={3}>
                       <Text as="label" style={labelSt}>ASSET URL</Text>
                       <Box as="input" value={form.assetUrl}
