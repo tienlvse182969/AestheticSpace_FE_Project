@@ -392,7 +392,11 @@
     "cancelConfirmTitle": "Cancel focus session?",
     "cancelConfirmDesc": "This session will be deleted and won't count toward your stats.",
     "cancelConfirmBtn": "Cancel Session",
-    "cancelKeepBtn": "Keep Going"
+    "cancelKeepBtn": "Keep Going",
+    "skipBreakTitle": "Skip break time?",
+    "skipBreakDesc": "You still have break time remaining. Skip it and start the next session now?",
+    "skipBreakConfirm": "Skip Break",
+    "skipBreakCancel": "Keep Resting"
   },
   "clockSettings": {
     "title": "Clock Settings",

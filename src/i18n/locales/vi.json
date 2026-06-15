@@ -391,7 +391,11 @@
     "cancelConfirmTitle": "Hủy phiên tập trung?",
     "cancelConfirmDesc": "Phiên này sẽ bị xóa và không được tính vào thống kê.",
     "cancelConfirmBtn": "Hủy phiên",
-    "cancelKeepBtn": "Tiếp tục"
+    "cancelKeepBtn": "Tiếp tục",
+    "skipBreakTitle": "Bỏ qua thời gian nghỉ?",
+    "skipBreakDesc": "Bạn vẫn còn thời gian nghỉ. Bỏ qua và bắt đầu phiên tiếp theo ngay bây giờ?",
+    "skipBreakConfirm": "Bỏ qua nghỉ",
+    "skipBreakCancel": "Tiếp tục nghỉ"
   },
   "clockSettings": {
     "title": "Cài đặt đồng hồ",
