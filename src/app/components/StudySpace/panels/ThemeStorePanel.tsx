@@ -5,6 +5,7 @@ import {
   ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
   Sparkles, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
   Crown, Search, X, Heart, Package, Play, Pause, PlusCircle,
+  Loader2, Trash2, AlertCircle,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
@@ -18,6 +19,11 @@ import {
 } from "../../../../services/aestheticStore.service";
 import { useAuth } from "../../../../context/AuthContext";
 import { coinService } from "../../../../services/coin.service";
+import {
+  userThemeService,
+  type UserThemeSubmission,
+  type ThemeSubmissionStatus,
+} from "../../../../services/userTheme.service";
 
 const MotionBox = motion.create(Box);
 
@@ -35,9 +41,10 @@ interface Props {
   onApplyItem?: (item: StoreItem) => void;
   trialItemId?: string;
   initialDetailItemId?: string;
+  onOpenCreate?: () => void;
 }
 
-type TabValue = "all" | "purchased" | "wishlist" | StoreCategory;
+type TabValue = "all" | "purchased" | "wishlist" | "my-themes" | StoreCategory;
 
 const TABS: { value: TabValue; key: string }[] = [
   { value: "all",          key: "themeStore.tabDiscovery" },
@@ -70,6 +77,7 @@ function tabIcon(value: TabValue, size = 14): React.ReactNode {
     case "Effect":       return <Wand2 size={size} />;
     case "purchased":    return <Check size={size} />;
     case "wishlist":     return <Heart size={size} />;
+    case "my-themes":    return <PlusCircle size={size} />;
     default:             return null;
   }
 }
@@ -1156,6 +1164,161 @@ function FeaturedCarousel({
   );
 }
 
+// ── MyThemeCard ───────────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<ThemeSubmissionStatus, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
+  PendingReview: { label: "Đang chờ duyệt", color: "#facc15", bg: "rgba(250,204,21,0.1)",    border: "rgba(250,204,21,0.28)",   icon: Clock },
+  Approved:      { label: "Đã được duyệt",  color: "#4ade80", bg: "rgba(74,222,128,0.1)",    border: "rgba(74,222,128,0.28)",   icon: Check },
+  Rejected:      { label: "Bị từ chối",     color: "#f87171", bg: "rgba(248,113,113,0.1)",   border: "rgba(248,113,113,0.28)",  icon: X },
+  AdminCreated:  { label: "Quản trị tạo",   color: "#a78bfa", bg: "rgba(167,139,250,0.1)",   border: "rgba(167,139,250,0.28)",  icon: Check },
+};
+
+function MyThemeCard({
+  theme,
+  withdrawing,
+  onWithdraw,
+}: {
+  theme: UserThemeSubmission;
+  withdrawing: boolean;
+  onWithdraw: (id: string) => void;
+}) {
+  const cfg = STATUS_CONFIG[theme.status];
+  const StatusIcon = cfg.icon;
+  const canWithdraw = theme.status === "PendingReview" || theme.status === "Rejected";
+  const dateStr = new Date(theme.submittedAt).toLocaleDateString("vi-VN");
+
+  return (
+    <Box
+      borderRadius="10px"
+      overflow="hidden"
+      style={{
+        background: "rgba(255,255,255,0.03)",
+        border: "1px solid rgba(255,255,255,0.07)",
+      }}
+    >
+      <Flex gap="10px" p="10px">
+        {/* Thumbnail */}
+        <Box
+          flexShrink={0}
+          borderRadius="7px"
+          overflow="hidden"
+          style={{
+            width: 72, height: 48,
+            background: "rgba(255,255,255,0.04)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}
+        >
+          {theme.assetUrl ? (
+            <img
+              src={theme.assetUrl}
+              alt={theme.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              draggable={false}
+            />
+          ) : (
+            <Flex w="100%" h="100%" align="center" justify="center">
+              <Palette size={16} color="rgba(255,255,255,0.15)" />
+            </Flex>
+          )}
+        </Box>
+
+        {/* Info */}
+        <Box flex={1} minW={0}>
+          <Text style={{
+            fontSize: "0.8rem",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+            fontWeight: 600,
+            color: "rgba(255,255,255,0.88)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            marginBottom: "4px",
+          }}>
+            {theme.name}
+          </Text>
+          <Flex align="center" gap="6px" wrap="wrap">
+            {/* Status badge */}
+            <Flex
+              align="center"
+              gap="4px"
+              px="6px"
+              py="2px"
+              borderRadius="5px"
+              style={{
+                background: cfg.bg,
+                border: `1px solid ${cfg.border}`,
+                color: cfg.color,
+                fontSize: "0.6rem",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                fontWeight: 600,
+                letterSpacing: "0.04em",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <StatusIcon size={9} />
+              {cfg.label}
+            </Flex>
+            <Text style={{
+              fontSize: "0.62rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              color: "rgba(255,255,255,0.22)",
+            }}>
+              {dateStr}
+            </Text>
+          </Flex>
+        </Box>
+
+        {/* Withdraw button */}
+        {canWithdraw && (
+          <Box
+            as="button"
+            onClick={() => onWithdraw(theme.id)}
+            border="none"
+            cursor={withdrawing ? "not-allowed" : "pointer"}
+            borderRadius="6px"
+            flexShrink={0}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            style={{
+              width: 28, height: 28,
+              background: "transparent",
+              color: "rgba(255,255,255,0.22)",
+              transition: "all 0.15s",
+              opacity: withdrawing ? 0.5 : 1,
+            }}
+            _hover={{ background: "rgba(248,113,113,0.15) !important", color: "rgba(248,113,113,0.8) !important" }}
+            title="Rút lại theme"
+          >
+            {withdrawing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={12} />}
+          </Box>
+        )}
+      </Flex>
+
+      {/* Rejection note */}
+      {theme.status === "Rejected" && theme.rejectionNote && (
+        <Flex
+          align="flex-start"
+          gap="6px"
+          px="10px"
+          py="8px"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
+        >
+          <AlertCircle size={11} color="rgba(248,113,113,0.6)" style={{ flexShrink: 0, marginTop: 1 }} />
+          <Text style={{
+            fontSize: "0.68rem",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+            color: "rgba(248,113,113,0.7)",
+            lineHeight: 1.5,
+          }}>
+            {theme.rejectionNote}
+          </Text>
+        </Flex>
+      )}
+    </Box>
+  );
+}
+
 // ── ThemeStorePanel (main) ─────────────────────────────────────────────────
 
 export function ThemeStorePanel({
@@ -1167,6 +1330,7 @@ export function ThemeStorePanel({
   onApplyItem,
   trialItemId,
   initialDetailItemId,
+  onOpenCreate,
 }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -1187,6 +1351,11 @@ export function ThemeStorePanel({
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [localCoinBalance, setLocalCoinBalance] = useState<number>(coinBalanceProp ?? 0);
+
+  const [myThemes, setMyThemes]           = useState<UserThemeSubmission[]>([]);
+  const [myThemesLoading, setMyThemesLoading] = useState(false);
+  const [myThemesError, setMyThemesError] = useState<string | null>(null);
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
 
   const loading = itemsLoading || inventoryLoading;
 
@@ -1235,6 +1404,29 @@ export function ThemeStorePanel({
       .catch(() => {})
       .finally(() => setInventoryLoading(false));
   }, [activeTab]);
+
+  // Fetch my submitted themes when switching to "my-themes" tab
+  useEffect(() => {
+    if (activeTab !== "my-themes") return;
+    setMyThemesLoading(true);
+    setMyThemesError(null);
+    userThemeService.getMyThemes()
+      .then((data) => setMyThemes(data))
+      .catch(() => setMyThemesError("Không thể tải danh sách theme. Vui lòng thử lại."))
+      .finally(() => setMyThemesLoading(false));
+  }, [activeTab]);
+
+  const handleWithdraw = useCallback(async (id: string) => {
+    setWithdrawingId(id);
+    try {
+      await userThemeService.withdraw(id);
+      setMyThemes((prev) => prev.filter((t) => t.id !== id));
+    } catch {
+      // silently ignore — could show a toast here
+    } finally {
+      setWithdrawingId(null);
+    }
+  }, []);
 
   // Auto-open detail view from trial banner "Buy now"
   useEffect(() => {
@@ -1535,6 +1727,65 @@ export function ThemeStorePanel({
               </Box>
             );
           })}
+
+          {/* Create section */}
+          <Box my="8px" mx="4px" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }} />
+          <Text px="8px" mb="4px" style={{ fontSize: "0.58rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.22)", letterSpacing: "0.1em" }}>
+            TẠO
+          </Text>
+          {(() => {
+            const active = activeTab === "my-themes";
+            return (
+              <Box
+                as="button"
+                w="100%"
+                textAlign="left"
+                display="flex"
+                alignItems="center"
+                gap="8px"
+                px="8px"
+                py="6px"
+                borderRadius="7px"
+                border="none"
+                cursor="pointer"
+                onClick={() => setActiveTab("my-themes")}
+                style={{
+                  background: active ? "rgba(78,124,106,0.18)" : "transparent",
+                  color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
+                  fontSize: "0.76rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  fontWeight: active ? 600 : 400,
+                  transition: "all 0.15s",
+                }}
+                _hover={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.8)" } as any}
+              >
+                <Box flexShrink={0} style={{ color: active ? "rgba(78,124,106,0.9)" : "rgba(255,255,255,0.28)", display: "flex" }}>
+                  <PlusCircle size={14} />
+                </Box>
+                <Box flex={1}>Của tôi</Box>
+                <Box
+                  flexShrink={0}
+                  px="4px"
+                  py="1px"
+                  borderRadius="3px"
+                  style={{
+                    background: "rgba(78,124,106,0.2)",
+                    border: "1px solid rgba(78,124,106,0.38)",
+                  }}
+                >
+                  <Text style={{
+                    fontSize: "0.5rem",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    fontWeight: 700,
+                    color: "rgba(78,124,106,0.9)",
+                    letterSpacing: "0.07em",
+                  }}>
+                    BETA
+                  </Text>
+                </Box>
+              </Box>
+            );
+          })()}
         </Box>
 
         {/* ── Right content ── */}
@@ -1547,6 +1798,99 @@ export function ThemeStorePanel({
             pb="12px"
             style={{ minHeight: 0, scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.12) transparent" }}
           >
+            {/* ── My Themes tab ── */}
+            {activeTab === "my-themes" && (
+              <Box>
+                {/* Create new button */}
+                <Box
+                  as="button"
+                  w="100%"
+                  onClick={onOpenCreate}
+                  border="none"
+                  cursor="pointer"
+                  borderRadius="12px"
+                  mb="14px"
+                  overflow="hidden"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(78,124,106,0.18) 0%, rgba(20,184,166,0.12) 100%)",
+                    border: "1px dashed rgba(78,124,106,0.45)",
+                    padding: "20px 16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 10,
+                    transition: "all 0.18s",
+                  }}
+                  _hover={{ background: "rgba(78,124,106,0.25) !important", border: "1px dashed rgba(78,124,106,0.7) !important" } as any}
+                >
+                  <Box
+                    style={{
+                      width: 40, height: 40,
+                      borderRadius: "12px",
+                      background: "rgba(78,124,106,0.22)",
+                      border: "1px solid rgba(78,124,106,0.4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}
+                  >
+                    <Palette size={18} color="rgba(78,124,106,0.9)" />
+                  </Box>
+                  <Box>
+                    <Text style={{ fontSize: "0.86rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(255,255,255,0.82)", marginBottom: 3 }}>
+                      + Tạo theme mới
+                    </Text>
+                    <Text style={{ fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
+                      Tuỳ chỉnh màu nhấn, hình nền và âm thanh
+                    </Text>
+                  </Box>
+                </Box>
+
+                {/* My themes list */}
+                {myThemesLoading ? (
+                  <Flex h="100px" align="center" justify="center" gap="8px">
+                    <Loader2 size={14} color="rgba(255,255,255,0.25)" style={{ animation: "spin 1s linear infinite" }} />
+                    <Text style={{ fontSize: "0.75rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.28)" }}>
+                      Đang tải…
+                    </Text>
+                  </Flex>
+                ) : myThemesError ? (
+                  <Flex h="80px" align="center" justify="center" gap="6px">
+                    <AlertCircle size={14} color="rgba(248,113,113,0.6)" />
+                    <Text style={{ fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(248,113,113,0.6)" }}>
+                      {myThemesError}
+                    </Text>
+                  </Flex>
+                ) : myThemes.length === 0 ? (
+                  <Flex direction="column" align="center" justify="center" py="24px" gap={3}>
+                    <Box style={{
+                      width: 44, height: 44, borderRadius: "50%",
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <Palette size={18} color="rgba(255,255,255,0.18)" />
+                    </Box>
+                    <Text style={{ fontSize: "0.75rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.28)", textAlign: "center", lineHeight: 1.6 }}>
+                      Chưa có theme nào<br />
+                      <span style={{ fontSize: "0.66rem", color: "rgba(255,255,255,0.16)" }}>
+                        Theme đã tạo sẽ hiển thị ở đây
+                      </span>
+                    </Text>
+                  </Flex>
+                ) : (
+                  <Box display="flex" flexDirection="column" gap="8px">
+                    {myThemes.map((theme) => (
+                      <MyThemeCard
+                        key={theme.id}
+                        theme={theme}
+                        withdrawing={withdrawingId === theme.id}
+                        onWithdraw={handleWithdraw}
+                      />
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            )}
+
             {/* Featured carousel — only on Explore (all) tab, no active search */}
             {activeTab === "all" && featuredItems.length > 0 && !loading && !searchQuery && (
               <FeaturedCarousel
@@ -1556,31 +1900,33 @@ export function ThemeStorePanel({
               />
             )}
 
-            {loading ? (
-              <Flex h="200px" align="center" justify="center">
-                <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)", letterSpacing: "0.04em" }}>
-                  {t("themeStore.loading")}
-                </Text>
-              </Flex>
-            ) : filteredItems.length === 0 ? (
-              <Flex h="200px" align="center" justify="center" direction="column" gap={2}>
-                <Package size={28} color="rgba(255,255,255,0.15)" />
-                <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)" }}>
-                  {t("themeStore.empty")}
-                </Text>
-              </Flex>
-            ) : (
-              <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
-                {filteredItems.map((item) => (
-                  <StoreCard
-                    key={item.id}
-                    item={item}
-                    t={t}
-                    isTrialing={item.id === trialItemId}
-                    onClick={() => { setSelectedItem(item); setPurchaseError(null); }}
-                  />
-                ))}
-              </Box>
+            {activeTab !== "my-themes" && (
+              loading ? (
+                <Flex h="200px" align="center" justify="center">
+                  <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)", letterSpacing: "0.04em" }}>
+                    {t("themeStore.loading")}
+                  </Text>
+                </Flex>
+              ) : filteredItems.length === 0 ? (
+                <Flex h="200px" align="center" justify="center" direction="column" gap={2}>
+                  <Package size={28} color="rgba(255,255,255,0.15)" />
+                  <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)" }}>
+                    {t("themeStore.empty")}
+                  </Text>
+                </Flex>
+              ) : (
+                <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                  {filteredItems.map((item) => (
+                    <StoreCard
+                      key={item.id}
+                      item={item}
+                      t={t}
+                      isTrialing={item.id === trialItemId}
+                      onClick={() => { setSelectedItem(item); setPurchaseError(null); }}
+                    />
+                  ))}
+                </Box>
+              )
             )}
           </Box>
         </Box>

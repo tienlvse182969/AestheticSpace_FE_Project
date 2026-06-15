@@ -257,7 +257,12 @@
     "missingKey": "Thêm {{key}} vào {{file}} để bật tìm kiếm. Đang hiển thị ảnh được tuyển chọn.",
     "invalidKey": "API key không hợp lệ — kiểm tra VITE_UNSPLASH_ACCESS_KEY",
     "rateLimit": "Đã đạt giới hạn. Thử lại sau.",
-    "errorCode": "Lỗi {{code}}"
+    "errorCode": "Lỗi {{code}}",
+    "upload": "Tải lên",
+    "uploadHint": "Kéo thả ảnh vào đây hoặc nhấn để chọn file",
+    "uploadFormats": "Hỗ trợ JPG, PNG, WebP",
+    "deleteUpload": "Xóa",
+    "noUploads": "Chưa có ảnh nào — tải lên ảnh đầu tiên của bạn"
   },
   "themeStore": {
     "title": "AESTHETIC STORE",

@@ -257,7 +257,12 @@
     "missingKey": "Add {{key}} to {{file}} to enable live search. Showing curated picks for now.",
     "invalidKey": "Invalid API key — check VITE_UNSPLASH_ACCESS_KEY",
     "rateLimit": "Rate limit reached. Try again in a moment.",
-    "errorCode": "Error {{code}}"
+    "errorCode": "Error {{code}}",
+    "upload": "Upload",
+    "uploadHint": "Drop an image here or click to browse",
+    "uploadFormats": "JPG, PNG, WebP supported",
+    "deleteUpload": "Remove",
+    "noUploads": "No uploads yet — add your first photo above"
   },
   "themeStore": {
     "title": "AESTHETIC STORE",

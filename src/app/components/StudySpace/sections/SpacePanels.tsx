@@ -10,6 +10,7 @@ import { SettingsPanel }         from "../panels/SettingsPanel";
 import { RoomManagerPanel }      from "../panels/RoomManagerPanel";
 import { PomodoroStatsPanel }    from "../panels/PomodoroStatsPanel";
 import { QuestPanel }            from "../panels/QuestPanel";
+import { CreateThemePanel }      from "../panels/CreateThemePanel";
 import { AboutModal }            from "../ui/AboutModal";
 import { TrialBanner }           from "../ui/TrialBanner";
 import { TrialExpiredModal }     from "../ui/TrialExpiredModal";
@@ -181,6 +182,13 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onApplyItem={handleApplyItem}
             trialItemId={trialItem?.id}
             initialDetailItemId={buyItemId}
+            onOpenCreate={() => setActivePanel("create-theme")}
+          />
+        )}
+        {activePanel === "create-theme" && (
+          <CreateThemePanel
+            key="create-theme-panel"
+            onClose={() => setActivePanel(null)}
           />
         )}
         {activePanel === "ambient" && (

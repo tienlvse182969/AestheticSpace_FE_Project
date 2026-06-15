@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
-import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Construction } from "lucide-react";
+import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Construction, ImagePlus, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
@@ -271,6 +271,69 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
     };
   };
 
+  /* ── Upload tab ── */
+  const [uploadedBgs, setUploadedBgs] = useState<BackgroundItem[]>(() => {
+    try { return JSON.parse(localStorage.getItem("bg_uploads") ?? "[]"); }
+    catch { return []; }
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const compressImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const MAX_W = 1920, MAX_H = 1080;
+          let w = img.width, h = img.height;
+          if (w > MAX_W || h > MAX_H) {
+            const ratio = Math.min(MAX_W / w, MAX_H / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileSelect = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file.type.startsWith("image/")) return;
+    try {
+      const dataUrl = await compressImage(file);
+      const newBg: BackgroundItem = {
+        id: `upload_${Date.now()}`,
+        url: dataUrl,
+        thumb: dataUrl,
+        label: file.name.replace(/\.[^/.]+$/, ""),
+      };
+      setUploadedBgs(prev => {
+        const next = [newBg, ...prev].slice(0, 8);
+        try { localStorage.setItem("bg_uploads", JSON.stringify(next)); } catch {}
+        return next;
+      });
+      onSelect(newBg);
+    } catch {}
+  }, [onSelect]);
+
+  const deleteUpload = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUploadedBgs(prev => {
+      const next = prev.filter(b => b.id !== id);
+      try { localStorage.setItem("bg_uploads", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
   /* ── Purchased backgrounds ── */
   const [purchasedFilter, setPurchasedFilter] = useState<"store" | "theme">("store");
   const [purchasedItems,  setPurchasedItems]  = useState<BackgroundItem[]>([]);
@@ -298,6 +361,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
     { id: "discover",  label: t("backgrounds.discover") },
     { id: "favorites", label: favorites.length > 0 ? t("backgrounds.favoritesCount", { count: favorites.length }) : t("backgrounds.favorites") },
     { id: "purchased", label: t("backgrounds.purchased") },
+    { id: "upload",    label: t("backgrounds.upload") },
   ] as const;
 
   type TabId = typeof TABS[number]["id"];
@@ -640,6 +704,177 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
               {favorites.map(bg => <PhotoCard key={bg.id} {...makeCardProps(bg)} />)}
             </Box>
           )
+        )}
+
+        {/* ── UPLOAD TAB ── */}
+        {tab === "upload" && (
+          <>
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => handleFileSelect(e.target.files)}
+            />
+
+            {/* Drop zone */}
+            <Box
+              mb={4}
+              borderRadius="10px"
+              style={{
+                border: isDragging
+                  ? "2px dashed rgba(255,255,255,0.55)"
+                  : "2px dashed rgba(255,255,255,0.15)",
+                background: isDragging
+                  ? "rgba(255,255,255,0.07)"
+                  : "rgba(255,255,255,0.03)",
+                padding: "32px 20px",
+                textAlign: "center",
+                cursor: "pointer",
+                transition: "all 0.18s",
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); handleFileSelect(e.dataTransfer.files); }}
+            >
+              <Flex direction="column" align="center" gap={2}>
+                <Box
+                  w="44px" h="44px" borderRadius="full"
+                  display="flex" alignItems="center" justifyContent="center"
+                  style={{
+                    background: isDragging ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    transition: "all 0.18s",
+                  }}
+                >
+                  <ImagePlus size={20} color={isDragging ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.45)"} />
+                </Box>
+                <Text style={{
+                  color: isDragging ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.55)",
+                  fontSize: "0.82rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  transition: "color 0.18s",
+                }}>
+                  {t("backgrounds.uploadHint")}
+                </Text>
+                <Text style={{
+                  color: "rgba(255,255,255,0.25)",
+                  fontSize: "0.68rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                }}>
+                  {t("backgrounds.uploadFormats")}
+                </Text>
+              </Flex>
+            </Box>
+
+            {/* Uploaded images grid */}
+            {uploadedBgs.length === 0 ? (
+              <Flex align="center" justify="center" h="100px" direction="column" gap={2}>
+                <Text style={{
+                  color: "rgba(255,255,255,0.22)",
+                  fontSize: "0.76rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                }}>
+                  {t("backgrounds.noUploads")}
+                </Text>
+              </Flex>
+            ) : (
+              <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                {uploadedBgs.map(bg => (
+                  <Box
+                    key={bg.id}
+                    position="relative"
+                    borderRadius="8px"
+                    overflow="hidden"
+                    css={{
+                      "&:hover .upload-delete-btn": { opacity: "1 !important" },
+                      "&:hover": {
+                        border: "2px solid rgba(255,255,255,0.5) !important",
+                        boxShadow: "0 6px 22px rgba(0,0,0,0.7) !important",
+                        transform: "scale(1.04) !important",
+                      },
+                    }}
+                    style={{
+                      aspectRatio: "16/9",
+                      cursor: "pointer",
+                      border: bg.id === currentBgId
+                        ? "2px solid rgba(255,255,255,0.9)"
+                        : "2px solid rgba(255,255,255,0.06)",
+                      boxShadow: bg.id === currentBgId
+                        ? "0 0 0 3px rgba(255,255,255,0.18), 0 4px 16px rgba(0,0,0,0.5)"
+                        : "0 2px 10px rgba(0,0,0,0.45)",
+                      transform: bg.id === currentBgId ? "scale(1.03)" : "scale(1)",
+                      transition: "all 0.18s ease",
+                    }}
+                    onClick={() => onSelect(bg)}
+                  >
+                    {/* Thumbnail */}
+                    <Box
+                      position="absolute"
+                      inset={0}
+                      style={{
+                        backgroundImage: `url(${bg.thumb})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+
+                    {/* Active checkmark */}
+                    {bg.id === currentBgId && (
+                      <Box
+                        position="absolute"
+                        top="5px"
+                        left="5px"
+                        w="15px"
+                        h="15px"
+                        borderRadius="full"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        style={{ background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.4)", zIndex: 2 }}
+                      >
+                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                          <path d="M1 3L3 5L7 1" stroke="#0d2b24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </Box>
+                    )}
+
+                    {/* Delete button */}
+                    <Box
+                      as="button"
+                      className="upload-delete-btn"
+                      position="absolute"
+                      top="5px"
+                      right="5px"
+                      w="20px"
+                      h="20px"
+                      borderRadius="full"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      bg="transparent"
+                      border="none"
+                      cursor="pointer"
+                      style={{
+                        opacity: 0,
+                        zIndex: 3,
+                        background: "rgba(0,0,0,0.55)",
+                        backdropFilter: "blur(4px)",
+                        color: "rgba(255,255,255,0.85)",
+                        transition: "all 0.15s",
+                      }}
+                      onClick={(e: React.MouseEvent) => deleteUpload(bg.id, e)}
+                      title={t("backgrounds.deleteUpload")}
+                    >
+                      <X size={10} />
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </>
         )}
 
         {/* ── PURCHASED TAB ── */}
