@@ -31,7 +31,7 @@ interface WorkspaceSaveParams {
   pomodoroSettings: PomodoroSettings;
   todoItems: TodoItem[];
   accentColor?: string;
-  musicState?: { source: string; activeUrl: string };
+  musicState?: { source: string; activeUrl: string; ytUrl?: string; scUrl?: string };
   captureScreenshot?: () => Promise<string | null>;
   onNewUser?: () => void;
   onRestore: (data: {

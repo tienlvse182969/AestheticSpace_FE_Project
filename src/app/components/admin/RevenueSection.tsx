@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { TrendingUp, TrendingDown, DollarSign, Users, CreditCard, Calendar } from "lucide-react";
 import { motion } from "motion/react";
+import { useAdminTheme } from "./AdminThemeContext";
 
 const MotionBox = motion.create(Box);
 
@@ -53,6 +54,7 @@ const totalPaid     = TRANSACTIONS.filter(t => t.status === "paid").reduce((s, t
 const totalRefunded = TRANSACTIONS.filter(t => t.status === "refunded").reduce((s, t) => s + t.amount, 0);
 
 export function RevenueSection() {
+  const { c } = useAdminTheme();
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const [hoveredRow, setHoveredRow] = useState<string | null>(null);
 
@@ -66,7 +68,7 @@ export function RevenueSection() {
             value: fmt(totalRevenue),
             sub: "All time",
             icon: DollarSign,
-            color: "#4ade80",
+            color: "#16a34a",
             bg: "rgba(74,222,128,0.1)",
             border: "rgba(74,222,128,0.2)",
           },
@@ -75,7 +77,7 @@ export function RevenueSection() {
             value: fmt(currentMonth.revenue),
             sub: `${momPositive ? "+" : ""}${momGrowth}% vs last month`,
             icon: momPositive ? TrendingUp : TrendingDown,
-            color: momPositive ? "#4ade80" : "#f87171",
+            color: momPositive ? "#16a34a" : "#dc2626",
             bg: momPositive ? "rgba(74,222,128,0.1)" : "rgba(248,113,113,0.1)",
             border: momPositive ? "rgba(74,222,128,0.2)" : "rgba(248,113,113,0.2)",
           },
@@ -84,7 +86,7 @@ export function RevenueSection() {
             value: String(currentMonth.subs),
             sub: "Active this month",
             icon: Users,
-            color: "#a78bfa",
+            color: "#7c3aed",
             bg: "rgba(167,139,250,0.1)",
             border: "rgba(167,139,250,0.2)",
           },
@@ -93,7 +95,7 @@ export function RevenueSection() {
             value: fmt(totalRefunded),
             sub: `${TRANSACTIONS.filter(t => t.status === "refunded").length} transactions`,
             icon: CreditCard,
-            color: "#f87171",
+            color: "#dc2626",
             bg: "rgba(248,113,113,0.1)",
             border: "rgba(248,113,113,0.2)",
           },
@@ -101,17 +103,17 @@ export function RevenueSection() {
           const Icon = card.icon;
           return (
             <Box key={card.label} borderRadius="14px" p={5}
-              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+              style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
               <Flex align="center" justify="space-between" mb={4}>
                 <Flex align="center" justify="center" w="38px" h="38px" borderRadius="10px"
                   style={{ background: card.bg, border: `1px solid ${card.border}` }}>
                   <Icon size={17} style={{ color: card.color }} />
                 </Flex>
               </Flex>
-              <Text style={{ fontSize: "1.5rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1, fontWeight: 600 }}>
+              <Text style={{ fontSize: "1.5rem", color: c.cardText, fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1, fontWeight: 600 }}>
                 {card.value}
               </Text>
-              <Text mt={1} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+              <Text mt={1} style={{ fontSize: "0.72rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                 {card.label}
               </Text>
               <Text mt="3px" style={{ fontSize: "0.68rem", color: card.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
@@ -124,13 +126,13 @@ export function RevenueSection() {
 
       {/* ── Bar chart ── */}
       <Box borderRadius="14px" p={6} mb={5}
-        style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+        style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
         <Flex align="center" justify="space-between" mb={6}>
           <Box>
-            <Text style={{ fontSize: "0.62rem", color: "rgba(255,255,255,0.2)", letterSpacing: "0.12em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+            <Text style={{ fontSize: "0.62rem", color: c.textDim, letterSpacing: "0.12em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
               REVENUE HISTORY
             </Text>
-            <Text style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.82)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
+            <Text style={{ fontSize: "0.95rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
               Monthly Revenue (VNĐ)
             </Text>
           </Box>
@@ -148,7 +150,7 @@ export function RevenueSection() {
           {/* Y-axis */}
           <Flex direction="column" justify="space-between" style={{ height: "100%", flexShrink: 0 }}>
             {[4_000_000, 3_000_000, 2_000_000, 1_000_000, 0].map(v => (
-              <Text key={v} style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.2)", fontFamily: "'HarmonyOS Sans', sans-serif", textAlign: "right", lineHeight: 1 }}>
+              <Text key={v} style={{ fontSize: "0.6rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", textAlign: "right", lineHeight: 1 }}>
                 {v === 0 ? "0" : `${v / 1_000_000}M`}
               </Text>
             ))}
@@ -158,17 +160,8 @@ export function RevenueSection() {
           <Box flex={1} position="relative">
             {/* Grid lines */}
             {[0, 25, 50, 75, 100].map(pct => (
-              <Box
-                key={pct}
-                position="absolute"
-                left={0}
-                right={0}
-                style={{
-                  bottom: `${pct}%`,
-                  borderTop: "1px solid rgba(255,255,255,0.05)",
-                  pointerEvents: "none",
-                }}
-              />
+              <Box key={pct} position="absolute" left={0} right={0}
+                style={{ bottom: `${pct}%`, borderTop: `1px solid ${c.rowDivider}`, pointerEvents: "none" }} />
             ))}
 
             {/* Bars */}
@@ -177,43 +170,33 @@ export function RevenueSection() {
                 const heightPct = (m.revenue / maxRevenue) * 92;
                 const isHov = hoveredBar === i;
                 return (
-                  <Flex
-                    key={m.month}
-                    direction="column"
-                    align="center"
-                    justify="flex-end"
+                  <Flex key={m.month} direction="column" align="center" justify="flex-end"
                     style={{ height: "100%", flex: 1, cursor: "pointer" }}
                     onMouseEnter={() => setHoveredBar(i)}
-                    onMouseLeave={() => setHoveredBar(null)}
-                  >
+                    onMouseLeave={() => setHoveredBar(null)}>
                     {/* Tooltip */}
                     {isHov && (
-                      <Box
-                        position="absolute"
-                        borderRadius="8px"
-                        px={3}
-                        py={2}
+                      <Box position="absolute" borderRadius="8px" px={3} py={2}
                         style={{
-                          background: "rgba(10,18,24,0.95)",
-                          border: "1px solid rgba(78,124,106,0.4)",
+                          background: c.panelBg,
+                          border: `1px solid ${c.panelBorder}`,
+                          boxShadow: c.panelShadow,
                           bottom: `calc(${heightPct}% + 10px)`,
                           pointerEvents: "none",
                           whiteSpace: "nowrap",
                           zIndex: 10,
-                        }}
-                      >
-                        <Text style={{ fontSize: "0.75rem", color: "#4ade80", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        }}>
+                        <Text style={{ fontSize: "0.75rem", color: "#16a34a", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                           {fmt(m.revenue)}
                         </Text>
-                        <Text style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.4)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        <Text style={{ fontSize: "0.65rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                           {m.subs} subscribers
                         </Text>
                       </Box>
                     )}
 
                     {/* Bar */}
-                    <MotionBox
-                      borderRadius="6px 6px 3px 3px"
+                    <MotionBox borderRadius="6px 6px 3px 3px"
                       style={{
                         width: "60%",
                         background: isHov
@@ -228,7 +211,7 @@ export function RevenueSection() {
                     />
 
                     {/* Month label */}
-                    <Text mt={2} style={{ fontSize: "0.62rem", color: isHov ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.25)", fontFamily: "'HarmonyOS Sans', sans-serif", transition: "color 0.2s" }}>
+                    <Text mt={2} style={{ fontSize: "0.62rem", color: isHov ? c.text : c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", transition: "color 0.2s" }}>
                       {m.month}
                     </Text>
                   </Flex>
@@ -239,14 +222,14 @@ export function RevenueSection() {
         </Flex>
 
         {/* Summary row */}
-        <Flex gap={6} mt={5} pt={4} style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <Flex gap={6} mt={5} pt={4} style={{ borderTop: `1px solid ${c.rowDivider}` }}>
           {[
-            { label: "Peak Month", value: "May 2026", color: "#4ade80" },
-            { label: "Avg Monthly", value: fmt(Math.round(totalRevenue / MONTHLY_REVENUE.length)), color: "rgba(255,255,255,0.6)" },
-            { label: "Growth (MoM)", value: `+${momGrowth}%`, color: momPositive ? "#4ade80" : "#f87171" },
+            { label: "Peak Month",   value: "May 2026",                                              color: "#16a34a" },
+            { label: "Avg Monthly",  value: fmt(Math.round(totalRevenue / MONTHLY_REVENUE.length)),  color: c.textMuted },
+            { label: "Growth (MoM)", value: `+${momGrowth}%`,                                        color: momPositive ? "#16a34a" : "#dc2626" },
           ].map(s => (
             <Box key={s.label}>
-              <Text style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.2)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.08em" }}>
+              <Text style={{ fontSize: "0.65rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.08em" }}>
                 {s.label.toUpperCase()}
               </Text>
               <Text style={{ fontSize: "0.9rem", color: s.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
@@ -259,24 +242,24 @@ export function RevenueSection() {
 
       {/* ── Transaction history ── */}
       <Box borderRadius="14px" overflow="hidden"
-        style={{ border: "1px solid rgba(255,255,255,0.07)" }}>
+        style={{ border: `1px solid ${c.cardBorder}` }}>
         {/* Header */}
         <Flex px={5} py={3} align="center" justify="space-between"
-          style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <Text style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+          style={{ background: c.cardBg, borderBottom: `1px solid ${c.rowDivider}` }}>
+          <Text style={{ fontSize: "0.85rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
             Transaction History
           </Text>
-          <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.2)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+          <Text style={{ fontSize: "0.68rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
             {TRANSACTIONS.length} transactions
           </Text>
         </Flex>
 
         {/* Column headers */}
         <Flex px={5} py="10px"
-          style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+          style={{ background: c.cardBg, borderBottom: `1px solid ${c.rowDivider}` }}>
           {["Transaction ID", "User", "Plan", "Amount", "Date", "Status"].map((h, i) => (
             <Text key={h} style={{
-              fontSize: "0.62rem", color: "rgba(255,255,255,0.22)", letterSpacing: "0.1em",
+              fontSize: "0.62rem", color: c.textDim, letterSpacing: "0.1em",
               fontFamily: "'HarmonyOS Sans', sans-serif",
               flex: [1.4, 2.2, 1.4, 1, 1.2, 1][i],
             }}>
@@ -289,21 +272,17 @@ export function RevenueSection() {
         {TRANSACTIONS.map((tx, i) => {
           const st = STATUS_CFG[tx.status as keyof typeof STATUS_CFG];
           return (
-            <Flex
-              key={tx.id}
-              align="center"
-              px={5}
-              py="13px"
+            <Flex key={tx.id} align="center" px={5} py="13px"
               style={{
-                background: hoveredRow === tx.id ? "rgba(78,124,106,0.1)" : "transparent",
-                borderBottom: i < TRANSACTIONS.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                background: hoveredRow === tx.id ? "rgba(78,124,106,0.08)" : "transparent",
+                borderBottom: i < TRANSACTIONS.length - 1 ? `1px solid ${c.rowDivider}` : "none",
                 transition: "background 0.15s",
               }}
               onMouseEnter={() => setHoveredRow(tx.id)}
-              onMouseLeave={() => setHoveredRow(null)}
-            >
+              onMouseLeave={() => setHoveredRow(null)}>
+
               {/* ID */}
-              <Text style={{ flex: 1.4, fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.04em" }}>
+              <Text style={{ flex: 1.4, fontSize: "0.75rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.04em" }}>
                 {tx.id}
               </Text>
 
@@ -316,10 +295,10 @@ export function RevenueSection() {
                   </Text>
                 </Flex>
                 <Box minW={0}>
-                  <Text style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.82)", fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Text style={{ fontSize: "0.8rem", color: c.cardText, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {tx.user}
                   </Text>
-                  <Text style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.25)", fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <Text style={{ fontSize: "0.65rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {tx.email}
                   </Text>
                 </Box>
@@ -332,19 +311,19 @@ export function RevenueSection() {
                     background: tx.plan.includes("Yearly") ? "rgba(167,139,250,0.15)" : "rgba(56,189,248,0.1)",
                     border: `1px solid ${tx.plan.includes("Yearly") ? "rgba(167,139,250,0.3)" : "rgba(56,189,248,0.25)"}`,
                   }}>
-                  <Text style={{ fontSize: "0.65rem", color: tx.plan.includes("Yearly") ? "#a78bfa" : "#38bdf8", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                  <Text style={{ fontSize: "0.65rem", color: tx.plan.includes("Yearly") ? "#7c3aed" : "#0284c7", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                     {tx.plan}
                   </Text>
                 </Box>
               </Box>
 
               {/* Amount */}
-              <Text style={{ flex: 1, fontSize: "0.85rem", color: tx.status === "refunded" ? "#f87171" : "rgba(255,255,255,0.85)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+              <Text style={{ flex: 1, fontSize: "0.85rem", color: tx.status === "refunded" ? "#dc2626" : c.cardText, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                 {tx.status === "refunded" ? `-${fmt(tx.amount)}` : fmt(tx.amount)}
               </Text>
 
               {/* Date */}
-              <Text style={{ flex: 1.2, fontSize: "0.75rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+              <Text style={{ flex: 1.2, fontSize: "0.75rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                 {tx.date}
               </Text>
 
@@ -365,11 +344,11 @@ export function RevenueSection() {
 
       {/* Footer summary */}
       <Flex mt={3} align="center" justify="space-between">
-        <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.2)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+        <Text style={{ fontSize: "0.72rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
           Showing {TRANSACTIONS.length} most recent transactions
         </Text>
-        <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.2)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-          Net collected: <span style={{ color: "#4ade80" }}>{fmt(totalPaid)}</span>
+        <Text style={{ fontSize: "0.72rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+          Net collected: <span style={{ color: "#16a34a" }}>{fmt(totalPaid)}</span>
         </Text>
       </Flex>
     </Box>

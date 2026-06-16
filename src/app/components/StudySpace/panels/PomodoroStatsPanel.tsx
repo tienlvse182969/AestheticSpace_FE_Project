@@ -16,12 +16,13 @@ const MotionBox = motion.create(Box);
 const PANEL_W = 460;
 
 /* ── Aggregate history → 7-day chart data ────────────────────────────── */
-function buildChartData(history: { startTime: string; durationMinutes: number; isActive: boolean }[], locale: string) {
+function buildChartData(history: { startTime: string; durationMinutes: number; isActive: boolean }[], locale: string, todayLabel: string) {
+  const todayStr = new Date().toISOString().split("T")[0];
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
     const dateStr = d.toISOString().split("T")[0];
-    const label   = d.toLocaleDateString(locale, { weekday: "short" });
+    const label   = dateStr === todayStr ? todayLabel : d.toLocaleDateString(locale, { day: "numeric", month: "numeric" });
     const day     = history.filter(s => s.startTime.startsWith(dateStr) && !s.isActive);
     return {
       label,
@@ -88,9 +89,9 @@ export function PomodoroStatsPanel({ onClose }: Props) {
     ]).then(([s, history]) => {
       if (!alive) return;
       setStats(s);
-      setChart(buildChartData(history, locale));
+      setChart(buildChartData(history, locale, t("pomodoroStats.today")));
     }).catch(() => {
-      if (alive) setChart(buildChartData([], locale));
+      if (alive) setChart(buildChartData([], locale, t("pomodoroStats.today")));
     }).finally(() => {
       if (alive) setLoading(false);
     });

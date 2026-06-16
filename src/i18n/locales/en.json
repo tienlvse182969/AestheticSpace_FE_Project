@@ -177,7 +177,7 @@
     "settings": "Settings",
     "help": "Help",
     "home": "Home",
-    "about": "About",
+    "feedback": "Send Feedback",
     "signOut": "Sign out",
     "guest": "Guest",
     "demoMode": "Demo mode",
@@ -185,6 +185,17 @@
     "signIn": "Sign in",
     "language": "Language",
     "upgradeToPremium": "Upgrade to Premium"
+  },
+  "feedbackPanel": {
+    "title": "Feedback",
+    "typeFeedback": "Suggestion",
+    "typeBug": "Bug Report",
+    "emailPlaceholder": "Your email address",
+    "contentPlaceholder_feedback": "What suggestions do you have for us?",
+    "contentPlaceholder_bug": "Describe the issue and steps to reproduce it...",
+    "submit_feedback": "Send Suggestion",
+    "submit_bug": "Send Bug Report",
+    "success": "Sent! Thank you for your feedback."
   },
   "widgetPicker": {
     "title": "WIDGETS",
@@ -223,14 +234,26 @@
     "ocean": "Ocean",
     "nowMixing": "Now mixing: {{label}}",
     "layersActive": "{{count}} layer(s) active",
-    "noSounds": "No sounds active — tap a card to start"
+    "noSounds": "No sounds active — tap a card to start",
+    "loadError": "Failed to load sounds",
+    "tabDefault": "Default",
+    "tabPurchased": "Purchased",
+    "noPurchased": "No purchased sounds yet",
+    "noPurchasedHint": "Visit the store to find ambient sounds"
   },
   "backgrounds": {
+    "title": "BACKGROUNDS",
     "rooms": "Rooms",
     "discover": "Discover",
     "favorites": "Favorites",
     "favoritesCount": "Favorites ({{count}})",
     "themes": "Themes",
+    "purchased": "Purchased",
+    "purchasedStore": "Individually Purchased",
+    "purchasedTheme": "Included with Theme",
+    "noPurchased": "No purchased backgrounds",
+    "noPurchasedHint": "Visit the Aesthetic Store to purchase backgrounds",
+    "loadingPurchased": "Loading…",
     "searchPlaceholder": "Search on Unsplash…",
     "loadMore": "Load more",
     "photosVia": "Photos via Unsplash",
@@ -246,7 +269,12 @@
     "missingKey": "Add {{key}} to {{file}} to enable live search. Showing curated picks for now.",
     "invalidKey": "Invalid API key — check VITE_UNSPLASH_ACCESS_KEY",
     "rateLimit": "Rate limit reached. Try again in a moment.",
-    "errorCode": "Error {{code}}"
+    "errorCode": "Error {{code}}",
+    "upload": "Upload",
+    "uploadHint": "Drop an image here or click to browse",
+    "uploadFormats": "JPG, PNG, WebP supported",
+    "deleteUpload": "Remove",
+    "noUploads": "No uploads yet — add your first photo above"
   },
   "themeStore": {
     "title": "AESTHETIC STORE",
@@ -270,6 +298,9 @@
     "coins": "Coins",
     "free": "Free",
     "purchased": "Purchased",
+    "apply": "Apply",
+    "addToSpace": "Add to Space",
+    "ambientSoundHint": "Open Ambient Sounds panel to apply",
     "searchPlaceholder": "Search…",
     "loading": "Loading store…",
     "empty": "No items found",
@@ -282,6 +313,7 @@
       "effect": "Visual effect",
       "widgetStyle": "Custom widget style",
       "buyNow": "Buy Now",
+      "get": "Get",
       "notEnoughCoins": "Not enough coins"
     },
     "trial": {
@@ -289,16 +321,27 @@
       "banner": "Trying",
       "buyNow": "Buy now",
       "discard": "Discard",
-      "trying": "TRYING"
+      "trying": "TRYING",
+      "expired": {
+        "title": "Trial Ended",
+        "body": "Your 10-minute trial for \"{{name}}\" has ended.",
+        "prompt": "Purchase to keep using this background.",
+        "buyNow": "Buy Now",
+        "dismiss": "Maybe Later"
+      }
     }
   },
   "stickerPicker": {
     "title": "STICKERS",
     "hint": "Click to place on your space",
-    "comingSoon": "More stickers will be available soon ✦"
+    "comingSoon": "More stickers will be available soon ✦",
+    "tabDefault": "Default",
+    "tabPurchased": "Purchased",
+    "noPurchased": "No purchased stickers yet",
+    "noPurchasedHint": "Visit the store to find stickers"
   },
   "about": {
-    "label": "ABOUT",
+    "label": "About",
     "appName": "Aēsthetic Space",
     "desc": "A distraction-free environment crafted to help you focus, stay inspired, and make every study session feel effortless.",
     "contributors": "CONTRIBUTORS",
@@ -314,7 +357,8 @@
     "sessions": "sessions",
     "focusMinutes": "{{minutes}} min focused",
     "tooltip": "{{sessions}} sessions · {{minutes}} min",
-    "noData": "No data yet"
+    "noData": "No data yet",
+    "today": "Today"
   },
   "pomodoroSettings": {
     "title": "Pomodoro Settings",
@@ -361,7 +405,11 @@
     "cancelConfirmTitle": "Cancel focus session?",
     "cancelConfirmDesc": "This session will be deleted and won't count toward your stats.",
     "cancelConfirmBtn": "Cancel Session",
-    "cancelKeepBtn": "Keep Going"
+    "cancelKeepBtn": "Keep Going",
+    "skipBreakTitle": "Skip break time?",
+    "skipBreakDesc": "You still have break time remaining. Skip it and start the next session now?",
+    "skipBreakConfirm": "Skip Break",
+    "skipBreakCancel": "Keep Resting"
   },
   "clockSettings": {
     "title": "Clock Settings",
@@ -475,7 +523,7 @@
       "dashboard": "Dashboard",
       "users": "Users",
       "revenue": "Revenue",
-      "themes": "Themes",
+      "themes": "Store",
       "stickers": "Stickers",
       "sounds": "Ambient Sounds",
       "missions": "Missions",

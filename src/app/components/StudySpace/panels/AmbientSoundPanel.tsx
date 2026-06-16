@@ -2,13 +2,15 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Music2, AudioWaveform, Music } from "lucide-react";
+import { Music2, AudioWaveform, Music, ShoppingBag, Waves } from "lucide-react";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import {
   adminAssetsService,
-  type AssetDto,
 } from "../../../../services/admin/assets.admin.service";
+import {
+  aestheticStoreService,
+} from "../../../../services/aestheticStore.service";
 
 const MotionBox = motion.create(Box);
 const MotionDiv = motion.div;
@@ -45,14 +47,23 @@ const FALLBACK_COLORS = [
   "#fbbf24", "#22d3ee", "#f87171", "#34d399",
 ];
 
-function resolveColor(category: string | null, idx: number): string {
-  if (category) {
-    const lower = category.toLowerCase();
+function resolveColor(hint: string | null, idx: number): string {
+  if (hint) {
+    const lower = hint.toLowerCase();
     for (const [key, color] of Object.entries(CATEGORY_COLOR_MAP)) {
       if (lower.includes(key)) return color;
     }
   }
   return FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+}
+
+/* ── Sound entry ─────────────────────────────────────────────────────────── */
+interface SoundEntry {
+  id: string;
+  name: string;
+  url: string | null;
+  colorHint: string | null;
+  defaultVolume: number;
 }
 
 /* ── Animated waveform indicator ─────────────────────────────────────────── */
@@ -200,84 +211,215 @@ function SoundCard({
 /* ── Main panel ─────────────────────────────────────────────────────────── */
 export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
   const { t } = useTranslation();
-  const { x, y, ref } = useCenteredPanel(548, 560);
+  const { x, y, ref } = useCenteredPanel(548, 580);
 
-  const [sounds,  setSounds]  = useState<AssetDto[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState<string | null>(null);
-  const [active,  setActive]  = useState<boolean[]>([]);
-  const [volumes, setVolumes] = useState<number[]>([]);
+  const FONT = "'HarmonyOS Sans', sans-serif";
 
+  const [tab, setTab] = useState<"default" | "purchased">("default");
+
+  const [defaultSounds,  setDefaultSounds]  = useState<SoundEntry[]>([]);
+  const [defaultLoading, setDefaultLoading] = useState(true);
+  const [defaultError,   setDefaultError]   = useState<string | null>(null);
+
+  const [purchasedSounds,  setPurchasedSounds]  = useState<SoundEntry[]>([]);
+  const [purchasedLoading, setPurchasedLoading] = useState(false);
+  const [purchasedError,   setPurchasedError]   = useState<string | null>(null);
+
+  /* Unified audio state keyed by sound ID */
+  const [activeIds,  setActiveIds]  = useState<Set<string>>(new Set());
+  const [volumeMap,  setVolumeMap]  = useState<Record<string, number>>({});
   const audioMapRef = useRef<Map<string, HTMLAudioElement>>(new Map());
 
-  /* ── Fetch audio assets ── */
-  const fetchSounds = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  /* ── Fetch default sounds ── */
+  const fetchDefault = useCallback(async () => {
+    setDefaultLoading(true);
+    setDefaultError(null);
     try {
       const result = await adminAssetsService.getAssets("Audio");
-      setSounds(result);
-      setActive(result.map(() => false));
-      setVolumes(result.map((s) => s.defaultVolume ?? 50));
+      setDefaultSounds(result.map(s => ({
+        id: s.id,
+        name: s.name ?? "",
+        url: s.url,
+        colorHint: s.category,
+        defaultVolume: s.defaultVolume ?? 50,
+      })));
+      setVolumeMap(prev => {
+        const next = { ...prev };
+        result.forEach(s => { if (!(s.id in next)) next[s.id] = s.defaultVolume ?? 50; });
+        return next;
+      });
     } catch {
-      setError(t("ambient.loadError", "Failed to load sounds"));
+      setDefaultError(t("ambient.loadError"));
     } finally {
-      setLoading(false);
+      setDefaultLoading(false);
     }
   }, [t]);
 
-  useEffect(() => { fetchSounds(); }, [fetchSounds]);
+  /* ── Fetch purchased sounds ── */
+  const fetchPurchased = useCallback(async () => {
+    setPurchasedLoading(true);
+    setPurchasedError(null);
+    try {
+      const items = await aestheticStoreService.getInventory();
+      const filtered = items.filter(i => i.category === "AmbientSound");
+      setPurchasedSounds(filtered.map(item => ({
+        id: item.storeItemId,
+        name: item.name,
+        url: item.assetUrl,
+        colorHint: item.name,
+        defaultVolume: 50,
+      })));
+      setVolumeMap(prev => {
+        const next = { ...prev };
+        filtered.forEach(item => { if (!(item.storeItemId in next)) next[item.storeItemId] = 50; });
+        return next;
+      });
+    } catch {
+      setPurchasedError(t("ambient.loadError"));
+    } finally {
+      setPurchasedLoading(false);
+    }
+  }, [t]);
+
+  useEffect(() => { fetchDefault(); }, [fetchDefault]);
+  useEffect(() => { if (tab === "purchased") fetchPurchased(); }, [tab, fetchPurchased]);
 
   /* ── Cleanup audio on unmount ── */
   useEffect(() => {
     return () => {
-      audioMapRef.current.forEach((audio) => {
-        audio.pause();
-        audio.src = "";
-      });
+      audioMapRef.current.forEach((audio) => { audio.pause(); audio.src = ""; });
       audioMapRef.current.clear();
     };
   }, []);
 
-  /* ── Sync audio play/pause with active state ── */
+  const allSounds = [...defaultSounds, ...purchasedSounds];
+
+  /* ── Sync audio play/pause ── */
   useEffect(() => {
-    sounds.forEach((sound, i) => {
+    allSounds.forEach(sound => {
       if (!sound.url) return;
       let audio = audioMapRef.current.get(sound.id);
-      if (active[i]) {
+      if (activeIds.has(sound.id)) {
         if (!audio) {
           audio = new Audio(sound.url);
           audio.loop = true;
           audioMapRef.current.set(sound.id, audio);
         }
-        audio.volume = (volumes[i] ?? 50) / 100;
+        audio.volume = (volumeMap[sound.id] ?? 50) / 100;
         audio.play().catch(() => {/* autoplay blocked */});
       } else if (audio) {
         audio.pause();
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, sounds]);
+  }, [activeIds, allSounds.map(s => s.id).join(",")]);
 
   /* ── Sync volume ── */
   useEffect(() => {
-    sounds.forEach((sound, i) => {
+    allSounds.forEach(sound => {
       const audio = audioMapRef.current.get(sound.id);
-      if (audio) audio.volume = (volumes[i] ?? 50) / 100;
+      if (audio) audio.volume = (volumeMap[sound.id] ?? 50) / 100;
     });
-  }, [volumes, sounds]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [volumeMap]);
 
   /* ── Handlers ── */
-  const toggle = (i: number) =>
-    setActive((a) => a.map((v, j) => (j === i ? !v : v)));
+  const toggle = (id: string) =>
+    setActiveIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
 
-  const setVol = (i: number, val: number) =>
-    setVolumes((v) => v.map((n, j) => (j === i ? val : n)));
+  const setVol = (id: string, val: number) =>
+    setVolumeMap(prev => ({ ...prev, [id]: val }));
 
   /* ── Derived ── */
-  const activeSounds  = sounds.filter((_, i) => active[i]);
-  const activeCount   = activeSounds.length;
-  const mixLabel      = activeSounds.slice(0, 3).map((s) => s.name ?? "").join(" · ");
+  const activeSoundEntries = allSounds.filter(s => activeIds.has(s.id));
+  const activeCount        = activeSoundEntries.length;
+  const mixLabel           = activeSoundEntries.slice(0, 3).map(s => s.name).join(" · ");
+
+  /* ── Tab style ── */
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    padding: "6px 14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "0.76rem",
+    fontFamily: FONT,
+    fontWeight: active ? 600 : 400,
+    color: active ? "#fff" : "rgba(255,255,255,0.45)",
+    background: active ? "rgba(255,255,255,0.1)" : "transparent",
+    border: "none",
+    transition: "all 0.15s",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  });
+
+  /* ── Shared grid renderer ── */
+  const renderGrid = (
+    sounds: SoundEntry[],
+    loading: boolean,
+    error: string | null,
+    onRetry: () => void,
+    emptyMsg: string,
+    emptyHint?: string,
+  ) => {
+    if (loading) return (
+      <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
+        <Spinner size="sm" style={{ color: "#4ade80" }} />
+        <Text style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.35)", fontFamily: FONT }}>
+          Loading sounds…
+        </Text>
+      </Flex>
+    );
+    if (error) return (
+      <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
+        <Text style={{ fontSize: "0.82rem", color: "rgba(248,113,113,0.8)", fontFamily: FONT }}>
+          {error}
+        </Text>
+        <Box
+          as="button"
+          onClick={onRetry}
+          style={{
+            background: "transparent", border: "1px solid rgba(78,124,106,0.4)",
+            borderRadius: 8, padding: "6px 16px", cursor: "pointer",
+            fontSize: "0.78rem", color: "#4ade80", fontFamily: FONT,
+          }}
+        >
+          Retry
+        </Box>
+      </Flex>
+    );
+    if (sounds.length === 0) return (
+      <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
+        <ShoppingBag size={32} style={{ color: "rgba(255,255,255,0.2)" }} />
+        <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.35)", fontFamily: FONT, fontWeight: 500 }}>
+          {emptyMsg}
+        </Text>
+        {emptyHint && (
+          <Text style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.22)", fontFamily: FONT }}>
+            {emptyHint}
+          </Text>
+        )}
+      </Flex>
+    );
+    return (
+      <Box display="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
+        {sounds.map((s, i) => (
+          <SoundCard
+            key={s.id}
+            label={s.name}
+            color={resolveColor(s.colorHint, i)}
+            isOn={activeIds.has(s.id)}
+            volume={volumeMap[s.id] ?? s.defaultVolume}
+            onToggle={() => toggle(s.id)}
+            onVolume={(v) => setVol(s.id, v)}
+          />
+        ))}
+      </Box>
+    );
+  };
 
   return (
     <MotionBox
@@ -295,7 +437,7 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
       style={{
         x, y,
         width: 548,
-        height: 560,
+        height: 580,
         borderRadius: "18px",
         background: "rgba(10,16,14,0.88)",
         backdropFilter: "blur(22px)",
@@ -312,11 +454,11 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
         <PanelCloseBtn onClose={onClose} />
 
         {/* ── Header ── */}
-        <Flex align="center" gap={2} mb={4} pr="50px">
+        <Flex align="center" gap={2} mb={3} pr="50px">
           <AudioWaveform size={15} style={{ color: "rgba(255,255,255,0.45)" }} />
           <Text style={{
             fontSize: "0.7rem", color: "rgba(255,255,255,0.32)",
-            letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif",
+            letterSpacing: "0.1em", fontFamily: FONT,
           }}>
             {t("ambient.title")}
           </Text>
@@ -325,59 +467,35 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
               fontSize: "0.62rem", color: "rgba(74,222,128,0.75)",
               background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)",
               borderRadius: "20px", padding: "2px 9px",
-              fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.06em",
+              fontFamily: FONT, letterSpacing: "0.06em",
             }}>
               {activeCount} {activeCount === 1 ? "layer" : "layers"}
             </Box>
           )}
         </Flex>
 
-        {/* ── Content ── */}
+        {/* ── Tabs ── */}
+        <Flex mb={3} gap={1} style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: "10px" }}>
+          <Box as="button" style={tabStyle(tab === "default")} onClick={() => setTab("default")}>
+            <Waves size={13} />
+            {t("ambient.tabDefault")}
+          </Box>
+          <Box as="button" style={tabStyle(tab === "purchased")} onClick={() => setTab("purchased")}>
+            <ShoppingBag size={13} />
+            {t("ambient.tabPurchased")}
+          </Box>
+        </Flex>
+
+        {/* ── Sound grid ── */}
         <Box style={{ flex: 1, overflowY: "auto", overflowX: "hidden", marginRight: -4, paddingRight: 4 }}>
-          {loading ? (
-            <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
-              <Spinner size="sm" style={{ color: "#4ade80" }} />
-              <Text style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                Loading sounds…
-              </Text>
-            </Flex>
-          ) : error ? (
-            <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
-              <Text style={{ fontSize: "0.82rem", color: "rgba(248,113,113,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                {error}
-              </Text>
-              <Box
-                as="button"
-                onClick={fetchSounds}
-                style={{
-                  background: "transparent", border: "1px solid rgba(78,124,106,0.4)",
-                  borderRadius: 8, padding: "6px 16px", cursor: "pointer",
-                  fontSize: "0.78rem", color: "#4ade80", fontFamily: "'HarmonyOS Sans', sans-serif",
-                }}
-              >
-                Retry
-              </Box>
-            </Flex>
-          ) : sounds.length === 0 ? (
-            <Flex align="center" justify="center" style={{ height: "100%" }}>
-              <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                No audio assets found
-              </Text>
-            </Flex>
-          ) : (
-            <Box display="grid" style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
-              {sounds.map((s, i) => (
-                <SoundCard
-                  key={s.id}
-                  label={s.name ?? ""}
-                  color={resolveColor(s.category, i)}
-                  isOn={active[i] ?? false}
-                  volume={volumes[i] ?? 50}
-                  onToggle={() => toggle(i)}
-                  onVolume={(v) => setVol(i, v)}
-                />
-              ))}
-            </Box>
+          {tab === "default" && renderGrid(
+            defaultSounds, defaultLoading, defaultError, fetchDefault,
+            "No audio assets found",
+          )}
+          {tab === "purchased" && renderGrid(
+            purchasedSounds, purchasedLoading, purchasedError, fetchPurchased,
+            t("ambient.noPurchased"),
+            t("ambient.noPurchasedHint"),
           )}
         </Box>
 
@@ -395,12 +513,12 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
               <Box flex={1} minW={0}>
                 <Text style={{
                   fontSize: "0.77rem", color: "rgba(255,255,255,0.82)",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  fontFamily: FONT,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 }}>
                   {mixLabel}{activeCount > 3 ? ` +${activeCount - 3}` : ""}
                 </Text>
-                <Text style={{ fontSize: "0.68rem", color: "rgba(74,222,128,0.5)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                <Text style={{ fontSize: "0.68rem", color: "rgba(74,222,128,0.5)", fontFamily: FONT }}>
                   {t("ambient.layersActive", { count: activeCount })}
                 </Text>
               </Box>
@@ -412,7 +530,7 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
                 style={{ width: 30, height: 30, background: "rgba(255,255,255,0.05)" }}>
                 <Music2 size={13} style={{ color: "rgba(255,255,255,0.2)" }} />
               </Flex>
-              <Text style={{ fontSize: "0.77rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+              <Text style={{ fontSize: "0.77rem", color: "rgba(255,255,255,0.28)", fontFamily: FONT }}>
                 {t("ambient.noSounds")}
               </Text>
             </Flex>

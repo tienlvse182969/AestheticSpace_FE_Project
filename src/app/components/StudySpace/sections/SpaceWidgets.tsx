@@ -16,7 +16,7 @@ import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
 interface Props { ctx: StudySpaceCtx; }
 
 export function SpaceWidgets({ ctx }: Props) {
-  const { space, clock, pomodoro, saveNow, WIDGET_POSITIONS, layoutLocked, musicSource, musicUrl, setMusicSource, setMusicUrl } = ctx;
+  const { space, clock, pomodoro, saveNow, WIDGET_POSITIONS, layoutLocked, musicSource, musicYtUrl, musicScUrl, setMusicSource, setMusicYtUrl, setMusicScUrl } = ctx;
 
   return (
     <>
@@ -34,8 +34,9 @@ export function SpaceWidgets({ ctx }: Props) {
           >
             <MusicPlayerWidget
               initialSource={musicSource}
-              initialUrl={musicUrl}
-              onStateChange={(src, url) => { setMusicSource(src); setMusicUrl(url); saveNow(); }}
+              initialYtUrl={musicYtUrl}
+              initialScUrl={musicScUrl}
+              onStateChange={(src, ytUrl, scUrl) => { setMusicSource(src); setMusicYtUrl(ytUrl); setMusicScUrl(scUrl); saveNow(); }}
             />
           </DraggableWidget>
         )}

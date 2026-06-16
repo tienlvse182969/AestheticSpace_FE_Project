@@ -1,15 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { Flame, RotateCcw, Play, Pause, Coffee, Zap, X, BarChart2, AlertTriangle } from "lucide-react";
+import { Flame, RotateCcw, Play, Pause, Coffee, Zap, X, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../../../context/AuthContext";
-import { pomodoroService, type PomodoroStatsDto } from "../../../../../services/pomodoro.service";
+import { pomodoroService } from "../../../../../services/pomodoro.service";
 
 const MotionBox = motion.create(Box);
 
 type Phase  = "idle" | "focus" | "break";
-type Dialog = "break-prompt" | "next-prompt" | "cancel-confirm" | null;
+type Dialog = "break-prompt" | "next-prompt" | "cancel-confirm" | "skip-break-confirm" | null;
 
 const SPRING = { type: "spring", stiffness: 500, damping: 24, mass: 0.9 } as const;
 
@@ -32,9 +32,6 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
   const [session,          setSession]          = useState(1);
   const [dialog,           setDialog]           = useState<Dialog>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [statsOpen,        setStatsOpen]        = useState(false);
-  const [stats,            setStats]            = useState<PomodoroStatsDto | null>(null);
-  const [statsLoading,     setStatsLoading]     = useState(false);
   const startingRef = useRef(false); // guard against concurrent start calls
 
   const isBreak = phase === "break";
@@ -140,18 +137,6 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     else setRunning((r) => !r);
   };
 
-  const handleToggleStats = () => {
-    const next = !statsOpen;
-    setStatsOpen(next);
-    if (next && !stats && !statsLoading && user) {
-      setStatsLoading(true);
-      pomodoroService.getStats()
-        .then(setStats)
-        .catch(() => {})
-        .finally(() => setStatsLoading(false));
-    }
-  };
-
   const gradId = isBreak ? "timerGradBreak" : "timerGradFocus";
 
   return (
@@ -240,7 +225,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           {running ? <Pause size={18} color="#0d2b24" fill="#0d2b24" /> : <Play size={18} color="#0d2b24" fill="#0d2b24" />}
         </Box>
         <Box as="button"
-          onClick={() => { if (isBreak) { setRunning(false); setPhase("idle"); setDialog("next-prompt"); } }}
+          onClick={() => { if (isBreak) { setRunning(false); setDialog("skip-break-confirm"); } }}
           borderRadius="full" display="flex" alignItems="center" justifyContent="center"
           title={isBreak ? t("pomodoroWidget.skipBreakTooltip") : ""}
           style={{
@@ -273,78 +258,6 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           : t("pomodoroWidget.noSessionsDone", { total: totalSessions })}
       </Text>
 
-      {/* ── Stats toggle ── */}
-      {user && (
-        <Flex justify="center" mt={3}>
-          <Box as="button" onClick={handleToggleStats}
-            display="flex" alignItems="center" gap={1}
-            px={3} py={1} borderRadius="full" border="none" cursor="pointer"
-            style={{
-              background: statsOpen ? "rgba(var(--accent-rgb), 0.15)" : "transparent",
-              color: statsOpen ? "rgba(var(--accent-light-rgb), 0.8)" : "rgba(var(--accent-light-rgb), 0.4)",
-              fontSize: "0.65rem", fontFamily: "'HarmonyOS Sans', sans-serif",
-              letterSpacing: "0.08em", transition: "all 0.2s",
-            }}
-          >
-            <BarChart2 size={11} />
-            &nbsp;PHÂN TÍCH
-          </Box>
-        </Flex>
-      )}
-
-      {/* ── Stats panel ── */}
-      <AnimatePresence>
-        {statsOpen && user && (
-          <MotionBox
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.22 } as any}
-            mt={3}
-            style={{ borderTop: "1px solid rgba(var(--accent-rgb), 0.12)", paddingTop: 12, overflow: "hidden" }}
-          >
-            {statsLoading ? (
-              <Flex direction="column" gap={2}>
-                {[1, 2].map(i => (
-                  <Box key={i} h="32px" borderRadius="8px"
-                    style={{ background: "rgba(255,255,255,0.05)", animation: `pulse 1.5s ease-in-out ${i * 0.15}s infinite` }} />
-                ))}
-              </Flex>
-            ) : stats ? (
-              <Flex gap={3}>
-                <Box flex={1} p={2} borderRadius="10px"
-                  style={{ background: "rgba(var(--accent-rgb), 0.08)", border: "1px solid rgba(var(--accent-rgb), 0.15)" }}>
-                  <Text style={{ fontSize: "0.6rem", color: "rgba(var(--accent-light-rgb), 0.5)", letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    7 NGÀY
-                  </Text>
-                  <Text style={{ fontSize: "1.1rem", fontWeight: 700, color: "rgba(var(--accent-light-rgb), 0.9)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    {stats.sessionsLast7Days}
-                  </Text>
-                  <Text style={{ fontSize: "0.62rem", color: "rgba(var(--accent-light-rgb), 0.45)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    phiên · {stats.totalMinutesLast7Days} phút
-                  </Text>
-                </Box>
-                <Box flex={1} p={2} borderRadius="10px"
-                  style={{ background: "rgba(var(--accent-rgb), 0.08)", border: "1px solid rgba(var(--accent-rgb), 0.15)" }}>
-                  <Text style={{ fontSize: "0.6rem", color: "rgba(var(--accent-light-rgb), 0.5)", letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    30 NGÀY
-                  </Text>
-                  <Text style={{ fontSize: "1.1rem", fontWeight: 700, color: "rgba(var(--accent-light-rgb), 0.9)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    {stats.sessionsLast30Days}
-                  </Text>
-                  <Text style={{ fontSize: "0.62rem", color: "rgba(var(--accent-light-rgb), 0.45)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    phiên · {stats.totalMinutesLast30Days} phút
-                  </Text>
-                </Box>
-              </Flex>
-            ) : (
-              <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.2)", textAlign: "center", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                Chưa có dữ liệu
-              </Text>
-            )}
-          </MotionBox>
-        )}
-      </AnimatePresence>
 
       {/* ── End-of-session dialog overlay ── */}
       <AnimatePresence>
@@ -389,6 +302,30 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
                   <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={() => setDialog(null)}
                     style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
                     {t("pomodoroWidget.cancelKeepBtn")}
+                  </Box>
+                </Flex>
+              </>
+            )}
+
+            {dialog === "skip-break-confirm" && (
+              <>
+                <Coffee size={28} color="#38bdf8" style={{ marginBottom: 12, opacity: 0.9 }} />
+                <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
+                  {t("pomodoroWidget.skipBreakTitle")}
+                </Text>
+                <Text textAlign="center" mb={5} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.5 }}>
+                  {t("pomodoroWidget.skipBreakDesc")}
+                </Text>
+                <Flex gap={2} w="100%">
+                  <Box as="button" flex={1} py="9px" borderRadius="10px"
+                    onClick={() => { setPhase("idle"); setDialog("next-prompt"); }}
+                    style={{ background: "linear-gradient(135deg,#38bdf8,#818cf8)", color: "#fff", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(56,189,248,0.3)" }}>
+                    {t("pomodoroWidget.skipBreakConfirm")}
+                  </Box>
+                  <Box as="button" flex={1} py="9px" borderRadius="10px"
+                    onClick={() => { setDialog(null); setRunning(true); }}
+                    style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
+                    {t("pomodoroWidget.skipBreakCancel")}
                   </Box>
                 </Flex>
               </>

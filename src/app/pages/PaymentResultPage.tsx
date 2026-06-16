@@ -18,12 +18,21 @@ export function PaymentResultPage() {
 
   useEffect(() => {
     const transactionCode = sessionStorage.getItem("vnpay_transaction_code");
+    const purpose = sessionStorage.getItem("vnpay_purpose");
     sessionStorage.removeItem("vnpay_transaction_code");
+    sessionStorage.removeItem("vnpay_purpose");
+    sessionStorage.removeItem("vnpay_store_item_name");
 
     const statusParam = searchParams.get("status");
 
     if (statusParam !== "success" || !transactionCode) {
       setStatus("error");
+      return;
+    }
+
+    if (purpose === "StoreItem") {
+      // Backend webhook đã xử lý item delivery — chỉ cần hiện success
+      setStatus("success");
       return;
     }
 

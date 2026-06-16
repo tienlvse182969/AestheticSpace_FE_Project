@@ -177,7 +177,7 @@
     "settings": "Cài đặt",
     "help": "Trợ giúp",
     "home": "Trang chủ",
-    "about": "Giới thiệu",
+    "feedback": "Gửi phản hồi",
     "signOut": "Đăng xuất",
     "guest": "Khách",
     "demoMode": "Chế độ Demo",
@@ -185,6 +185,17 @@
     "signIn": "Đăng nhập",
     "language": "Ngôn ngữ",
     "upgradeToPremium": "Nâng cấp Premium"
+  },
+  "feedbackPanel": {
+    "title": "Phản hồi",
+    "typeFeedback": "Góp ý",
+    "typeBug": "Báo lỗi",
+    "emailPlaceholder": "Địa chỉ email của bạn",
+    "contentPlaceholder_feedback": "Bạn có góp ý gì cho chúng tôi không?",
+    "contentPlaceholder_bug": "Mô tả lỗi và các bước tái hiện...",
+    "submit_feedback": "Gửi góp ý",
+    "submit_bug": "Gửi báo lỗi",
+    "success": "Đã gửi! Cảm ơn bạn đã phản hồi."
   },
   "widgetPicker": {
     "title": "WIDGET",
@@ -223,14 +234,26 @@
     "ocean": "Đại dương",
     "nowMixing": "Đang phát: {{label}}",
     "layersActive": "{{count}} lớp âm thanh",
-    "noSounds": "Chưa có âm thanh — nhấn thẻ để bắt đầu"
+    "noSounds": "Chưa có âm thanh — nhấn thẻ để bắt đầu",
+    "loadError": "Không thể tải âm thanh",
+    "tabDefault": "Mặc định",
+    "tabPurchased": "Đã mua",
+    "noPurchased": "Chưa có âm thanh nào đã mua",
+    "noPurchasedHint": "Ghé store để tìm âm thanh môi trường"
   },
   "backgrounds": {
+    "title": "HÌNH NỀN",
     "rooms": "Phòng học",
     "discover": "Khám phá",
     "favorites": "Yêu thích",
     "favoritesCount": "Yêu thích ({{count}})",
     "themes": "Giao diện",
+    "purchased": "Đã mua",
+    "purchasedStore": "Mua lẻ trên Store",
+    "purchasedTheme": "Kèm theo giao diện",
+    "noPurchased": "Chưa có hình nền nào đã mua",
+    "noPurchasedHint": "Ghé Aesthetic Store để mua hình nền",
+    "loadingPurchased": "Đang tải…",
     "searchPlaceholder": "Tìm kiếm trên Unsplash…",
     "loadMore": "Tải thêm",
     "photosVia": "Ảnh từ Unsplash",
@@ -246,7 +269,12 @@
     "missingKey": "Thêm {{key}} vào {{file}} để bật tìm kiếm. Đang hiển thị ảnh được tuyển chọn.",
     "invalidKey": "API key không hợp lệ — kiểm tra VITE_UNSPLASH_ACCESS_KEY",
     "rateLimit": "Đã đạt giới hạn. Thử lại sau.",
-    "errorCode": "Lỗi {{code}}"
+    "errorCode": "Lỗi {{code}}",
+    "upload": "Tải lên",
+    "uploadHint": "Kéo thả ảnh vào đây hoặc nhấn để chọn file",
+    "uploadFormats": "Hỗ trợ JPG, PNG, WebP",
+    "deleteUpload": "Xóa",
+    "noUploads": "Chưa có ảnh nào — tải lên ảnh đầu tiên của bạn"
   },
   "themeStore": {
     "title": "AESTHETIC STORE",
@@ -270,6 +298,9 @@
     "coins": "Xu",
     "free": "Miễn phí",
     "purchased": "Đã mua",
+    "apply": "Áp dụng",
+    "addToSpace": "Thêm vào Space",
+    "ambientSoundHint": "Mở bảng Âm Thanh để áp dụng",
     "searchPlaceholder": "Tìm kiếm…",
     "loading": "Đang tải cửa hàng…",
     "empty": "Không tìm thấy mục nào",
@@ -282,6 +313,7 @@
       "effect": "Hiệu ứng hình ảnh",
       "widgetStyle": "Kiểu widget riêng",
       "buyNow": "Mua ngay",
+      "get": "Nhận",
       "notEnoughCoins": "Không đủ xu"
     },
     "trial": {
@@ -289,16 +321,27 @@
       "banner": "Đang dùng thử",
       "buyNow": "Mua ngay",
       "discard": "Từ bỏ",
-      "trying": "ĐANG THỬ"
+      "trying": "ĐANG THỬ",
+      "expired": {
+        "title": "Hết thời gian dùng thử",
+        "body": "Thời gian dùng thử \"{{name}}\" đã kết thúc.",
+        "prompt": "Mua để tiếp tục sử dụng hình nền này.",
+        "buyNow": "Mua ngay",
+        "dismiss": "Để sau"
+      }
     }
   },
   "stickerPicker": {
     "title": "NHÃN DÁN",
     "hint": "Nhấn để đặt vào không gian",
-    "comingSoon": "Sẽ có thêm nhãn dán sớm ✦"
+    "comingSoon": "Sẽ có thêm nhãn dán sớm ✦",
+    "tabDefault": "Mặc định",
+    "tabPurchased": "Đã mua",
+    "noPurchased": "Chưa có nhãn dán nào đã mua",
+    "noPurchasedHint": "Ghé store để tìm nhãn dán"
   },
   "about": {
-    "label": "GIỚI THIỆU",
+    "label": "Giới thiệu",
     "appName": "Aēsthetic Space",
     "desc": "Môi trường không xao nhãng được tạo ra để giúp bạn tập trung, luôn được truyền cảm hứng và làm cho mỗi phiên học trở nên dễ dàng.",
     "contributors": "ĐÓNG GÓP",
@@ -314,7 +357,8 @@
     "sessions": "phiên",
     "focusMinutes": "{{minutes}} phút tập trung",
     "tooltip": "{{sessions}} phiên · {{minutes}} phút",
-    "noData": "Chưa có dữ liệu"
+    "noData": "Chưa có dữ liệu",
+    "today": "H.nay"
   },
   "pomodoroSettings": {
     "title": "Cài đặt Pomodoro",
@@ -360,7 +404,11 @@
     "cancelConfirmTitle": "Hủy phiên tập trung?",
     "cancelConfirmDesc": "Phiên này sẽ bị xóa và không được tính vào thống kê.",
     "cancelConfirmBtn": "Hủy phiên",
-    "cancelKeepBtn": "Tiếp tục"
+    "cancelKeepBtn": "Tiếp tục",
+    "skipBreakTitle": "Bỏ qua thời gian nghỉ?",
+    "skipBreakDesc": "Bạn vẫn còn thời gian nghỉ. Bỏ qua và bắt đầu phiên tiếp theo ngay bây giờ?",
+    "skipBreakConfirm": "Bỏ qua nghỉ",
+    "skipBreakCancel": "Tiếp tục nghỉ"
   },
   "clockSettings": {
     "title": "Cài đặt đồng hồ",
@@ -474,7 +522,7 @@
       "dashboard": "Tổng quan",
       "users": "Người dùng",
       "revenue": "Doanh thu",
-      "themes": "Giao diện",
+      "themes": "Cửa hàng",
       "stickers": "Nhãn dán",
       "sounds": "Âm thanh",
       "missions": "Nhiệm vụ",

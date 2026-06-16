@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { FeedbackPanel } from "./FeedbackPanel";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -7,10 +8,10 @@ import {
   LogOut,
   User,
   Home,
-  Info,
   Crown,
   Coins,
   Zap,
+  MessageSquare,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -24,7 +25,7 @@ export interface UserInfo {
   accountTier?: string;
 }
 
-function AccountTierBadge({ tier }: { tier?: string }) {
+export function AccountTierBadge({ tier }: { tier?: string }) {
   const isPremium = tier?.toLowerCase() === "premium";
   return (
     <Flex
@@ -68,7 +69,6 @@ interface AccountPanelProps {
   onClose: () => void;
   onLogout: () => void;
   onHome: () => void;
-  onAbout: () => void;
 }
 
 function getInitials(name: string) {
@@ -171,13 +171,11 @@ export function AccountPanel({
   onClose,
   onLogout,
   onHome,
-  onAbout,
 }: AccountPanelProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [pos, setPos] = useState<{ bottom: number; right: number } | null>(
-    null,
-  );
+  const [pos, setPos] = useState<{ bottom: number; right: number } | null>(null);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   useEffect(() => {
     if (!open || !anchorRef.current) return;
     const rect = anchorRef.current.getBoundingClientRect();
@@ -200,6 +198,7 @@ export function AccountPanel({
   };
 
   return (
+  <>
     <AnimatePresence>
       {open && (
         <MotionBox
@@ -384,39 +383,20 @@ export function AccountPanel({
                 {t("account.home")}
               </Box>
 
-              {/* About */}
+              {/* Feedback */}
               <Box
                 as="button"
-                onClick={() => {
-                  onAbout();
-                  onClose();
-                }}
-                display="flex"
-                alignItems="center"
-                gap={2}
-                w="100%"
-                px="10px"
-                py="8px"
-                borderRadius="9px"
+                onClick={() => { onClose(); setFeedbackOpen(true); }}
+                display="flex" alignItems="center" gap={2} w="100%" px="10px" py="8px" borderRadius="9px"
                 style={menuItemStyle}
-                _hover={
-                  {
-                    background: "rgba(255,255,255,0.08)",
-                    color: "white",
-                  } as any
-                }
+                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
               >
-                <Info size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
-                {t("account.about")}
+                <MessageSquare size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
+                {t("account.feedback")}
               </Box>
 
-              {/* Divider */}
-              <Box
-                mx={2}
-                my="6px"
-                h="1px"
-                style={{ background: "rgba(255,255,255,0.08)" }}
-              />
+{/* Divider */}
+              <Box mx={2} my="6px" h="1px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
               {/* Logout */}
               <Box
@@ -546,39 +526,20 @@ export function AccountPanel({
                 {t("account.home")}
               </Box>
 
-              {/* About */}
+              {/* Feedback */}
               <Box
                 as="button"
-                onClick={() => {
-                  onAbout();
-                  onClose();
-                }}
-                display="flex"
-                alignItems="center"
-                gap={2}
-                w="100%"
-                px="10px"
-                py="8px"
-                borderRadius="9px"
+                onClick={() => { onClose(); setFeedbackOpen(true); }}
+                display="flex" alignItems="center" gap={2} w="100%" px="10px" py="8px" borderRadius="9px"
                 style={menuItemStyle}
-                _hover={
-                  {
-                    background: "rgba(255,255,255,0.08)",
-                    color: "white",
-                  } as any
-                }
+                _hover={{ background: "rgba(255,255,255,0.08)", color: "white" } as any}
               >
-                <Info size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
-                {t("account.about")}
+                <MessageSquare size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
+                {t("account.feedback")}
               </Box>
 
-              {/* Divider */}
-              <Box
-                mx={2}
-                my="6px"
-                h="1px"
-                style={{ background: "rgba(255,255,255,0.08)" }}
-              />
+{/* Divider */}
+              <Box mx={2} my="6px" h="1px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
               {/* Sign in button */}
               <Box
@@ -617,5 +578,11 @@ export function AccountPanel({
         </MotionBox>
       )}
     </AnimatePresence>
+    <AnimatePresence>
+      {feedbackOpen && (
+        <FeedbackPanel onClose={() => setFeedbackOpen(false)} />
+      )}
+    </AnimatePresence>
+  </>
   );
 }

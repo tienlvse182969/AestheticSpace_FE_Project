@@ -4,6 +4,7 @@ import { Info, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "./PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
+import { APP_VERSION } from "../../../../version";
 
 const MotionBox = motion.create(Box);
 
@@ -127,7 +128,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
               padding: "3px 8px",
             }}
           >
-            {t("about.version")}
+            v{APP_VERSION}
           </Box>
         </Flex>
       </Box>

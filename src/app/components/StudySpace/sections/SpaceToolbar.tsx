@@ -29,7 +29,6 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
     activePanel, togglePanel,
     accountOpen, setAccountOpen,
     avatarBtnRef, accountPanelRef,
-    setAboutOpen,
   } = ctx;
 
   const isFree = !!currentUser && currentUser.accountTier?.toLowerCase() !== "premium";
@@ -100,7 +99,6 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
         onClose={() => setAccountOpen(false)}
         onLogout={handleLogout}
         onHome={() => navigate("/")}
-        onAbout={() => setAboutOpen(true)}
       />
 
       {/* ── Arrow toggle ── */}

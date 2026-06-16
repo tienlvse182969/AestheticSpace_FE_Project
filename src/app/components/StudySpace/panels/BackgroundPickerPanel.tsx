@@ -1,12 +1,13 @@
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
-import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, Palette, Sparkles } from "lucide-react";
+import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Construction, ImagePlus, X, Image as ImageIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { BACKGROUNDS } from "../constants";
 import type { BackgroundItem } from "../types";
+import { aestheticStoreService } from "../../../../services/aestheticStore.service";
 
 const MotionBox = motion.create(Box);
 
@@ -270,14 +271,128 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
     };
   };
 
+  /* ── Upload tab ── */
+  const [uploadedBgs, setUploadedBgs] = useState<BackgroundItem[]>(() => {
+    try { return JSON.parse(localStorage.getItem("bg_uploads") ?? "[]"); }
+    catch { return []; }
+  });
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const compressImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          const MAX_W = 1920, MAX_H = 1080;
+          let w = img.width, h = img.height;
+          if (w > MAX_W || h > MAX_H) {
+            const ratio = Math.min(MAX_W / w, MAX_H / h);
+            w = Math.round(w * ratio);
+            h = Math.round(h * ratio);
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+
+  const handleFileSelect = useCallback(async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    const file = files[0];
+    if (!file.type.startsWith("image/")) return;
+    try {
+      const dataUrl = await compressImage(file);
+      const newBg: BackgroundItem = {
+        id: `upload_${Date.now()}`,
+        url: dataUrl,
+        thumb: dataUrl,
+        label: file.name.replace(/\.[^/.]+$/, ""),
+      };
+      setUploadedBgs(prev => {
+        const next = [newBg, ...prev].slice(0, 8);
+        try { localStorage.setItem("bg_uploads", JSON.stringify(next)); } catch {}
+        return next;
+      });
+      onSelect(newBg);
+    } catch {}
+  }, [onSelect]);
+
+  const deleteUpload = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setUploadedBgs(prev => {
+      const next = prev.filter(b => b.id !== id);
+      try { localStorage.setItem("bg_uploads", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  /* ── Purchased backgrounds ── */
+  const [purchasedFilter, setPurchasedFilter] = useState<"store" | "theme">("store");
+  const [purchasedItems,  setPurchasedItems]  = useState<BackgroundItem[]>([]);
+  const [purchasedLoading, setPurchasedLoading] = useState(false);
+  const [purchasedError,   setPurchasedError]   = useState(false);
+
+  const fetchPurchased = useCallback(async () => {
+    setPurchasedLoading(true);
+    setPurchasedError(false);
+    try {
+      const inv = await aestheticStoreService.getInventory();
+      setPurchasedItems(
+        inv
+          .filter(i => i.category === "Background" && i.assetUrl)
+          .map(i => ({ id: i.storeItemId, url: i.assetUrl!, thumb: i.assetUrl!, label: i.name }))
+      );
+    } catch {
+      setPurchasedError(true);
+    } finally {
+      setPurchasedLoading(false);
+    }
+  }, []);
+
   const TABS = [
     { id: "discover",  label: t("backgrounds.discover") },
     { id: "favorites", label: favorites.length > 0 ? t("backgrounds.favoritesCount", { count: favorites.length }) : t("backgrounds.favorites") },
-    { id: "themes",    label: t("backgrounds.themes") },
+    { id: "purchased", label: t("backgrounds.purchased") },
+    { id: "upload",    label: t("backgrounds.upload") },
   ] as const;
 
   type TabId = typeof TABS[number]["id"];
   const [tab, setTab] = useState<TabId>("discover");
+
+  useEffect(() => {
+    if (tab === "purchased" && purchasedFilter === "store") fetchPurchased();
+  }, [tab, purchasedFilter, fetchPurchased]);
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    padding: "6px 14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "0.76rem",
+    fontFamily: "'HarmonyOS Sans', sans-serif",
+    fontWeight: active ? 600 : 400,
+    color: active ? "#fff" : "rgba(255,255,255,0.45)",
+    background: active ? "rgba(255,255,255,0.1)" : "transparent",
+    border: "none",
+    transition: "all 0.15s",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  });
+
+  const TAB_ICONS: Record<TabId, React.ReactNode> = {
+    discover:  <Search size={13} />,
+    favorites: <Heart size={13} />,
+    purchased: <ShoppingBag size={13} />,
+    upload:    <ImagePlus size={13} />,
+  };
 
   return (
     <MotionBox
@@ -310,34 +425,28 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
       <Box style={{ padding: "18px 18px 0", flexShrink: 0 }}>
         <PanelCloseBtn onClose={onClose} />
 
+        {/* Title */}
+        <Flex align="center" gap={2} mb={3} pr="50px">
+          <ImageIcon size={15} style={{ color: "rgba(255,255,255,0.45)" }} />
+          <Text style={{
+            fontSize: "0.7rem", color: "rgba(255,255,255,0.32)",
+            letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif",
+          }}>
+            {t("backgrounds.title")}
+          </Text>
+        </Flex>
+
         {/* Tabs */}
-        <Flex align="center" justify="center" gap={0} mb={4}>
-          {TABS.map((t, i) => (
-            <Box key={t.id} display="flex" alignItems="center">
-              <Box
-                as="button"
-                onClick={() => setTab(t.id)}
-                bg="transparent"
-                border="none"
-                cursor="pointer"
-                style={{
-                  color: tab === t.id ? "#ffffff" : "rgba(255,255,255,0.4)",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  fontSize: "0.92rem",
-                  fontWeight: tab === t.id ? 700 : 400,
-                  padding: "2px 6px 6px",
-                  borderBottom: tab === t.id
-                    ? "2px solid rgba(255,255,255,0.7)"
-                    : "2px solid transparent",
-                  transition: "all 0.18s",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {t.label}
-              </Box>
-              {i < TABS.length - 1 && (
-                <Text mx={3} style={{ color: "rgba(255,255,255,0.18)", fontSize: "0.88rem", userSelect: "none" }}>|</Text>
-              )}
+        <Flex mb={3} gap={1} style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: "10px" }}>
+          {TABS.map(tabItem => (
+            <Box
+              key={tabItem.id}
+              as="button"
+              style={tabStyle(tab === tabItem.id)}
+              onClick={() => setTab(tabItem.id)}
+            >
+              {TAB_ICONS[tabItem.id]}
+              {tabItem.label}
             </Box>
           ))}
         </Flex>
@@ -614,79 +723,301 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
           )
         )}
 
-        {/* ── THEMES TAB ── */}
-        {tab === "themes" && (
-          <Flex direction="column" align="center" justify="center" gap={5} py={8}>
-            {/* Icon ring */}
+        {/* ── UPLOAD TAB ── */}
+        {tab === "upload" && (
+          <>
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              onChange={(e) => handleFileSelect(e.target.files)}
+            />
+
+            {/* Drop zone */}
             <Box
-              position="relative"
-              w="72px"
-              h="72px"
-              borderRadius="full"
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
+              mb={4}
+              borderRadius="10px"
               style={{
-                background: "radial-gradient(circle at 40% 35%, rgba(168,85,247,0.22), rgba(99,102,241,0.14) 70%, transparent)",
-                border: "1px solid rgba(168,85,247,0.22)",
-                boxShadow: "0 0 32px rgba(168,85,247,0.12)",
+                border: isDragging
+                  ? "2px dashed rgba(255,255,255,0.55)"
+                  : "2px dashed rgba(255,255,255,0.15)",
+                background: isDragging
+                  ? "rgba(255,255,255,0.07)"
+                  : "rgba(255,255,255,0.03)",
+                padding: "32px 20px",
+                textAlign: "center",
+                cursor: "pointer",
+                transition: "all 0.18s",
               }}
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); handleFileSelect(e.dataTransfer.files); }}
             >
-              <Palette size={28} color="rgba(192,132,252,0.75)" />
-              {/* Sparkle decoration */}
-              <Box
-                position="absolute"
-                top="-4px"
-                right="-4px"
-                style={{ color: "rgba(251,191,36,0.7)" }}
-              >
-                <Sparkles size={14} />
+              <Flex direction="column" align="center" gap={2}>
+                <Box
+                  w="44px" h="44px" borderRadius="full"
+                  display="flex" alignItems="center" justifyContent="center"
+                  style={{
+                    background: isDragging ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    transition: "all 0.18s",
+                  }}
+                >
+                  <ImagePlus size={20} color={isDragging ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.45)"} />
+                </Box>
+                <Text style={{
+                  color: isDragging ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.55)",
+                  fontSize: "0.82rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  transition: "color 0.18s",
+                }}>
+                  {t("backgrounds.uploadHint")}
+                </Text>
+                <Text style={{
+                  color: "rgba(255,255,255,0.25)",
+                  fontSize: "0.68rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                }}>
+                  {t("backgrounds.uploadFormats")}
+                </Text>
+              </Flex>
+            </Box>
+
+            {/* Uploaded images grid */}
+            {uploadedBgs.length === 0 ? (
+              <Flex align="center" justify="center" h="100px" direction="column" gap={2}>
+                <Text style={{
+                  color: "rgba(255,255,255,0.22)",
+                  fontSize: "0.76rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                }}>
+                  {t("backgrounds.noUploads")}
+                </Text>
+              </Flex>
+            ) : (
+              <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                {uploadedBgs.map(bg => (
+                  <Box
+                    key={bg.id}
+                    position="relative"
+                    borderRadius="8px"
+                    overflow="hidden"
+                    css={{
+                      "&:hover .upload-delete-btn": { opacity: "1 !important" },
+                      "&:hover": {
+                        border: "2px solid rgba(255,255,255,0.5) !important",
+                        boxShadow: "0 6px 22px rgba(0,0,0,0.7) !important",
+                        transform: "scale(1.04) !important",
+                      },
+                    }}
+                    style={{
+                      aspectRatio: "16/9",
+                      cursor: "pointer",
+                      border: bg.id === currentBgId
+                        ? "2px solid rgba(255,255,255,0.9)"
+                        : "2px solid rgba(255,255,255,0.06)",
+                      boxShadow: bg.id === currentBgId
+                        ? "0 0 0 3px rgba(255,255,255,0.18), 0 4px 16px rgba(0,0,0,0.5)"
+                        : "0 2px 10px rgba(0,0,0,0.45)",
+                      transform: bg.id === currentBgId ? "scale(1.03)" : "scale(1)",
+                      transition: "all 0.18s ease",
+                    }}
+                    onClick={() => onSelect(bg)}
+                  >
+                    {/* Thumbnail */}
+                    <Box
+                      position="absolute"
+                      inset={0}
+                      style={{
+                        backgroundImage: `url(${bg.thumb})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                      }}
+                    />
+
+                    {/* Active checkmark */}
+                    {bg.id === currentBgId && (
+                      <Box
+                        position="absolute"
+                        top="5px"
+                        left="5px"
+                        w="15px"
+                        h="15px"
+                        borderRadius="full"
+                        display="flex"
+                        alignItems="center"
+                        justifyContent="center"
+                        style={{ background: "white", boxShadow: "0 1px 4px rgba(0,0,0,0.4)", zIndex: 2 }}
+                      >
+                        <svg width="8" height="6" viewBox="0 0 8 6" fill="none">
+                          <path d="M1 3L3 5L7 1" stroke="#0d2b24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </Box>
+                    )}
+
+                    {/* Delete button */}
+                    <Box
+                      as="button"
+                      className="upload-delete-btn"
+                      position="absolute"
+                      top="5px"
+                      right="5px"
+                      w="20px"
+                      h="20px"
+                      borderRadius="full"
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      bg="transparent"
+                      border="none"
+                      cursor="pointer"
+                      style={{
+                        opacity: 0,
+                        zIndex: 3,
+                        background: "rgba(0,0,0,0.55)",
+                        backdropFilter: "blur(4px)",
+                        color: "rgba(255,255,255,0.85)",
+                        transition: "all 0.15s",
+                      }}
+                      onClick={(e: React.MouseEvent) => deleteUpload(bg.id, e)}
+                      title={t("backgrounds.deleteUpload")}
+                    >
+                      <X size={10} />
+                    </Box>
+                  </Box>
+                ))}
               </Box>
-            </Box>
+            )}
+          </>
+        )}
 
-            {/* Badge */}
-            <Box
-              px={3}
-              py={1}
-              borderRadius="full"
-              style={{
-                background: "rgba(168,85,247,0.12)",
-                border: "1px solid rgba(168,85,247,0.3)",
-              }}
-            >
-              <Text style={{
-                fontSize: "0.65rem",
-                color: "rgba(192,132,252,0.9)",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-              }}>
-                {t("backgrounds.inDevelopment")}
-              </Text>
-            </Box>
+        {/* ── PURCHASED TAB ── */}
+        {tab === "purchased" && (
+          <>
+            {/* Sub-filter pills */}
+            <Flex gap={2} mb={4}>
+              {(["store", "theme"] as const).map(f => (
+                <Box
+                  key={f}
+                  as="button"
+                  onClick={() => setPurchasedFilter(f)}
+                  style={{
+                    background: purchasedFilter === f
+                      ? "rgba(255,255,255,0.15)"
+                      : "rgba(255,255,255,0.06)",
+                    border: purchasedFilter === f
+                      ? "1px solid rgba(255,255,255,0.32)"
+                      : "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: "20px",
+                    color: purchasedFilter === f ? "#fff" : "rgba(255,255,255,0.45)",
+                    fontSize: "0.74rem",
+                    padding: "4px 14px",
+                    cursor: "pointer",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    fontWeight: purchasedFilter === f ? 600 : 400,
+                    transition: "all 0.15s",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {f === "store" ? t("backgrounds.purchasedStore") : t("backgrounds.purchasedTheme")}
+                </Box>
+              ))}
+            </Flex>
 
-            {/* Title */}
-            <Box textAlign="center">
-              <Text style={{
-                fontSize: "1.05rem",
-                color: "rgba(255,255,255,0.82)",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                letterSpacing: "0.01em",
-                marginBottom: "6px",
-              }}>
-                {t("backgrounds.themesTitle")}
-              </Text>
-              <Text style={{
-                fontSize: "0.78rem",
-                color: "rgba(255,255,255,0.35)",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                lineHeight: 1.65,
-                maxWidth: "300px",
-              }}>
-                {t("backgrounds.themesDesc")}
-              </Text>
-            </Box>
-          </Flex>
+            {/* ── Store-bought backgrounds ── */}
+            {purchasedFilter === "store" && (
+              purchasedLoading ? (
+                <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Box key={i} borderRadius="8px" className="animate-pulse"
+                      style={{ aspectRatio: "16/9", background: "rgba(255,255,255,0.07)" }} />
+                  ))}
+                </Box>
+              ) : purchasedError ? (
+                <Flex direction="column" align="center" justify="center" gap={3} py={10}>
+                  <AlertCircle size={24} color="rgba(248,113,113,0.55)" />
+                  <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {t("backgrounds.errorCode", { code: "load" })}
+                  </Text>
+                  <Box
+                    as="button" onClick={fetchPurchased}
+                    display="flex" alignItems="center" gap={2}
+                    style={{
+                      background: "rgba(255,255,255,0.08)",
+                      border: "1px solid rgba(255,255,255,0.16)",
+                      borderRadius: "7px",
+                      color: "rgba(255,255,255,0.6)",
+                      fontSize: "0.76rem",
+                      padding: "5px 14px",
+                      cursor: "pointer",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                    }}
+                  >
+                    <RefreshCw size={12} /> Retry
+                  </Box>
+                </Flex>
+              ) : purchasedItems.length === 0 ? (
+                <Flex align="center" justify="center" h="180px" direction="column" gap={2}>
+                  <ShoppingBag size={22} color="rgba(255,255,255,0.15)" />
+                  <Text style={{ color: "rgba(255,255,255,0.28)", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {t("backgrounds.noPurchased")}
+                  </Text>
+                  <Text style={{ color: "rgba(255,255,255,0.18)", fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {t("backgrounds.noPurchasedHint")}
+                  </Text>
+                </Flex>
+              ) : (
+                <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                  {purchasedItems.map(bg => (
+                    <PhotoCard
+                      key={bg.id}
+                      bg={bg}
+                      isActive={bg.id === currentBgId}
+                      isFav={isFav(bg.id)}
+                      onSelect={() => onSelect(bg)}
+                      onToggleFav={(e) => toggleFav(bg, e)}
+                      favLabel={isFav(bg.id) ? t("backgrounds.removeFromFavorites") : t("backgrounds.addToFavorites")}
+                    />
+                  ))}
+                </Box>
+              )
+            )}
+
+            {/* ── Theme-bundled backgrounds ── */}
+            {purchasedFilter === "theme" && (
+              <Flex direction="column" align="center" justify="center" gap={4} py={8}>
+                <Box
+                  w="60px" h="60px" borderRadius="full"
+                  display="flex" alignItems="center" justifyContent="center"
+                  style={{
+                    background: "radial-gradient(circle at 40% 35%, rgba(168,85,247,0.2), rgba(99,102,241,0.1) 70%)",
+                    border: "1px solid rgba(168,85,247,0.2)",
+                  }}
+                >
+                  <Construction size={24} color="rgba(192,132,252,0.7)" />
+                </Box>
+                <Box
+                  px={3} py="3px" borderRadius="full"
+                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)" }}
+                >
+                  <Text style={{ fontSize: "0.62rem", color: "rgba(192,132,252,0.85)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+                    {t("backgrounds.inDevelopment")}
+                  </Text>
+                </Box>
+                <Box textAlign="center">
+                  <Text style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.75)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: "6px" }}>
+                    {t("backgrounds.themesTitle")}
+                  </Text>
+                  <Text style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.32)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.65, maxWidth: "280px" }}>
+                    {t("backgrounds.themesDesc")}
+                  </Text>
+                </Box>
+              </Flex>
+            )}
+          </>
         )}
       </Box>
     </MotionBox>
