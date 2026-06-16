@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
-import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Construction, ImagePlus, X } from "lucide-react";
+import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Construction, ImagePlus, X, Image as ImageIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
@@ -371,6 +371,29 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
     if (tab === "purchased" && purchasedFilter === "store") fetchPurchased();
   }, [tab, purchasedFilter, fetchPurchased]);
 
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    padding: "6px 14px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontSize: "0.76rem",
+    fontFamily: "'HarmonyOS Sans', sans-serif",
+    fontWeight: active ? 600 : 400,
+    color: active ? "#fff" : "rgba(255,255,255,0.45)",
+    background: active ? "rgba(255,255,255,0.1)" : "transparent",
+    border: "none",
+    transition: "all 0.15s",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+  });
+
+  const TAB_ICONS: Record<TabId, React.ReactNode> = {
+    discover:  <Search size={13} />,
+    favorites: <Heart size={13} />,
+    purchased: <ShoppingBag size={13} />,
+    upload:    <ImagePlus size={13} />,
+  };
+
   return (
     <MotionBox
       ref={ref as any}
@@ -402,34 +425,28 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
       <Box style={{ padding: "18px 18px 0", flexShrink: 0 }}>
         <PanelCloseBtn onClose={onClose} />
 
+        {/* Title */}
+        <Flex align="center" gap={2} mb={3} pr="50px">
+          <ImageIcon size={15} style={{ color: "rgba(255,255,255,0.45)" }} />
+          <Text style={{
+            fontSize: "0.7rem", color: "rgba(255,255,255,0.32)",
+            letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif",
+          }}>
+            {t("backgrounds.title")}
+          </Text>
+        </Flex>
+
         {/* Tabs */}
-        <Flex align="center" justify="center" gap={0} mb={4}>
-          {TABS.map((t, i) => (
-            <Box key={t.id} display="flex" alignItems="center">
-              <Box
-                as="button"
-                onClick={() => setTab(t.id)}
-                bg="transparent"
-                border="none"
-                cursor="pointer"
-                style={{
-                  color: tab === t.id ? "#ffffff" : "rgba(255,255,255,0.4)",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  fontSize: "0.92rem",
-                  fontWeight: tab === t.id ? 700 : 400,
-                  padding: "2px 6px 6px",
-                  borderBottom: tab === t.id
-                    ? "2px solid rgba(255,255,255,0.7)"
-                    : "2px solid transparent",
-                  transition: "all 0.18s",
-                  letterSpacing: "0.01em",
-                }}
-              >
-                {t.label}
-              </Box>
-              {i < TABS.length - 1 && (
-                <Text mx={3} style={{ color: "rgba(255,255,255,0.18)", fontSize: "0.88rem", userSelect: "none" }}>|</Text>
-              )}
+        <Flex mb={3} gap={1} style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: "10px" }}>
+          {TABS.map(tabItem => (
+            <Box
+              key={tabItem.id}
+              as="button"
+              style={tabStyle(tab === tabItem.id)}
+              onClick={() => setTab(tabItem.id)}
+            >
+              {TAB_ICONS[tabItem.id]}
+              {tabItem.label}
             </Box>
           ))}
         </Flex>

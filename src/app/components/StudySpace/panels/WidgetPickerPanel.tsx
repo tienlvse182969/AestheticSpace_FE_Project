@@ -223,9 +223,12 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
         border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.08)",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <Box position="relative" style={{ padding: "20px 18px 18px", height: "100%", overflowY: "auto" }}>
+      {/* ── Header (not scrollable) ── */}
+      <Box position="relative" style={{ padding: "20px 18px 0", flexShrink: 0 }}>
         <PanelCloseBtn onClose={onClose} />
 
         <Text mb={1} style={{
@@ -236,7 +239,13 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
         }}>
           {t("widgetPicker.title")}
         </Text>
+      </Box>
 
+      {/* ── Scrollable content ── */}
+      <Box
+        style={{ padding: "0 18px 18px", flex: 1, overflowY: "auto" }}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         {/* ── Grid (desktop) / List (mobile) ──────────────────────────── */}
         {isMobile ? (
           /* ── Mobile: list ── */

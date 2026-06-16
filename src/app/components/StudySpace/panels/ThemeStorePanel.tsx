@@ -168,52 +168,6 @@ function StoreCard({
         >
           {typeLabel(item.category, t)}
         </Box>
-        {/* Premium badge */}
-        {item.isPremium && (
-          <Box
-            position="absolute"
-            top="6px"
-            right="6px"
-            style={{
-              padding: "2px 7px",
-              borderRadius: "5px",
-              fontSize: "0.58rem",
-              fontFamily: "'HarmonyOS Sans', sans-serif",
-              fontWeight: 700,
-              letterSpacing: "0.04em",
-              background: "rgba(251,191,36,0.88)",
-              color: "#1a1200",
-              backdropFilter: "blur(6px)",
-            }}
-          >
-            ✦ Premium
-          </Box>
-        )}
-        {/* Purchased overlay */}
-        {isOwned && (
-          <Flex
-            position="absolute"
-            inset={0}
-            align="center"
-            justify="center"
-            style={{ background: "rgba(0,0,0,0.4)" }}
-          >
-            <Box
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: "50%",
-                background: "rgba(74,222,128,0.95)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 0 12px rgba(74,222,128,0.4)",
-              }}
-            >
-              <Check size={14} color="#fff" />
-            </Box>
-          </Flex>
-        )}
         {/* Trialing overlay */}
         {isTrialing && !isOwned && (
           <Flex
@@ -408,9 +362,8 @@ function ItemDetailView({
       exit={{ x: "100%", opacity: 0, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } } as any}
       position="absolute"
       inset={0}
-      borderRadius="16px"
       overflow="hidden"
-      style={{ background: "rgba(10,15,20,0.98)", zIndex: 10 }}
+      style={{ background: "rgba(10,15,20,0.98)", zIndex: 20 }}
     >
       <Box h="100%" display="flex" flexDirection="column">
         {/* Main image */}
@@ -508,21 +461,6 @@ function ItemDetailView({
             >
               {typeLabel(item.category, t)}
             </Box>
-            {item.isPremium && (
-              <Box
-                style={{
-                  padding: "3px 8px",
-                  borderRadius: "6px",
-                  fontSize: "0.6rem",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  fontWeight: 700,
-                  background: "rgba(251,191,36,0.9)",
-                  color: "#1a1200",
-                }}
-              >
-                ✦ Premium
-              </Box>
-            )}
           </Flex>
         </Box>
 
@@ -1085,13 +1023,7 @@ function FeaturedCarousel({
             <Box position="absolute" bottom={0} left={0} right={0} h="50px" style={{ background: "linear-gradient(transparent, rgba(5,8,14,0.75))" }} />
 
             <Flex position="absolute" inset={0} px="14px" py="11px" direction="column" justify="space-between">
-              <Flex align="center" justify="flex-end">
-                {item.isPremium && (
-                  <Box style={{ padding: "2px 7px", borderRadius: "5px", fontSize: "0.55rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, letterSpacing: "0.06em", background: "rgba(251,191,36,0.92)", color: "#1a1200" }}>
-                    ✦ Premium
-                  </Box>
-                )}
-              </Flex>
+              <Flex align="center" justify="flex-end" />
               <Box>
                 <Text style={{ fontSize: "0.98rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: "2px" }}>
                   {item.name}
@@ -1789,7 +1721,35 @@ export function ThemeStorePanel({
         </Box>
 
         {/* ── Right content ── */}
-        <Box flex={1} display="flex" flexDirection="column" style={{ minWidth: 0 }}>
+        <Box flex={1} display="flex" flexDirection="column" position="relative" style={{ minWidth: 0 }}>
+          <AnimatePresence>
+            {selectedItem && (
+              <ItemDetailView
+                key={selectedItem.id}
+                item={selectedItem}
+                t={t}
+                purchasing={purchasing}
+                purchaseError={purchaseError}
+                onBack={() => { setSelectedItem(null); setPurchaseError(null); }}
+                onBuy={handleBuy}
+                onOpenPaymentModal={() => { setPurchaseError(null); setPaymentModalOpen(true); }}
+                onStartTrial={
+                  onStartTrial && !selectedItem.isOwned
+                    && selectedItem.category !== "Sticker"
+                    && selectedItem.category !== "AmbientSound"
+                    ? () => { onStartTrial(selectedItem); onClose(); }
+                    : undefined
+                }
+                isTrialing={selectedItem.id === trialItemId}
+                hasActiveTrial={!!trialItemId}
+                canPurchase={canPurchase}
+                onLockedBuy={() => setGateOpen(true)}
+                isWishlisted={wishlistIds.has(selectedItem.id)}
+                onToggleWishlist={() => toggleWishlist(selectedItem.id)}
+                onApplyItem={onApplyItem}
+              />
+            )}
+          </AnimatePresence>
           <Box
             flex={1}
             overflowY="auto"
@@ -1931,36 +1891,6 @@ export function ThemeStorePanel({
           </Box>
         </Box>
       </Flex>
-
-      {/* ── Detail view overlay ── */}
-      <AnimatePresence>
-        {selectedItem && (
-          <ItemDetailView
-            key={selectedItem.id}
-            item={selectedItem}
-            t={t}
-            purchasing={purchasing}
-            purchaseError={purchaseError}
-            onBack={() => { setSelectedItem(null); setPurchaseError(null); }}
-            onBuy={handleBuy}
-            onOpenPaymentModal={() => { setPurchaseError(null); setPaymentModalOpen(true); }}
-            onStartTrial={
-              onStartTrial && !selectedItem.isOwned
-                && selectedItem.category !== "Sticker"
-                && selectedItem.category !== "AmbientSound"
-                ? () => { onStartTrial(selectedItem); onClose(); }
-                : undefined
-            }
-            isTrialing={selectedItem.id === trialItemId}
-            hasActiveTrial={!!trialItemId}
-            canPurchase={canPurchase}
-            onLockedBuy={() => setGateOpen(true)}
-            isWishlisted={wishlistIds.has(selectedItem.id)}
-            onToggleWishlist={() => toggleWishlist(selectedItem.id)}
-            onApplyItem={onApplyItem}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Store payment modal */}
       {paymentModalOpen && selectedItem && (

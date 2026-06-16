@@ -177,7 +177,7 @@
     "settings": "Settings",
     "help": "Help",
     "home": "Home",
-    "about": "About",
+    "feedback": "Send Feedback",
     "signOut": "Sign out",
     "guest": "Guest",
     "demoMode": "Demo mode",
@@ -185,6 +185,17 @@
     "signIn": "Sign in",
     "language": "Language",
     "upgradeToPremium": "Upgrade to Premium"
+  },
+  "feedbackPanel": {
+    "title": "Feedback",
+    "typeFeedback": "Suggestion",
+    "typeBug": "Bug Report",
+    "emailPlaceholder": "Your email address",
+    "contentPlaceholder_feedback": "What suggestions do you have for us?",
+    "contentPlaceholder_bug": "Describe the issue and steps to reproduce it...",
+    "submit_feedback": "Send Suggestion",
+    "submit_bug": "Send Bug Report",
+    "success": "Sent! Thank you for your feedback."
   },
   "widgetPicker": {
     "title": "WIDGETS",
@@ -231,6 +242,7 @@
     "noPurchasedHint": "Visit the store to find ambient sounds"
   },
   "backgrounds": {
+    "title": "BACKGROUNDS",
     "rooms": "Rooms",
     "discover": "Discover",
     "favorites": "Favorites",
@@ -329,7 +341,7 @@
     "noPurchasedHint": "Visit the store to find stickers"
   },
   "about": {
-    "label": "ABOUT",
+    "label": "About",
     "appName": "Aēsthetic Space",
     "desc": "A distraction-free environment crafted to help you focus, stay inspired, and make every study session feel effortless.",
     "contributors": "CONTRIBUTORS",
@@ -345,7 +357,8 @@
     "sessions": "sessions",
     "focusMinutes": "{{minutes}} min focused",
     "tooltip": "{{sessions}} sessions · {{minutes}} min",
-    "noData": "No data yet"
+    "noData": "No data yet",
+    "today": "Today"
   },
   "pomodoroSettings": {
     "title": "Pomodoro Settings",

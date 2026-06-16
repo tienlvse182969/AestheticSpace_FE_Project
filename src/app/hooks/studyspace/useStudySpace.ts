@@ -40,8 +40,7 @@ export function useStudySpace() {
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [activePanel,    setActivePanel]    = useState<ActivePanel>(null);
   const [layoutLocked,   setLayoutLocked]   = useState(false);
-  const [aboutOpen,      setAboutOpen]      = useState(false);
-  const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
+const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const [accountOpen,         setAccountOpen]         = useState(false);
   const [currentBg,           setCurrentBg]           = useState<BackgroundItem>(BACKGROUNDS[3]);
   const [roomId,              setRoomId]              = useState<string | null>(null);
@@ -219,7 +218,6 @@ export function useStudySpace() {
     toolbarVisible, setToolbarVisible,
     activePanel, setActivePanel, togglePanel,
     layoutLocked, toggleLayoutLock,
-    aboutOpen, setAboutOpen,
     activeEffect, setActiveEffect,
     accountOpen, setAccountOpen,
     currentBg, setCurrentBg,

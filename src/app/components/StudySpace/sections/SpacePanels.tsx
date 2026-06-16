@@ -11,7 +11,6 @@ import { RoomManagerPanel }      from "../panels/RoomManagerPanel";
 import { PomodoroStatsPanel }    from "../panels/PomodoroStatsPanel";
 import { QuestPanel }            from "../panels/QuestPanel";
 import { CreateThemePanel }      from "../panels/CreateThemePanel";
-import { AboutModal }            from "../ui/AboutModal";
 import { TrialBanner }           from "../ui/TrialBanner";
 import { TrialExpiredModal }     from "../ui/TrialExpiredModal";
 import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
@@ -32,7 +31,6 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
     currentBg, setCurrentBg,
     activeEffect, setActiveEffect,
     roomId, handleRoomSelect,
-    aboutOpen, setAboutOpen,
     space, saveNow,
   } = ctx;
 
@@ -231,12 +229,6 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onClose={() => setActivePanel(null)}
             onBalanceChange={onCoinBalanceChange}
             currentCoinBalance={coinBalance}
-          />
-        )}
-        {aboutOpen && (
-          <AboutModal
-            key="about-modal"
-            onClose={() => setAboutOpen(false)}
           />
         )}
       </AnimatePresence>

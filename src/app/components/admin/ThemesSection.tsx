@@ -255,7 +255,7 @@ function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
           <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
             Add preview
           </Text>
-          <Box as="input" id={inputId} type="file" accept="image/*"
+          <input id={inputId} type="file" accept="image/*"
             onChange={handleFile} style={{ display: "none" }} />
         </Box>
       )}

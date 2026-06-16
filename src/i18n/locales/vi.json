@@ -177,7 +177,7 @@
     "settings": "Cài đặt",
     "help": "Trợ giúp",
     "home": "Trang chủ",
-    "about": "Giới thiệu",
+    "feedback": "Gửi phản hồi",
     "signOut": "Đăng xuất",
     "guest": "Khách",
     "demoMode": "Chế độ Demo",
@@ -185,6 +185,17 @@
     "signIn": "Đăng nhập",
     "language": "Ngôn ngữ",
     "upgradeToPremium": "Nâng cấp Premium"
+  },
+  "feedbackPanel": {
+    "title": "Phản hồi",
+    "typeFeedback": "Góp ý",
+    "typeBug": "Báo lỗi",
+    "emailPlaceholder": "Địa chỉ email của bạn",
+    "contentPlaceholder_feedback": "Bạn có góp ý gì cho chúng tôi không?",
+    "contentPlaceholder_bug": "Mô tả lỗi và các bước tái hiện...",
+    "submit_feedback": "Gửi góp ý",
+    "submit_bug": "Gửi báo lỗi",
+    "success": "Đã gửi! Cảm ơn bạn đã phản hồi."
   },
   "widgetPicker": {
     "title": "WIDGET",
@@ -231,6 +242,7 @@
     "noPurchasedHint": "Ghé store để tìm âm thanh môi trường"
   },
   "backgrounds": {
+    "title": "HÌNH NỀN",
     "rooms": "Phòng học",
     "discover": "Khám phá",
     "favorites": "Yêu thích",
@@ -329,7 +341,7 @@
     "noPurchasedHint": "Ghé store để tìm nhãn dán"
   },
   "about": {
-    "label": "GIỚI THIỆU",
+    "label": "Giới thiệu",
     "appName": "Aēsthetic Space",
     "desc": "Môi trường không xao nhãng được tạo ra để giúp bạn tập trung, luôn được truyền cảm hứng và làm cho mỗi phiên học trở nên dễ dàng.",
     "contributors": "ĐÓNG GÓP",
@@ -345,7 +357,8 @@
     "sessions": "phiên",
     "focusMinutes": "{{minutes}} phút tập trung",
     "tooltip": "{{sessions}} phiên · {{minutes}} phút",
-    "noData": "Chưa có dữ liệu"
+    "noData": "Chưa có dữ liệu",
+    "today": "H.nay"
   },
   "pomodoroSettings": {
     "title": "Cài đặt Pomodoro",

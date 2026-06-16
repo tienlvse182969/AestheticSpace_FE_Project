@@ -269,12 +269,6 @@ export function QuestPanel({
   const visibleQuests = quests.filter(q => q.category === tab);
   const claimableCount = quests.filter(q => q.status === "claimable").length;
 
-  const tabColor: Record<QuestCategory, string> = {
-    daily: "#60a5fa",
-    weekly: "#a78bfa",
-    achievement: "#fbbf24",
-  };
-
   return (
     <MotionBox
       ref={ref as any}
@@ -343,7 +337,7 @@ export function QuestPanel({
         </Flex>
 
         {/* ── Tabs ── */}
-        <Flex gap={1} mt="12px">
+        <Flex gap={1} mt="12px" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: "10px" }}>
           {TABS.map((cat) => {
             const count = quests.filter(q => q.category === cat && q.status === "claimable").length;
             const active = tab === cat;
@@ -352,33 +346,31 @@ export function QuestPanel({
                 key={cat}
                 as="button"
                 onClick={() => setTab(cat)}
-                flex={1}
-                py="6px"
-                borderRadius="8px"
                 style={{
-                  fontSize: "0.65rem",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  fontWeight: active ? 700 : 500,
-                  letterSpacing: "0.06em",
-                  background: active ? `${tabColor[cat]}18` : "transparent",
-                  border: active ? `1px solid ${tabColor[cat]}40` : "1px solid transparent",
-                  color: active ? tabColor[cat] : "rgba(255,255,255,0.35)",
+                  padding: "6px 14px",
+                  borderRadius: "8px",
                   cursor: "pointer",
+                  fontSize: "0.76rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  fontWeight: active ? 600 : 400,
+                  color: active ? "#fff" : "rgba(255,255,255,0.45)",
+                  background: active ? "rgba(255,255,255,0.1)" : "transparent",
+                  border: "none",
                   transition: "all 0.15s",
-                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
                 }}
               >
                 {t(CATEGORY_KEYS[cat])}
                 {count > 0 && (
                   <Box
                     style={{
-                      position: "absolute",
-                      top: -3,
-                      right: 6,
-                      width: 7,
-                      height: 7,
+                      width: 6,
+                      height: 6,
                       borderRadius: "50%",
                       background: "#4ade80",
+                      flexShrink: 0,
                     }}
                   />
                 )}
