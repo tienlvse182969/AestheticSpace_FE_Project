@@ -408,7 +408,11 @@
     "skipBreakTitle": "Bỏ qua thời gian nghỉ?",
     "skipBreakDesc": "Bạn vẫn còn thời gian nghỉ. Bỏ qua và bắt đầu phiên tiếp theo ngay bây giờ?",
     "skipBreakConfirm": "Bỏ qua nghỉ",
-    "skipBreakCancel": "Tiếp tục nghỉ"
+    "skipBreakCancel": "Tiếp tục nghỉ",
+    "focusEndTitle": "Hoàn thành phiên tập trung!",
+    "focusEndBody": "Làm tốt lắm! Đến giờ nghỉ rồi.",
+    "breakEndTitle": "Hết giờ nghỉ!",
+    "breakEndBody": "Sẵn sàng cho phiên tập trung tiếp theo chưa?"
   },
   "clockSettings": {
     "title": "Cài đặt đồng hồ",
@@ -447,6 +451,7 @@
   },
   "settings": {
     "title": "Cài đặt",
+    "display": "Hiển thị",
     "appearance": "Giao diện",
     "darkMode": "Chế độ tối",
     "darkModeDesc": "Chuyển đổi giữa giao diện tối và sáng",
@@ -459,7 +464,27 @@
     "notifUnsupported": "Trình duyệt không hỗ trợ tính năng này",
     "accentColor": "Màu chủ đạo",
     "accentColorDesc": "Áp dụng cho widget và các điểm nhấn giao diện",
-    "custom": "Tùy chỉnh"
+    "custom": "Tùy chỉnh",
+    "accountSection": "Tài khoản",
+    "changeUsername": "Đổi tên người dùng",
+    "changeUsernamePlaceholder": "Tên người dùng mới",
+    "changeUsernameSave": "Lưu",
+    "changeUsernameSuccess": "Đã đổi tên thành công!",
+    "changeUsernameError": "Không thể đổi tên. Vui lòng thử lại.",
+    "resetPassword": "Đặt lại mật khẩu",
+    "resetPasswordDesc": "Gửi liên kết đặt lại mật khẩu đến email của bạn.",
+    "resetPasswordSend": "Gửi email đặt lại",
+    "resetPasswordSent": "Đã gửi! Kiểm tra hộp thư của bạn.",
+    "resetPasswordError": "Không thể gửi email. Vui lòng thử lại.",
+    "topUpCoins": "Nạp xu bằng VNPAY",
+    "topUpCoinsDesc": "Chọn gói xu bên dưới để thanh toán qua VNPAY.",
+    "topUpComingSoon": "Sắp ra mắt",
+    "coins": "xu",
+    "vnd": "đ",
+    "toolbarPosition": "Vị trí thanh công cụ",
+    "toolbarBottom": "Dưới",
+    "toolbarLeft": "Trái",
+    "toolbarRight": "Phải"
   },
   "premiumGate": {
     "title": "Tính năng Premium",

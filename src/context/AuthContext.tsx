@@ -20,6 +20,7 @@ interface AuthContextValue {
   googleLogin: (idToken: string) => Promise<void>;
   logout: () => void;
   refreshAccountTier: (newTier: string) => void;
+  updateUsername: (newUsername: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -107,8 +108,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateUsername = useCallback(async (newUsername: string) => {
+    await authService.updateUsername(newUsername);
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, name: newUsername };
+      saveUser(updated, tokenStore.isRemembered());
+      return updated;
+    });
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, register, googleLogin, logout, refreshAccountTier }}>
+    <AuthContext.Provider value={{ user, isLoading, login, register, googleLogin, logout, refreshAccountTier, updateUsername }}>
       {children}
     </AuthContext.Provider>
   );
