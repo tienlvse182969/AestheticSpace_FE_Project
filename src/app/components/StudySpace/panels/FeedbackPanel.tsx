@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { MessageSquare, CheckCircle } from "lucide-react";
+import { MessageSquare, CheckCircle, ImagePlus, X } from "lucide-react";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { useAuth } from "../../../../context/AuthContext";
@@ -33,8 +33,24 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
   const [type, setType]       = useState<FeedbackType>("feedback");
   const [email, setEmail]     = useState("");
   const [content, setContent] = useState("");
+  const [images, setImages]   = useState<{ file: File; preview: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    const next = files.map(file => ({ file, preview: URL.createObjectURL(file) }));
+    setImages(prev => [...prev, ...next].slice(0, 5));
+    e.target.value = "";
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => {
+      URL.revokeObjectURL(prev[index].preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
 
   const isGuest  = !user;
   const canSubmit = content.trim().length > 0 && (!isGuest || email.trim().length > 0);
@@ -189,6 +205,87 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
                   lineHeight: 1.6,
                 }}
               />
+            </Box>
+
+            {/* Image upload */}
+            <Box mb={3}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: "none" }}
+                onChange={handleImageChange}
+                onPointerDown={e => e.stopPropagation()}
+              />
+              <Flex align="center" gap={2} mb={images.length > 0 ? 2 : 0}>
+                <Box
+                  as="button"
+                  border="none"
+                  onClick={() => { if (images.length < 5) fileInputRef.current?.click(); }}
+                  onPointerDown={e => (e as React.PointerEvent).stopPropagation()}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    height: 30,
+                    padding: "0 10px",
+                    borderRadius: 7,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    color: "rgba(255,255,255,0.5)",
+                    fontSize: "0.75rem",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    cursor: images.length >= 5 ? "not-allowed" : "pointer",
+                    opacity: images.length >= 5 ? 0.45 : 1,
+                    transition: "background 0.15s",
+                  }}
+                >
+                  <ImagePlus size={13} />
+                  {t("feedbackPanel.attachImages")}
+                </Box>
+                {images.length > 0 && (
+                  <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.25)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {images.length}/5
+                  </Text>
+                )}
+              </Flex>
+
+              {images.length > 0 && (
+                <Flex gap={2} style={{ flexWrap: "wrap" }}>
+                  {images.map((img, i) => (
+                    <Box key={i} position="relative" style={{ width: 58, height: 58, borderRadius: 7, overflow: "hidden", flexShrink: 0 }}>
+                      <img
+                        src={img.preview}
+                        alt=""
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                      />
+                      <Box
+                        as="button"
+                        border="none"
+                        onClick={() => removeImage(i)}
+                        onPointerDown={e => (e as React.PointerEvent).stopPropagation()}
+                        position="absolute"
+                        top="2px"
+                        right="2px"
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: "50%",
+                          background: "rgba(0,0,0,0.7)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        <X size={9} color="rgba(255,255,255,0.85)" />
+                      </Box>
+                    </Box>
+                  ))}
+                </Flex>
+              )}
             </Box>
 
             {/* Submit */}

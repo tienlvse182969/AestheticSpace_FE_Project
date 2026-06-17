@@ -195,7 +195,8 @@
     "contentPlaceholder_bug": "Describe the issue and steps to reproduce it...",
     "submit_feedback": "Send Suggestion",
     "submit_bug": "Send Bug Report",
-    "success": "Sent! Thank you for your feedback."
+    "success": "Sent! Thank you for your feedback.",
+    "attachImages": "Attach images"
   },
   "widgetPicker": {
     "title": "WIDGETS",

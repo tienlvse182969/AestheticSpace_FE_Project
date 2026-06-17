@@ -195,7 +195,8 @@
     "contentPlaceholder_bug": "Mô tả lỗi và các bước tái hiện...",
     "submit_feedback": "Gửi góp ý",
     "submit_bug": "Gửi báo lỗi",
-    "success": "Đã gửi! Cảm ơn bạn đã phản hồi."
+    "success": "Đã gửi! Cảm ơn bạn đã phản hồi.",
+    "attachImages": "Đính kèm hình ảnh"
   },
   "widgetPicker": {
     "title": "WIDGET",

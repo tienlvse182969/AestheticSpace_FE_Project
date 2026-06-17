@@ -836,12 +836,13 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         <PanelCloseBtn onClose={onClose} />
 
         <Text mb="16px" style={{
-          fontSize: "0.6rem",
-          color: "rgba(255,255,255,0.22)",
-          letterSpacing: "0.14em",
+          fontSize: "1.35rem",
+          fontWeight: 700,
+          color: "rgba(255,255,255,0.88)",
+          letterSpacing: "-0.01em",
           fontFamily: "'HarmonyOS Sans', sans-serif",
         }}>
-          {NAV_LABELS[activeNav].toUpperCase()}
+          {NAV_LABELS[activeNav]}
         </Text>
 
         {renderContent()}
