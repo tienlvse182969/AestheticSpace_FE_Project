@@ -255,16 +255,16 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                   }),
                 }}
               >
-                <ToolbarBtn icon={<LayoutDashboard size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} />
-                <ToolbarBtn icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} />
-                <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} />
-                <ToolbarBtn icon={<ShoppingBag size={22} />}     active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("themeStore.tooltip")} />
-                <ToolbarBtn icon={<Sparkles size={22} />}      active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} />
-                <ToolbarBtn icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} locked={isFree} onClick={() => isFree ? handleLockedClick("ambient") : togglePanel("ambient")} tooltip={t("space.ambientSounds")} />
-                <ToolbarBtn icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} />
-                <ToolbarBtn icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" />
-                <ToolbarBtn icon={<BarChart2 size={22} />} active={activePanel === "pomodoro-stats"} onClick={() => togglePanel("pomodoro-stats")} tooltip="Phân tích Pomodoro" />
-                <ToolbarBtn icon={<Settings size={22} />}  active={activePanel === "settings"}       onClick={() => togglePanel("settings")}       tooltip={t("settings.title")} />
+                <ToolbarBtn icon={<LayoutDashboard size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} position={position} />
+                <ToolbarBtn icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} position={position} />
+                <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} position={position} />
+                <ToolbarBtn icon={<ShoppingBag size={22} />}     active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("themeStore.tooltip")} position={position} />
+                <ToolbarBtn icon={<Sparkles size={22} />}      active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} position={position} />
+                <ToolbarBtn icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} locked={isFree} onClick={() => isFree ? handleLockedClick("ambient") : togglePanel("ambient")} tooltip={t("space.ambientSounds")} position={position} />
+                <ToolbarBtn icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} position={position} />
+                <ToolbarBtn icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" position={position} />
+                <ToolbarBtn icon={<BarChart2 size={22} />} active={activePanel === "pomodoro-stats"} onClick={() => togglePanel("pomodoro-stats")} tooltip="Phân tích Pomodoro" position={position} />
+                <ToolbarBtn icon={<Settings size={22} />}  active={activePanel === "settings"}       onClick={() => togglePanel("settings")}       tooltip={t("settings.title")} position={position} />
 
                 {/* Account avatar button */}
                 <Box

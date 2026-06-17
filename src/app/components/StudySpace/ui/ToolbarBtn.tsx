@@ -1,21 +1,39 @@
 import { Box } from "@chakra-ui/react";
 import { Lock } from "lucide-react";
 
+type ToolbarPosition = "bottom" | "left" | "right";
+
 interface ToolbarBtnProps {
   icon: React.ReactNode;
   active: boolean;
   onClick: () => void;
   tooltip: string;
   locked?: boolean;
+  position?: ToolbarPosition;
 }
 
-export function ToolbarBtn({ icon, active, onClick, tooltip, locked = false }: ToolbarBtnProps) {
+function getActiveTransform(position: ToolbarPosition) {
+  if (position === "left")  return "scale(1.15) translateX(2px)";
+  if (position === "right") return "scale(1.15) translateX(-2px)";
+  return "scale(1.15) translateY(-2px)";
+}
+
+export function ToolbarBtn({ icon, active, onClick, tooltip, locked = false, position = "bottom" }: ToolbarBtnProps) {
+  const activeTransform = getActiveTransform(position);
+  const dotProps =
+    position === "left"  ? { mr: "4px", w: "4px", h: "4px" } :
+    position === "right" ? { ml: "4px", w: "4px", h: "4px" } :
+                           { mt: "4px", w: "4px", h: "4px" };
+  const flexDir =
+    position === "left"  ? "row-reverse" :
+    position === "right" ? "row" :
+                           "column";
   return (
     <Box
       as="button"
       onClick={onClick}
       display="flex"
-      flexDirection="column"
+      flexDirection={flexDir as any}
       alignItems="center"
       justifyContent="center"
       bg="transparent"
@@ -26,20 +44,18 @@ export function ToolbarBtn({ icon, active, onClick, tooltip, locked = false }: T
       position="relative"
       style={{
         color: locked ? "rgba(255,255,255,0.28)" : active ? "#7aab97" : "rgba(255,255,255,0.55)",
-        transform: (!locked && active) ? "scale(1.15) translateY(-2px)" : "scale(1)",
+        transform: (!locked && active) ? activeTransform : "scale(1)",
         opacity: locked ? 0.55 : 1,
       }}
       _hover={locked ? {} : {
         color: active ? "#8abfac" : "rgba(255,255,255,0.88)",
-        transform: "scale(1.15) translateY(-2px)",
+        transform: activeTransform,
       }}
     >
       {icon}
       {!locked && active && (
         <Box
-          mt="4px"
-          w="4px"
-          h="4px"
+          {...dotProps}
           borderRadius="full"
           style={{ background: "#7aab97" }}
         />
