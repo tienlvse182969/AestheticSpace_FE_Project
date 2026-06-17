@@ -49,18 +49,18 @@ export function DraggableWidget({ children, initialX, initialY, onRemove, onDrag
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Top bar: grip handle + extra controls + remove button — hidden when locked */}
-      {!locked && (
-        <Flex
-          justify="space-between"
-          align="center"
-          px="6px"
-          pb="4px"
-          style={{ height: 20, opacity: hovered ? 1 : 0, transition: "opacity 0.2s" }}
-        >
-          <GripHorizontal size={14} color="rgba(255,255,255,0.45)" />
-          <Flex align="center" gap="4px">
-            {extraControls}
+      {/* Top bar: grip + extra controls + remove when unlocked; only extra controls when locked */}
+      <Flex
+        justify={locked ? "flex-end" : "space-between"}
+        align="center"
+        px="6px"
+        pb="4px"
+        style={{ height: 20, opacity: hovered ? 1 : 0, transition: "opacity 0.2s" }}
+      >
+        {!locked && <GripHorizontal size={14} color="rgba(255,255,255,0.45)" />}
+        <Flex align="center" gap="4px">
+          {extraControls}
+          {!locked && (
             <Box
               as="button"
               onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRemove(); }}
@@ -78,10 +78,9 @@ export function DraggableWidget({ children, initialX, initialY, onRemove, onDrag
             >
               <X size={10} />
             </Box>
-          </Flex>
+          )}
         </Flex>
-      )}
-      {locked && <Box style={{ height: 20 }} />}
+      </Flex>
 
       {/* Widget content */}
       {children}
