@@ -409,7 +409,11 @@
     "skipBreakTitle": "Skip break time?",
     "skipBreakDesc": "You still have break time remaining. Skip it and start the next session now?",
     "skipBreakConfirm": "Skip Break",
-    "skipBreakCancel": "Keep Resting"
+    "skipBreakCancel": "Keep Resting",
+    "focusEndTitle": "Focus session complete!",
+    "focusEndBody": "Great work! Time to take a break.",
+    "breakEndTitle": "Break time's up!",
+    "breakEndBody": "Ready for the next focus session?"
   },
   "clockSettings": {
     "title": "Clock Settings",
@@ -448,6 +452,7 @@
   },
   "settings": {
     "title": "Settings",
+    "display": "Display",
     "appearance": "Appearance",
     "darkMode": "Dark mode",
     "darkModeDesc": "Toggle between dark and light interface",
@@ -460,7 +465,27 @@
     "notifUnsupported": "Not supported in this browser",
     "accentColor": "Accent color",
     "accentColorDesc": "Applied to widgets and UI highlights",
-    "custom": "Custom"
+    "custom": "Custom",
+    "accountSection": "Account",
+    "changeUsername": "Change Username",
+    "changeUsernamePlaceholder": "New username",
+    "changeUsernameSave": "Save",
+    "changeUsernameSuccess": "Username updated successfully!",
+    "changeUsernameError": "Failed to update username. Please try again.",
+    "resetPassword": "Reset Password",
+    "resetPasswordDesc": "Send a password reset link to your email.",
+    "resetPasswordSend": "Send reset email",
+    "resetPasswordSent": "Sent! Check your inbox.",
+    "resetPasswordError": "Failed to send email. Please try again.",
+    "topUpCoins": "Top Up Coins via VNPAY",
+    "topUpCoinsDesc": "Select a coin pack below to pay via VNPAY.",
+    "topUpComingSoon": "Coming soon",
+    "coins": "coins",
+    "vnd": "₫",
+    "toolbarPosition": "Toolbar Position",
+    "toolbarBottom": "Bottom",
+    "toolbarLeft": "Left",
+    "toolbarRight": "Right"
   },
   "premiumGate": {
     "title": "Premium Feature",

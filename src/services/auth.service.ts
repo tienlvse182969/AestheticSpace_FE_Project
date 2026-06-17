@@ -32,6 +32,11 @@ export const authService = {
     return data;
   },
 
+  updateUsername: async (newUsername: string) => {
+    const { data } = await api.put<ApiResponse<{ newUsername: string }>>("/auth/username", { newUsername });
+    return data.data;
+  },
+
   logout: () => {
     tokenStore.clearTokens();
   },

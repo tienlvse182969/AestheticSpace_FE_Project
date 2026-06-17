@@ -56,11 +56,19 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     return () => clearInterval(id);
   }, [running]);
 
+  /* ── Browser notification helper ── */
+  const notify = (title: string, body: string) => {
+    if (localStorage.getItem("notifications") !== "enabled") return;
+    if (Notification.permission !== "granted") return;
+    new Notification(title, { body, icon: "/favicon.ico" });
+  };
+
   /* ── Timer hits 0 ── */
   useEffect(() => {
     if (seconds === 0 && running) {
       setRunning(false);
       if (phase === "focus") {
+        notify(t("pomodoroWidget.focusEndTitle"), t("pomodoroWidget.focusEndBody"));
         if (user && currentSessionId) {
           pomodoroService.end(currentSessionId).catch(() => {});
           setCurrentSessionId(null);
@@ -68,6 +76,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
         setPhase("idle");
         setDialog("break-prompt");
       } else if (phase === "break") {
+        notify(t("pomodoroWidget.breakEndTitle"), t("pomodoroWidget.breakEndBody"));
         setPhase("idle");
         setDialog("next-prompt");
       }

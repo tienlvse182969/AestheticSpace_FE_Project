@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, Flex } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
-  ChevronUp, ChevronDown,
+  ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
   Image as ImageIcon, LayoutGrid, Sparkles, ShoppingBag,
   AudioWaveform, Settings, Wand2, LayoutDashboard, BarChart2, Trophy,
 } from "lucide-react";
+import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
 import { PremiumGateModal, type LockedFeature } from "../ui/PremiumGateModal";
@@ -33,6 +34,31 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
 
   const isFree = !!currentUser && currentUser.accountTier?.toLowerCase() !== "premium";
   const [gateFeature, setGateFeature] = useState<LockedFeature | null>(null);
+  const [nearToolbar, setNearToolbar] = useState(false);
+  const { position } = useToolbarPosition();
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      const threshold = toolbarVisible ? 110 : 52;
+      let near = false;
+      if (position === "bottom") near = e.clientY > window.innerHeight - threshold;
+      else if (position === "left")  near = e.clientX < threshold;
+      else                           near = e.clientX > window.innerWidth - threshold;
+
+      if (near) {
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        setNearToolbar(true);
+      } else {
+        hideTimerRef.current = setTimeout(() => setNearToolbar(false), 350);
+      }
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, [position, toolbarVisible]);
 
   const handleLockedClick = (feature: LockedFeature) => setGateFeature(feature);
 
@@ -101,78 +127,132 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
         onHome={() => navigate("/")}
       />
 
-      {/* ── Arrow toggle ── */}
+      {/* ── Arrow toggle (shown only when near toolbar) ── */}
       <Box
         position="fixed"
-        left={0} right={0}
-        display="flex"
-        justifyContent="center"
         zIndex={30}
         pointerEvents="none"
-        style={{
-          bottom: toolbarVisible ? "72px" : "16px",
-          transition: "bottom 0.35s cubic-bezier(0.4,0,0.2,1)",
+        style={position === "bottom" ? {
+          left: 0, right: 0,
+          bottom: toolbarVisible ? "72px" : "10px",
+          display: "flex", justifyContent: "center",
+          transition: "bottom 0.3s cubic-bezier(0.4,0,0.2,1)",
+        } : position === "left" ? {
+          top: 0, bottom: 0,
+          left: toolbarVisible ? "72px" : "10px",
+          display: "flex", alignItems: "center",
+          transition: "left 0.3s cubic-bezier(0.4,0,0.2,1)",
+        } : {
+          top: 0, bottom: 0,
+          right: toolbarVisible ? "72px" : "10px",
+          display: "flex", alignItems: "center",
+          transition: "right 0.3s cubic-bezier(0.4,0,0.2,1)",
         }}
       >
-        <Box
-          as="button"
-          onClick={() => setToolbarVisible(v => !v)}
-          display="flex" alignItems="center" justifyContent="center"
-          w="36px" h="36px" borderRadius="full" pointerEvents="auto"
-          style={{
-            background: "rgba(10,15,20,0.65)",
-            backdropFilter: "blur(10px)",
-            WebkitBackdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,255,255,0.18)",
-            color: "rgba(255,255,255,0.8)",
-            cursor: "pointer",
-            transition: "background 0.2s, color 0.2s",
-            boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
-          }}
-          _hover={{ background: "rgba(25,35,45,0.85)", color: "white" }}
-        >
-          <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence initial={false}>
+          {nearToolbar && (
             <MotionBox
-              key={toolbarVisible ? "down" : "up"}
-              initial={{ opacity: 0, y: toolbarVisible ? -5 : 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: toolbarVisible ? 5 : -5 }}
-              transition={{ duration: 0.18 } as any}
-              display="flex" alignItems="center" justifyContent="center"
+              key={`toggle-${position}`}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              transition={{ duration: 0.15, ease: "easeOut" } as any}
+              display="flex"
             >
-              {toolbarVisible ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+              <Box
+                as="button"
+                onClick={() => setToolbarVisible(v => !v)}
+                display="flex" alignItems="center" justifyContent="center"
+                w="36px" h="36px" borderRadius="full" pointerEvents="auto"
+                style={{
+                  background: "rgba(10,15,20,0.65)",
+                  backdropFilter: "blur(10px)",
+                  WebkitBackdropFilter: "blur(10px)",
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  color: "rgba(255,255,255,0.8)",
+                  cursor: "pointer",
+                  transition: "background 0.2s, color 0.2s",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.4)",
+                }}
+                _hover={{ background: "rgba(25,35,45,0.85)", color: "white" }}
+              >
+                <AnimatePresence mode="wait" initial={false}>
+                  <MotionBox
+                    key={toolbarVisible ? "hide" : "show"}
+                    initial={{ opacity: 0, rotate: -30 }}
+                    animate={{ opacity: 1, rotate: 0 }}
+                    exit={{ opacity: 0, rotate: 30 }}
+                    transition={{ duration: 0.14 } as any}
+                    display="flex" alignItems="center" justifyContent="center"
+                  >
+                    {position === "bottom"
+                      ? (toolbarVisible ? <ChevronDown size={18} /> : <ChevronUp size={18} />)
+                      : position === "left"
+                      ? (toolbarVisible ? <ChevronLeft size={18} /> : <ChevronRight size={18} />)
+                      : (toolbarVisible ? <ChevronRight size={18} /> : <ChevronLeft size={18} />)
+                    }
+                  </MotionBox>
+                </AnimatePresence>
+              </Box>
             </MotionBox>
-          </AnimatePresence>
-        </Box>
+          )}
+        </AnimatePresence>
       </Box>
 
-      {/* ── Bottom Toolbar ── */}
+      {/* ── Toolbar ── */}
       <Box
-        position="fixed" bottom={0} left={0} right={0}
-        display="flex" justifyContent="center"
-        zIndex={20} pointerEvents="none"
+        position="fixed"
+        zIndex={20}
+        pointerEvents="none"
+        style={position === "bottom" ? {
+          bottom: 0, left: 0, right: 0,
+          display: "flex", justifyContent: "center",
+        } : position === "left" ? {
+          left: 0, top: 0, bottom: 0,
+          display: "flex", alignItems: "center",
+        } : {
+          right: 0, top: 0, bottom: 0,
+          display: "flex", alignItems: "center",
+        }}
       >
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {toolbarVisible && (
             <MotionBox
-              key="toolbar"
-              initial={{ y: 80, opacity: 0 }}
-              animate={{ y: 0,  opacity: 1 }}
-              exit={{ y: 80,    opacity: 0 }}
-              transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] } as any}
+              key={`toolbar-${position}`}
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.94 }}
+              transition={{ duration: 0.18, ease: [0.25, 0.1, 0.25, 1] } as any}
               pointerEvents="auto"
             >
               <Flex
-                align="center" justify="center" gap={8} px={12} h="64px"
+                direction={position === "bottom" ? "row" : "column"}
+                align="center" justify="center"
+                gap={8}
+                {...(position === "bottom" ? { px: 12, h: "64px" } : { py: 12, w: "64px" })}
                 style={{
                   background: "rgba(10,15,22,0.72)",
                   backdropFilter: "blur(22px)",
                   WebkitBackdropFilter: "blur(22px)",
-                  borderTop:    "1px solid rgba(255,255,255,0.1)",
-                  borderLeft:   "1px solid rgba(255,255,255,0.08)",
-                  borderRight:  "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "18px 18px 0 0",
-                  boxShadow:    "0 -4px 24px rgba(0,0,0,0.3)",
+                  ...(position === "bottom" ? {
+                    borderTop:    "1px solid rgba(255,255,255,0.1)",
+                    borderLeft:   "1px solid rgba(255,255,255,0.08)",
+                    borderRight:  "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "18px 18px 0 0",
+                    boxShadow:    "0 -4px 24px rgba(0,0,0,0.3)",
+                  } : position === "left" ? {
+                    borderRight:  "1px solid rgba(255,255,255,0.1)",
+                    borderTop:    "1px solid rgba(255,255,255,0.08)",
+                    borderBottom: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "0 18px 18px 0",
+                    boxShadow:    "4px 0 24px rgba(0,0,0,0.3)",
+                  } : {
+                    borderLeft:   "1px solid rgba(255,255,255,0.1)",
+                    borderTop:    "1px solid rgba(255,255,255,0.08)",
+                    borderBottom: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "18px 0 0 18px",
+                    boxShadow:    "-4px 0 24px rgba(0,0,0,0.3)",
+                  }),
                 }}
               >
                 <ToolbarBtn icon={<LayoutDashboard size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} />
@@ -197,9 +277,9 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                   transition="all 0.2s"
                   style={{
                     opacity:   accountOpen ? 1 : 0.75,
-                    transform: accountOpen ? "scale(1.1) translateY(-2px)" : "scale(1)",
+                    transform: accountOpen ? "scale(1.1)" : "scale(1)",
                   }}
-                  _hover={{ opacity: 1, transform: "scale(1.1) translateY(-2px)" } as any}
+                  _hover={{ opacity: 1, transform: "scale(1.1)" } as any}
                 >
                   <AvatarCircle user={currentUser} size={30} fontSize="0.72rem" />
                 </Box>
