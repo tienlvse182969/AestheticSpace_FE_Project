@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { Flame, RotateCcw, Play, Pause, Coffee, Zap, X, AlertTriangle } from "lucide-react";
+import { Flame, RotateCcw, Play, Pause, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../../../context/AuthContext";
@@ -73,6 +73,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
           pomodoroService.end(currentSessionId).catch(() => {});
           setCurrentSessionId(null);
         }
+        setSession((s) => s + 1);
         setPhase("idle");
         setDialog("break-prompt");
       } else if (phase === "break") {
@@ -112,7 +113,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     setDialog(null);
   };
 
-  const skipToNext = () => { setSession((s) => s + 1); setDialog(null); startFocus(); };
+  const skipToNext = () => { setDialog(null); startFocus(); };
 
   const performReset = () => {
     startingRef.current = false;
@@ -125,6 +126,15 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
   };
 
   const resetAll = performReset;
+
+  const stopWithoutReset = () => {
+    startingRef.current = false;
+    setRunning(false);
+    setPhase("idle");
+    setSeconds(focusTotal);
+    setDialog(null);
+    setCurrentSessionId(null);
+  };
 
   const handleResetClick = () => {
     if (user && currentSessionId) {
@@ -287,16 +297,8 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
               zIndex: 10,
             }}
           >
-            <Box as="button" position="absolute" top="10px" right="10px"
-              display="flex" alignItems="center" justifyContent="center"
-              w="22px" h="22px" borderRadius="full" onClick={resetAll}
-              style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.4)", cursor: "pointer" }}>
-              <X size={11} />
-            </Box>
-
             {dialog === "cancel-confirm" && (
               <>
-                <AlertTriangle size={28} color="#f97316" style={{ marginBottom: 12, opacity: 0.9 }} />
                 <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
                   {t("pomodoroWidget.cancelConfirmTitle")}
                 </Text>
@@ -318,7 +320,6 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
 
             {dialog === "skip-break-confirm" && (
               <>
-                <Coffee size={28} color="#38bdf8" style={{ marginBottom: 12, opacity: 0.9 }} />
                 <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
                   {t("pomodoroWidget.skipBreakTitle")}
                 </Text>
@@ -327,14 +328,14 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
                 </Text>
                 <Flex gap={2} w="100%">
                   <Box as="button" flex={1} py="9px" borderRadius="10px"
-                    onClick={() => { setPhase("idle"); setDialog("next-prompt"); }}
+                    onClick={() => { setDialog(null); setRunning(true); }}
                     style={{ background: "linear-gradient(135deg,#38bdf8,#818cf8)", color: "#fff", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(56,189,248,0.3)" }}>
-                    {t("pomodoroWidget.skipBreakConfirm")}
+                    {t("pomodoroWidget.skipBreakCancel")}
                   </Box>
                   <Box as="button" flex={1} py="9px" borderRadius="10px"
-                    onClick={() => { setDialog(null); setRunning(true); }}
+                    onClick={() => { setPhase("idle"); setDialog("next-prompt"); }}
                     style={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", border: "1px solid rgba(255,255,255,0.12)", cursor: "pointer" }}>
-                    {t("pomodoroWidget.skipBreakCancel")}
+                    {t("pomodoroWidget.skipBreakConfirm")}
                   </Box>
                 </Flex>
               </>
@@ -342,7 +343,6 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
 
             {dialog === "break-prompt" && (
               <>
-                <Coffee size={28} color="#38bdf8" style={{ marginBottom: 12, opacity: 0.9 }} />
                 <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
                   {t("pomodoroWidget.focusDoneTitle")}
                 </Text>
@@ -364,32 +364,32 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
 
             {dialog === "next-prompt" && (
               <>
-                <Zap size={28} color="#4ade80" style={{ marginBottom: 12, opacity: 0.9 }} />
                 <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
-                  {session >= totalSessions ? t("pomodoroWidget.allDoneTitle") : t("pomodoroWidget.readyNextTitle")}
+                  {session > totalSessions ? t("pomodoroWidget.allDoneTitle") : t("pomodoroWidget.readyNextTitle")}
                 </Text>
                 <Text textAlign="center" mb={5} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.5 }}>
-                  {session >= totalSessions
+                  {session > totalSessions
                     ? t("pomodoroWidget.allDoneDesc", { total: totalSessions })
-                    : t("pomodoroWidget.nextSessionDesc", { next: session + 1, total: totalSessions, minutes: focusMinutes })}
+                    : t("pomodoroWidget.nextSessionDesc", { next: session, total: totalSessions, minutes: focusMinutes })}
                 </Text>
                 <Flex gap={2} w="100%">
-                  {session < totalSessions && (
+                  {session <= totalSessions && (
                     <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={skipToNext}
                       style={{ background: "linear-gradient(135deg,#4ade80,#38bdf8)", color: "#0d2b24", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, border: "none", cursor: "pointer", boxShadow: "0 4px 16px rgba(74,222,128,0.28)" }}>
-                      {t("pomodoroWidget.startNext", { next: session + 1 })}
+                      {t("pomodoroWidget.startNext", { next: session })}
                     </Box>
                   )}
-                  <Box as="button" flex={1} py="9px" borderRadius="10px" onClick={resetAll}
+                  <Box as="button" flex={1} py="9px" borderRadius="10px"
+                    onClick={session > totalSessions ? resetAll : stopWithoutReset}
                     style={{
-                      background: session >= totalSessions ? "linear-gradient(135deg,#4ade80,#38bdf8)" : "rgba(255,255,255,0.07)",
-                      color: session >= totalSessions ? "#0d2b24" : "rgba(255,255,255,0.6)",
+                      background: session > totalSessions ? "linear-gradient(135deg,#4ade80,#38bdf8)" : "rgba(255,255,255,0.07)",
+                      color: session > totalSessions ? "#0d2b24" : "rgba(255,255,255,0.6)",
                       fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif",
-                      fontWeight: session >= totalSessions ? 600 : 400,
-                      border: session >= totalSessions ? "none" : "1px solid rgba(255,255,255,0.12)",
+                      fontWeight: session > totalSessions ? 600 : 400,
+                      border: session > totalSessions ? "none" : "1px solid rgba(255,255,255,0.12)",
                       cursor: "pointer",
                     }}>
-                    {session >= totalSessions ? t("pomodoroWidget.restart") : t("pomodoroWidget.stop")}
+                    {session > totalSessions ? t("pomodoroWidget.restart") : t("pomodoroWidget.stop")}
                   </Box>
                 </Flex>
               </>
