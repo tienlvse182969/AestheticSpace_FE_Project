@@ -174,15 +174,30 @@ export function AccountPanel({
 }: AccountPanelProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [pos, setPos] = useState<{ bottom: number; right: number } | null>(null);
+  const [pos, setPos] = useState<{
+    bottom: number;
+    right?: number;
+    left?: number;
+    transformOrigin: string;
+  } | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   useEffect(() => {
     if (!open || !anchorRef.current) return;
     const rect = anchorRef.current.getBoundingClientRect();
-    setPos({
-      bottom: window.innerHeight - rect.top + 8,
-      right: window.innerWidth - rect.right - rect.width / 2,
-    });
+    const isLeftSide = rect.left < window.innerWidth / 2;
+    if (isLeftSide) {
+      setPos({
+        bottom: window.innerHeight - rect.bottom,
+        left: rect.right + 8,
+        transformOrigin: "bottom left",
+      });
+    } else {
+      setPos({
+        bottom: window.innerHeight - rect.top + 8,
+        right: Math.max(8, window.innerWidth - rect.right - rect.width / 2),
+        transformOrigin: "bottom right",
+      });
+    }
   }, [open, anchorRef]);
 
   const menuItemStyle = {
@@ -212,7 +227,9 @@ export function AccountPanel({
           zIndex={100}
           style={{
             bottom: pos ? `${pos.bottom}px` : "80px",
-            right: pos ? `${Math.max(8, pos.right)}px` : "24px",
+            ...(pos?.left !== undefined
+              ? { left: `${pos.left}px` }
+              : { right: pos ? `${pos.right}px` : "24px" }),
             background: "rgba(12,18,22,0.92)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
@@ -221,7 +238,7 @@ export function AccountPanel({
             padding: "10px",
             minWidth: "240px",
             boxShadow: "0 16px 48px rgba(0,0,0,0.65)",
-            transformOrigin: "bottom right",
+            transformOrigin: pos?.transformOrigin ?? "bottom right",
           }}
         >
           {user ? (
