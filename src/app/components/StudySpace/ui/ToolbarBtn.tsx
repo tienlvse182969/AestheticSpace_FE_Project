@@ -43,12 +43,12 @@ export function ToolbarBtn({ icon, active, onClick, tooltip, locked = false, pos
       transition="all 0.2s"
       position="relative"
       style={{
-        color: locked ? "rgba(255,255,255,0.28)" : active ? "#7aab97" : "rgba(255,255,255,0.55)",
+        color: locked ? "rgba(255,255,255,0.28)" : active ? "var(--accent)" : "rgba(255,255,255,0.55)",
         transform: (!locked && active) ? activeTransform : "scale(1)",
         opacity: locked ? 0.55 : 1,
       }}
       _hover={locked ? {} : {
-        color: active ? "#8abfac" : "rgba(255,255,255,0.88)",
+        color: active ? "rgba(var(--accent-light-rgb), 1)" : "rgba(255,255,255,0.88)",
         transform: activeTransform,
       }}
     >
@@ -57,7 +57,7 @@ export function ToolbarBtn({ icon, active, onClick, tooltip, locked = false, pos
         <Box
           {...dotProps}
           borderRadius="full"
-          style={{ background: "#7aab97" }}
+          style={{ background: "var(--accent)" }}
         />
       )}
       {locked && (
