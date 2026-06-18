@@ -32,6 +32,7 @@ interface WorkspaceSaveParams {
   todoItems: TodoItem[];
   accentColor?: string;
   musicState?: { source: string; activeUrl: string; ytUrl?: string; scUrl?: string };
+  getAmbientSounds?: () => Array<{ id: string; url: string; volume: number }>;
   captureScreenshot?: () => Promise<string | null>;
   onNewUser?: () => void;
   onRestore: (data: {
@@ -57,6 +58,7 @@ export function useWorkspaceAutoSave({
   todoItems,
   accentColor,
   musicState,
+  getAmbientSounds,
   captureScreenshot,
   onNewUser,
   onRestore,
@@ -79,6 +81,10 @@ export function useWorkspaceAutoSave({
       clockSettings, pomodoroSettings, todoItems, accentColor, musicState,
     };
   });
+
+  // Stable ref so saveNow always calls the latest getter without closure issues
+  const getAmbientSoundsRef = useRef(getAmbientSounds);
+  useEffect(() => { getAmbientSoundsRef.current = getAmbientSounds; });
 
   // Restore workspace on mount when user is logged in
   useEffect(() => {
@@ -143,6 +149,7 @@ export function useWorkspaceAutoSave({
           todoItems:       s.todoItems,
           accentColor:     s.accentColor,
           musicState:      s.musicState,
+          ambientSounds:   getAmbientSoundsRef.current?.(),
         };
         const thumbnail = captureScreenshot ? await captureScreenshot() : null;
         await workspaceService.saveWorkspace({

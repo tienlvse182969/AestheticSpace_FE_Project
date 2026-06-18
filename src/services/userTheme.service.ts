@@ -8,6 +8,7 @@ export interface UserThemeSubmission {
   name: string;
   description: string | null;
   assetUrl: string | null;
+  previewUrl: string | null;
   themeStickerItemId: string | null;
   themeBackgroundItemId: string | null;
   themeEffectItemId: string | null;
@@ -25,12 +26,18 @@ export interface SubmitThemeDto {
   name: string;
   description?: string;
   assetUrl: string;
+  previewUrl?: string;
+  // Store item UUIDs (inventory items only)
   themeStickerItemId?: string;
   themeBackgroundItemId?: string;
   themeEffectItemId?: string;
   themeAmbientSoundItemId?: string;
   coinPrice?: number;
   realMoneyPriceVnd?: number;
+  // Custom uploaded asset URLs — pending backend support for these fields
+  customBackgroundUrl?: string;
+  customStickerUrl?: string;
+  customAmbientSoundUrl?: string;
 }
 
 interface PagedData<T> {
@@ -54,6 +61,11 @@ export const userThemeService = {
       params: { page, pageSize },
     });
     return data.data?.items ?? [];
+  },
+
+  update: async (id: string, dto: SubmitThemeDto): Promise<UserThemeSubmission> => {
+    const { data } = await api.put<ApiResponse<UserThemeSubmission>>(`/me/themes/${id}`, dto);
+    return data.data;
   },
 
   withdraw: async (id: string): Promise<void> => {

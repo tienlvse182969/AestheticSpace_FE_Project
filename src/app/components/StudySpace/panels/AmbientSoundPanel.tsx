@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -209,7 +209,18 @@ function SoundCard({
 }
 
 /* ── Main panel ─────────────────────────────────────────────────────────── */
-export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
+interface AmbientSoundPanelProps {
+  onClose: () => void;
+  activeIds: Set<string>;
+  volumeMap: Record<string, number>;
+  onToggle: (id: string, url: string, defaultVolume: number) => void;
+  onVolume: (id: string, val: number) => void;
+  onInitVolume: (id: string, defaultVol: number) => void;
+}
+
+export function AmbientSoundPanel({
+  onClose, activeIds, volumeMap, onToggle, onVolume, onInitVolume,
+}: AmbientSoundPanelProps) {
   const { t } = useTranslation();
   const { x, y, ref } = useCenteredPanel(548, 580);
 
@@ -225,11 +236,6 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
   const [purchasedLoading, setPurchasedLoading] = useState(false);
   const [purchasedError,   setPurchasedError]   = useState<string | null>(null);
 
-  /* Unified audio state keyed by sound ID */
-  const [activeIds,  setActiveIds]  = useState<Set<string>>(new Set());
-  const [volumeMap,  setVolumeMap]  = useState<Record<string, number>>({});
-  const audioMapRef = useRef<Map<string, HTMLAudioElement>>(new Map());
-
   /* ── Fetch default sounds ── */
   const fetchDefault = useCallback(async () => {
     setDefaultLoading(true);
@@ -243,17 +249,13 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
         colorHint: s.category,
         defaultVolume: s.defaultVolume ?? 50,
       })));
-      setVolumeMap(prev => {
-        const next = { ...prev };
-        result.forEach(s => { if (!(s.id in next)) next[s.id] = s.defaultVolume ?? 50; });
-        return next;
-      });
+      result.forEach(s => onInitVolume(s.id, s.defaultVolume ?? 50));
     } catch {
       setDefaultError(t("ambient.loadError"));
     } finally {
       setDefaultLoading(false);
     }
-  }, [t]);
+  }, [t, onInitVolume]);
 
   /* ── Fetch purchased sounds ── */
   const fetchPurchased = useCallback(async () => {
@@ -269,70 +271,18 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
         colorHint: item.name,
         defaultVolume: 50,
       })));
-      setVolumeMap(prev => {
-        const next = { ...prev };
-        filtered.forEach(item => { if (!(item.storeItemId in next)) next[item.storeItemId] = 50; });
-        return next;
-      });
+      filtered.forEach(item => onInitVolume(item.storeItemId, 50));
     } catch {
       setPurchasedError(t("ambient.loadError"));
     } finally {
       setPurchasedLoading(false);
     }
-  }, [t]);
+  }, [t, onInitVolume]);
 
   useEffect(() => { fetchDefault(); }, [fetchDefault]);
   useEffect(() => { if (tab === "purchased") fetchPurchased(); }, [tab, fetchPurchased]);
 
-  /* ── Cleanup audio on unmount ── */
-  useEffect(() => {
-    return () => {
-      audioMapRef.current.forEach((audio) => { audio.pause(); audio.src = ""; });
-      audioMapRef.current.clear();
-    };
-  }, []);
-
   const allSounds = [...defaultSounds, ...purchasedSounds];
-
-  /* ── Sync audio play/pause ── */
-  useEffect(() => {
-    allSounds.forEach(sound => {
-      if (!sound.url) return;
-      let audio = audioMapRef.current.get(sound.id);
-      if (activeIds.has(sound.id)) {
-        if (!audio) {
-          audio = new Audio(sound.url);
-          audio.loop = true;
-          audioMapRef.current.set(sound.id, audio);
-        }
-        audio.volume = (volumeMap[sound.id] ?? 50) / 100;
-        audio.play().catch(() => {/* autoplay blocked */});
-      } else if (audio) {
-        audio.pause();
-      }
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIds, allSounds.map(s => s.id).join(",")]);
-
-  /* ── Sync volume ── */
-  useEffect(() => {
-    allSounds.forEach(sound => {
-      const audio = audioMapRef.current.get(sound.id);
-      if (audio) audio.volume = (volumeMap[sound.id] ?? 50) / 100;
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [volumeMap]);
-
-  /* ── Handlers ── */
-  const toggle = (id: string) =>
-    setActiveIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-
-  const setVol = (id: string, val: number) =>
-    setVolumeMap(prev => ({ ...prev, [id]: val }));
 
   /* ── Derived ── */
   const activeSoundEntries = allSounds.filter(s => activeIds.has(s.id));
@@ -413,8 +363,8 @@ export function AmbientSoundPanel({ onClose }: { onClose: () => void }) {
             color={resolveColor(s.colorHint, i)}
             isOn={activeIds.has(s.id)}
             volume={volumeMap[s.id] ?? s.defaultVolume}
-            onToggle={() => toggle(s.id)}
-            onVolume={(v) => setVol(s.id, v)}
+            onToggle={() => { if (s.url) onToggle(s.id, s.url, s.defaultVolume); }}
+            onVolume={(v) => onVolume(s.id, v)}
           />
         ))}
       </Box>

@@ -5,7 +5,7 @@ import {
   ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
   Sparkles, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
   Crown, Search, X, Heart, Package, Play, Pause, PlusCircle,
-  Loader2, Trash2, AlertCircle,
+  Loader2, Trash2, AlertCircle, Pencil,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
@@ -42,6 +42,7 @@ interface Props {
   trialItemId?: string;
   initialDetailItemId?: string;
   onOpenCreate?: () => void;
+  onOpenEdit?: (theme: UserThemeSubmission) => void;
 }
 
 type TabValue = "all" | "purchased" | "wishlist" | "my-themes" | StoreCategory;
@@ -1109,10 +1110,12 @@ function MyThemeCard({
   theme,
   withdrawing,
   onWithdraw,
+  onEdit,
 }: {
   theme: UserThemeSubmission;
   withdrawing: boolean;
   onWithdraw: (id: string) => void;
+  onEdit?: (theme: UserThemeSubmission) => void;
 }) {
   const cfg = STATUS_CONFIG[theme.status];
   const StatusIcon = cfg.icon;
@@ -1200,30 +1203,53 @@ function MyThemeCard({
           </Flex>
         </Box>
 
-        {/* Withdraw button */}
+        {/* Action buttons */}
         {canWithdraw && (
-          <Box
-            as="button"
-            onClick={() => onWithdraw(theme.id)}
-            border="none"
-            cursor={withdrawing ? "not-allowed" : "pointer"}
-            borderRadius="6px"
-            flexShrink={0}
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            style={{
-              width: 28, height: 28,
-              background: "transparent",
-              color: "rgba(255,255,255,0.22)",
-              transition: "all 0.15s",
-              opacity: withdrawing ? 0.5 : 1,
-            }}
-            _hover={{ background: "rgba(248,113,113,0.15) !important", color: "rgba(248,113,113,0.8) !important" }}
-            title="Rút lại theme"
-          >
-            {withdrawing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={12} />}
-          </Box>
+          <Flex gap="4px" flexShrink={0}>
+            {onEdit && (
+              <Box
+                as="button"
+                onClick={() => onEdit(theme)}
+                border="none"
+                cursor="pointer"
+                borderRadius="6px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                style={{
+                  width: 28, height: 28,
+                  background: "transparent",
+                  color: "rgba(255,255,255,0.22)",
+                  transition: "all 0.15s",
+                }}
+                _hover={{ background: "rgba(99,102,241,0.15) !important", color: "rgba(129,140,248,0.8) !important" }}
+                title="Chỉnh sửa theme"
+              >
+                <Pencil size={12} />
+              </Box>
+            )}
+            <Box
+              as="button"
+              onClick={() => onWithdraw(theme.id)}
+              border="none"
+              cursor={withdrawing ? "not-allowed" : "pointer"}
+              borderRadius="6px"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              style={{
+                width: 28, height: 28,
+                background: "transparent",
+                color: "rgba(255,255,255,0.22)",
+                transition: "all 0.15s",
+                opacity: withdrawing ? 0.5 : 1,
+              }}
+              _hover={{ background: "rgba(248,113,113,0.15) !important", color: "rgba(248,113,113,0.8) !important" }}
+              title="Rút lại theme"
+            >
+              {withdrawing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={12} />}
+            </Box>
+          </Flex>
         )}
       </Flex>
 
@@ -1263,6 +1289,7 @@ export function ThemeStorePanel({
   trialItemId,
   initialDetailItemId,
   onOpenCreate,
+  onOpenEdit,
 }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -1844,6 +1871,7 @@ export function ThemeStorePanel({
                         theme={theme}
                         withdrawing={withdrawingId === theme.id}
                         onWithdraw={handleWithdraw}
+                        onEdit={onOpenEdit}
                       />
                     ))}
                   </Box>

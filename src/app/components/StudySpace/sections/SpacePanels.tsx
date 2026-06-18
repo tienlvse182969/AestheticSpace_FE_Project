@@ -16,6 +16,7 @@ import { TrialExpiredModal }     from "../ui/TrialExpiredModal";
 import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
 import type { StoreItem }        from "../../../../services/aestheticStore.service";
 import type { BackgroundItem }   from "../types";
+import type { UserThemeSubmission } from "../../../../services/userTheme.service";
 
 const TRIAL_DURATION = 600; // 10 minutes in seconds
 
@@ -32,12 +33,14 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
     activeEffect, setActiveEffect,
     roomId, handleRoomSelect,
     space, saveNow,
+    ambient,
   } = ctx;
 
   const [trialItem, setTrialItem]               = useState<StoreItem | null>(null);
   const [trialSecondsLeft, setTrialSecondsLeft] = useState(0);
   const [expiredItem, setExpiredItem]           = useState<StoreItem | null>(null);
   const [buyItemId, setBuyItemId]               = useState<string | undefined>(undefined);
+  const [editingTheme, setEditingTheme]         = useState<UserThemeSubmission | null>(null);
 
   // Ref for the original background before a Background trial — avoids stale closure issues
   const trialOriginalBgRef = useRef<BackgroundItem | null>(null);
@@ -118,7 +121,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
   }, [setCurrentBg, saveNow, space]);
 
   return (
-    <div className="no-capture">
+    <div className="no-capture" onPointerDown={ambient.tryResumePending}>
       {/* ── Trial banner (persists when store is closed) ── */}
       <AnimatePresence>
         {trialItem && trialSecondsLeft > 0 && (
@@ -180,19 +183,26 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onApplyItem={handleApplyItem}
             trialItemId={trialItem?.id}
             initialDetailItemId={buyItemId}
-            onOpenCreate={() => setActivePanel("create-theme")}
+            onOpenCreate={() => { setEditingTheme(null); setActivePanel("create-theme"); }}
+            onOpenEdit={(theme) => { setEditingTheme(theme); setActivePanel("create-theme"); }}
           />
         )}
         {activePanel === "create-theme" && (
           <CreateThemePanel
-            key="create-theme-panel"
-            onClose={() => setActivePanel(null)}
+            key={editingTheme?.id ?? "create-theme-panel"}
+            initialTheme={editingTheme ?? undefined}
+            onClose={() => { setEditingTheme(null); setActivePanel(null); }}
           />
         )}
         {activePanel === "ambient" && (
           <AmbientSoundPanel
             key="ambient-panel"
             onClose={() => setActivePanel(null)}
+            activeIds={ambient.activeIds}
+            volumeMap={ambient.volumeMap}
+            onToggle={(id, url, defaultVolume) => { ambient.toggle(id, url, defaultVolume); saveNow(); }}
+            onVolume={(id, val) => { ambient.setVol(id, val); saveNow(); }}
+            onInitVolume={ambient.initVolume}
           />
         )}
         {activePanel === "effects" && (

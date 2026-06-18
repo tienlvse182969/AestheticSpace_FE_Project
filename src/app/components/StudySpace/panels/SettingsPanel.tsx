@@ -645,7 +645,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                     padding: "2px 7px",
                     lineHeight: 1.4,
                   }}>
-                    v{APP_VERSION}
+                    {APP_VERSION}
                   </Box>
                 </Flex>
                 <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
@@ -664,27 +664,38 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   {t("about.contributors")}
                 </Text>
               </Flex>
-              <Flex wrap="wrap" gap="6px">
-                {["Phạm Thu Hiền", "Nguyễn Hồng Ngọc", "Trần Hoàng Duy", "Lê Văn Tiến", "Trần Quốc Nam"].map((name) => (
-                  <Box key={name} style={{
-                    fontSize: "0.76rem",
-                    color: "rgba(255,255,255,0.65)",
-                    fontFamily: "'HarmonyOS Sans', sans-serif",
-                    background: "rgba(94,234,212,0.07)",
-                    border: "1px solid rgba(94,234,212,0.15)",
-                    borderRadius: "20px",
-                    padding: "3px 10px",
-                  }}>
-                    {name}
-                  </Box>
+              <Flex wrap="wrap" gap="12px">
+                {[
+                  { name: "Phạm Thu Hiền",    avatar: "/assets/ContributorAvatar/PhamThuHien.jpg" },
+                  { name: "Nguyễn Hồng Ngọc", avatar: "/assets/ContributorAvatar/NguyenHongNgoc.jpg" },
+                  { name: "Trần Hoàng Duy",   avatar: "/assets/ContributorAvatar/TranHoangDuy.jpg" },
+                  { name: "Lê Văn Tiến",      avatar: "/assets/ContributorAvatar/LeVanTien.jpg" },
+                  { name: "Trần Quốc Nam",    avatar: "/assets/ContributorAvatar/TranQuocNam.jpg" },
+                ].map(({ name, avatar }) => (
+                  <Flex key={name} direction="column" align="center" gap="6px" style={{ width: 60 }}>
+                    <Box style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: "50%",
+                      overflow: "hidden",
+                      border: "1.5px solid rgba(94,234,212,0.3)",
+                      flexShrink: 0,
+                    }}>
+                      <img src={avatar} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </Box>
+                    <Text style={{
+                      fontSize: "0.6rem",
+                      color: "rgba(255,255,255,0.5)",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      textAlign: "center",
+                      lineHeight: 1.3,
+                    }}>
+                      {name}
+                    </Text>
+                  </Flex>
                 ))}
               </Flex>
             </Box>
-
-            {/* Footer */}
-            <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.2)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.06em" }}>
-              {t("about.copyright")}
-            </Text>
           </Box>
         );
     }

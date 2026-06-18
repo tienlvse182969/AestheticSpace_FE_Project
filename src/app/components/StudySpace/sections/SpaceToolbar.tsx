@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
   Image as ImageIcon, LayoutGrid, Sparkles, ShoppingBag,
-  AudioWaveform, Settings, Wand2, LayoutDashboard, BarChart2, Trophy,
+  AudioWaveform, Settings, Wand2, Layers, BarChart2, Trophy,
 } from "lucide-react";
 import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
@@ -255,7 +255,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                   }),
                 }}
               >
-                <ToolbarBtn icon={<LayoutDashboard size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} position={position} />
+                <ToolbarBtn icon={<Layers size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} position={position} />
                 <ToolbarBtn icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} position={position} />
                 <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} position={position} />
                 <ToolbarBtn icon={<ShoppingBag size={22} />}     active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("themeStore.tooltip")} position={position} />

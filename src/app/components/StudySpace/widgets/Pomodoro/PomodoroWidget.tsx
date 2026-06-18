@@ -8,6 +8,19 @@ import { pomodoroService } from "../../../../../services/pomodoro.service";
 
 const MotionBox = motion.create(Box);
 
+const chime = {
+  startPomodoro: new Audio("/assets/PomodoroChime/StartPomodoroChime.mp3"),
+  startBreak:    new Audio("/assets/PomodoroChime/StartBreakTimeChime.mp3"),
+  pause:         new Audio("/assets/PomodoroChime/PauseChime.mp3"),
+  reset:         new Audio("/assets/PomodoroChime/ResetPomodoroChime.mp3"),
+  success:       new Audio("/assets/PomodoroChime/SuccessChime.mp3"),
+};
+
+const playChime = (audio: HTMLAudioElement) => {
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+};
+
 type Phase  = "idle" | "focus" | "break";
 type Dialog = "break-prompt" | "next-prompt" | "cancel-confirm" | "skip-break-confirm" | null;
 
@@ -68,6 +81,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     if (seconds === 0 && running) {
       setRunning(false);
       if (phase === "focus") {
+        playChime(chime.success);
         notify(t("pomodoroWidget.focusEndTitle"), t("pomodoroWidget.focusEndBody"));
         if (user && currentSessionId) {
           pomodoroService.end(currentSessionId).catch(() => {});
@@ -77,6 +91,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
         setPhase("idle");
         setDialog("break-prompt");
       } else if (phase === "break") {
+        playChime(chime.success);
         notify(t("pomodoroWidget.breakEndTitle"), t("pomodoroWidget.breakEndBody"));
         setPhase("idle");
         setDialog("next-prompt");
@@ -93,6 +108,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     setSeconds(focusTotal);
     setRunning(true);
     setDialog(null);
+    playChime(chime.startPomodoro);
 
     if (user) {
       try {
@@ -107,6 +123,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
   };
 
   const startBreak = () => {
+    playChime(chime.startBreak);
     setPhase("break");
     setSeconds(breakTotal);
     setRunning(true);
@@ -116,6 +133,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
   const skipToNext = () => { setDialog(null); startFocus(); };
 
   const performReset = () => {
+    playChime(chime.reset);
     startingRef.current = false;
     setRunning(false);
     setPhase("idle");
@@ -152,8 +170,15 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
   };
 
   const togglePlay = () => {
-    if (phase === "idle") startFocus();
-    else setRunning((r) => !r);
+    if (phase === "idle") {
+      startFocus();
+    } else if (running) {
+      playChime(chime.pause);
+      setRunning(false);
+    } else {
+      playChime(phase === "break" ? chime.startBreak : chime.startPomodoro);
+      setRunning(true);
+    }
   };
 
   const gradId = isBreak ? "timerGradBreak" : "timerGradFocus";
