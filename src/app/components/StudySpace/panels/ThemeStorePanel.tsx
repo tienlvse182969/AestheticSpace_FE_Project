@@ -1957,10 +1957,8 @@ export function ThemeStorePanel({
   const canPurchase = user?.accountTier !== "Free";
 
   const [items, setItems]               = useState<StoreItem[]>([]);
-  const [inventoryItems, setInventoryItems] = useState<StoreItem[]>([]);
   const [gateOpen, setGateOpen]         = useState(false);
   const [itemsLoading, setItemsLoading] = useState(true);
-  const [inventoryLoading, setInventoryLoading] = useState(false);
   const [activeTab, setActiveTab]       = useState<TabValue>("all");
   const [searchQuery, setSearchQuery]   = useState("");
   const [sourceFilter, setSourceFilter] = useState<"all" | "Official" | "Community">("all");
@@ -1990,7 +1988,7 @@ export function ThemeStorePanel({
     return ids;
   }, [myThemes]);
 
-  const loading = itemsLoading || inventoryLoading;
+  const loading = itemsLoading;
 
   // Sync coinBalance prop
   useEffect(() => {
@@ -2015,30 +2013,6 @@ export function ThemeStorePanel({
       .finally(() => setItemsLoading(false));
   }, []);
 
-  // Fetch inventory when switching to purchased tab
-  useEffect(() => {
-    if (activeTab !== "purchased") return;
-    setInventoryLoading(true);
-    aestheticStoreService.getInventory()
-      .then((inv) => {
-        setInventoryItems(inv.map((i) => ({
-          id: i.storeItemId,
-          category: i.category,
-          name: i.name,
-          description: i.description,
-          assetUrl: i.assetUrl,
-          isPremium: i.isPremium,
-          coinPrice: null,
-          realMoneyPriceVnd: null,
-          isActive: true,
-          isOwned: true,
-          canBuyWithCoins: false,
-          canBuyWithMoney: false,
-        })));
-      })
-      .catch(() => {})
-      .finally(() => setInventoryLoading(false));
-  }, [activeTab]);
 
   // Fetch my submitted themes when switching to "my-themes" tab
   useEffect(() => {
@@ -2094,7 +2068,7 @@ export function ThemeStorePanel({
     }
 
     let source: StoreItem[];
-    if (activeTab === "purchased") source = inventoryItems;
+    if (activeTab === "purchased") source = items.filter((i) => i.isOwned);
     else if (activeTab === "wishlist") source = items.filter((i) => wishlistIds.has(i.id));
     else if (activeTab === "all") source = items.filter((i) => i.category !== "Effect" && (i.coinPrice != null || i.realMoneyPriceVnd != null));
     else source = items.filter((i) => i.category === activeTab && (i.coinPrice != null || i.realMoneyPriceVnd != null));
@@ -2104,7 +2078,7 @@ export function ThemeStorePanel({
     }
 
     return source;
-  }, [activeTab, items, inventoryItems, wishlistIds, searchQuery, sourceFilter]);
+  }, [activeTab, items, wishlistIds, searchQuery, sourceFilter]);
 
   const toggleWishlist = useCallback((itemId: string) => {
     setWishlistIds((prev) => {
