@@ -62,6 +62,12 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
 
   const handleLockedClick = (feature: LockedFeature) => setGateFeature(feature);
 
+  useEffect(() => {
+    if (currentUser) {
+      coinService.getBalance().then((data) => onCoinBalanceReady?.(data.balance));
+    }
+  }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleAvatarClick = () => {
     const opening = !accountOpen;
     setAccountOpen(opening);
