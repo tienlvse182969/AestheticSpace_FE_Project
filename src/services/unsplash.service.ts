@@ -7,7 +7,7 @@ const PER_PAGE = 12;
 
 interface UnsplashPhoto {
   id: string;
-  urls: { regular: string; small: string };
+  urls: { full: string; regular: string; small: string };
   alt_description: string | null;
   description: string | null;
   user: { name: string; links: { html: string } };
@@ -17,7 +17,7 @@ interface UnsplashPhoto {
 function mapPhoto(p: UnsplashPhoto): BackgroundItem {
   return {
     id: p.id,
-    url: p.urls.regular,
+    url: p.urls.full,
     thumb: p.urls.small,
     label: p.alt_description || p.description || "Untitled",
     photographer: p.user.name,
