@@ -116,12 +116,12 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
     setTopUpError(false);
     try {
       const { transactionCode, paymentUrl } = await paymentService.createVnPayPayment({
-        amountVnd,
+        amountVnd: amountVnd,
         coinsAmount: coins,
         purpose: "BuyCoins",
-        returnUrl: `${window.location.origin}/payment/result`,
+        returnUrl: "string",
         description: null,
-        storeItemId: null,
+        storeItemId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
       });
       sessionStorage.setItem("vnpay_transaction_code", transactionCode);
       sessionStorage.setItem("vnpay_purpose", "BuyCoins");
