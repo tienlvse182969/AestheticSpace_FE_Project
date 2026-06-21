@@ -196,7 +196,9 @@
     "submit_feedback": "Send Suggestion",
     "submit_bug": "Send Bug Report",
     "success": "Sent! Thank you for your feedback.",
-    "attachImages": "Attach images"
+    "attachImages": "Attach images",
+    "loginRequired": "Please log in to submit feedback.",
+    "submitError": "Failed to send. Please try again."
   },
   "widgetPicker": {
     "title": "WIDGETS",

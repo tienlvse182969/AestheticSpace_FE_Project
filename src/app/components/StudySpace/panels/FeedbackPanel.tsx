@@ -7,6 +7,7 @@ import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { useAuth } from "../../../../context/AuthContext";
 import { AvatarCircle } from "./AccountPanel";
+import { reportService } from "../../../../services/report.service";
 
 const MotionBox = motion.create(Box);
 
@@ -31,11 +32,11 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
   const { x, y, ref } = useCenteredPanel(440, 430);
 
   const [type, setType]       = useState<FeedbackType>("feedback");
-  const [email, setEmail]     = useState("");
   const [content, setContent] = useState("");
   const [images, setImages]   = useState<{ file: File; preview: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError]     = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,16 +54,21 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
   };
 
   const isGuest  = !user;
-  const canSubmit = content.trim().length > 0 && (!isGuest || email.trim().length > 0);
+  const canSubmit = !isGuest && content.trim().length > 0;
 
   const handleSubmit = async () => {
     if (!canSubmit || submitting) return;
     setSubmitting(true);
-    // TODO: replace with real API call when endpoint is ready
-    await new Promise(r => setTimeout(r, 900));
-    setSubmitting(false);
-    setSuccess(true);
-    setTimeout(() => onClose(), 1500);
+    setError("");
+    try {
+      await reportService.submit(type, content, images[0]?.file);
+      setSuccess(true);
+      setTimeout(() => onClose(), 1500);
+    } catch {
+      setError(t("feedbackPanel.submitError"));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -171,20 +177,6 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
               ))}
             </Flex>
 
-            {/* Email — guest only */}
-            {isGuest && (
-              <Box mb={3}>
-                <input
-                  type="email"
-                  placeholder={t("feedbackPanel.emailPlaceholder")}
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  onPointerDown={e => e.stopPropagation()}
-                  style={inputStyle}
-                />
-              </Box>
-            )}
-
             {/* Content */}
             <Box mb={4}>
               <Box
@@ -287,6 +279,30 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
                 </Flex>
               )}
             </Box>
+
+            {/* Guest notice */}
+            {isGuest && (
+              <Text mb={3} style={{
+                fontSize: "0.75rem",
+                color: "rgba(255,200,100,0.75)",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                textAlign: "center",
+              }}>
+                {t("feedbackPanel.loginRequired")}
+              </Text>
+            )}
+
+            {/* Error message */}
+            {error && (
+              <Text mb={2} style={{
+                fontSize: "0.75rem",
+                color: "rgba(255,100,100,0.85)",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                textAlign: "center",
+              }}>
+                {error}
+              </Text>
+            )}
 
             {/* Submit */}
             <Box

@@ -196,7 +196,9 @@
     "submit_feedback": "Gửi góp ý",
     "submit_bug": "Gửi báo lỗi",
     "success": "Đã gửi! Cảm ơn bạn đã phản hồi.",
-    "attachImages": "Đính kèm hình ảnh"
+    "attachImages": "Đính kèm hình ảnh",
+    "loginRequired": "Vui lòng đăng nhập để gửi phản hồi.",
+    "submitError": "Gửi thất bại. Vui lòng thử lại."
   },
   "widgetPicker": {
     "title": "WIDGET",
