@@ -27,17 +27,22 @@ export function PaymentResultPage() {
     sessionStorage.removeItem("vnpay_coins_amount");
     if (coinsAmount) setCoinsReceived(Number(coinsAmount));
 
-    // BuyCoins và StoreItem: backend webhook đã xử lý, chỉ cần có purpose là success
+    const statusParam = searchParams.get("status");
+    const vnpResponseCode = searchParams.get("vnp_ResponseCode");
+    const isSuccess = statusParam === "success" || vnpResponseCode === "00";
+
+    if (!isSuccess) {
+      setStatus("error");
+      return;
+    }
+
+    // BuyCoins và StoreItem: backend webhook đã xử lý, chỉ cần hiện success
     if (purpose === "BuyCoins" || purpose === "StoreItem") {
       setStatus("success");
       return;
     }
 
-    const statusParam = searchParams.get("status");
-    const vnpResponseCode = searchParams.get("vnp_ResponseCode");
-    const isSuccess = statusParam === "success" || vnpResponseCode === "00";
-
-    if (!isSuccess || !transactionCode) {
+    if (!transactionCode) {
       setStatus("error");
       return;
     }
