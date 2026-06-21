@@ -152,7 +152,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
         <AnimatePresence initial={false}>
           {nearToolbar && (
             <MotionBox
-              key={`toggle-${position}`}
+              key="toggle"
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
@@ -218,7 +218,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
         <AnimatePresence mode="wait">
           {toolbarVisible && (
             <MotionBox
-              key={`toolbar-${position}`}
+              key="toolbar"
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}

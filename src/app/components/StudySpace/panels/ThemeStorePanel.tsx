@@ -2539,7 +2539,7 @@ export function ThemeStorePanel({
                   </Box>
                   <Box>
                     <Text style={{ fontSize: "0.86rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(255,255,255,0.82)", marginBottom: 3 }}>
-                      + Tạo theme mới
+                      Tạo theme mới
                     </Text>
                     <Text style={{ fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
                       Tuỳ chỉnh màu nhấn, hình nền và âm thanh
