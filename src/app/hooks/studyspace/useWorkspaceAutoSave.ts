@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { workspaceService } from "../../../services/workspace.service";
 import { roomService } from "../../../services/room.service";
+
 import type { PlacedSticker, StickyNote, BackgroundItem, TodoItem } from "../../components/StudySpace/types";
 import type { LayoutConfig } from "../../../types/workspace.types";
 
@@ -32,6 +33,7 @@ interface WorkspaceSaveParams {
   todoItems: TodoItem[];
   accentColor?: string;
   musicState?: { source: string; activeUrl: string; ytUrl?: string; scUrl?: string };
+  getAmbientSounds?: () => Array<{ id: string; url: string; volume: number }>;
   captureScreenshot?: () => Promise<string | null>;
   onNewUser?: () => void;
   onRestore: (data: {
@@ -57,6 +59,7 @@ export function useWorkspaceAutoSave({
   todoItems,
   accentColor,
   musicState,
+  getAmbientSounds,
   captureScreenshot,
   onNewUser,
   onRestore,
@@ -80,12 +83,33 @@ export function useWorkspaceAutoSave({
     };
   });
 
+  // Stable ref so saveNow always calls the latest getter without closure issues
+  const getAmbientSoundsRef = useRef(getAmbientSounds);
+  useEffect(() => { getAmbientSoundsRef.current = getAmbientSounds; });
+
   // Restore workspace on mount when user is logged in
   useEffect(() => {
     if (!isLoggedIn) { setIsRestoring(false); return; }
     workspaceService.getMyWorkspace()
       .then(async (config) => {
         if (!config?.roomId || !config?.jsonConfig) {
+          // Check if user already has rooms before showing first-room modal
+          const existingRooms = await roomService.getMyRooms().catch(() => []);
+          if (existingRooms.length > 0) {
+            const room = existingRooms[0];
+            const bg: BackgroundItem = {
+              id: room.id,
+              url: room.thumbnailUrl ?? "",
+              thumb: room.thumbnailUrl ?? "",
+              label: room.name,
+            };
+            const emptyLayout: LayoutConfig = {
+              activeEffect: null, activeWidgets: [], placedStickers: [],
+              stickyNotes: [], widgetPositions: {}, todoItems: [],
+            };
+            onRestore({ roomId: room.id, bg, layout: emptyLayout });
+            return;
+          }
           // New user — show first-room naming modal if handler provided
           if (onNewUser) {
             onNewUser();
@@ -143,6 +167,7 @@ export function useWorkspaceAutoSave({
           todoItems:       s.todoItems,
           accentColor:     s.accentColor,
           musicState:      s.musicState,
+          ambientSounds:   getAmbientSoundsRef.current?.(),
         };
         const thumbnail = captureScreenshot ? await captureScreenshot() : null;
         await workspaceService.saveWorkspace({

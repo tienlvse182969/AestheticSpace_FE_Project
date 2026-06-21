@@ -34,6 +34,7 @@ export interface LayoutConfig {
   todoItems?: Array<{ id: string; text: string; done: boolean }>;
   accentColor?: string;
   musicState?: { source: string; activeUrl: string; ytUrl?: string; scUrl?: string };
+  ambientSounds?: Array<{ id: string; url: string; volume: number }>;
 }
 
 export interface WorkspaceConfig {

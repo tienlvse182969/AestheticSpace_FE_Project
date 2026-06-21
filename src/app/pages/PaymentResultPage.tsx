@@ -15,23 +15,29 @@ export function PaymentResultPage() {
   const [searchParams] = useSearchParams();
   const { refreshAccountTier } = useAuth();
   const [status, setStatus] = useState<Status>("loading");
+  const [coinsReceived, setCoinsReceived] = useState<number | null>(null);
 
   useEffect(() => {
     const transactionCode = sessionStorage.getItem("vnpay_transaction_code");
     const purpose = sessionStorage.getItem("vnpay_purpose");
+    const coinsAmount = sessionStorage.getItem("vnpay_coins_amount");
     sessionStorage.removeItem("vnpay_transaction_code");
     sessionStorage.removeItem("vnpay_purpose");
     sessionStorage.removeItem("vnpay_store_item_name");
+    sessionStorage.removeItem("vnpay_coins_amount");
+    if (coinsAmount) setCoinsReceived(Number(coinsAmount));
 
     const statusParam = searchParams.get("status");
+    const vnpResponseCode = searchParams.get("vnp_ResponseCode");
+    const isSuccess = statusParam === "success" || vnpResponseCode === "00";
 
-    if (statusParam !== "success" || !transactionCode) {
+    if (!isSuccess || !transactionCode) {
       setStatus("error");
       return;
     }
 
-    if (purpose === "StoreItem") {
-      // Backend webhook đã xử lý item delivery — chỉ cần hiện success
+    if (purpose === "StoreItem" || purpose === "BuyCoins") {
+      // Backend webhook đã xử lý delivery/coin crediting — chỉ cần hiện success
       setStatus("success");
       return;
     }
@@ -108,12 +114,13 @@ export function PaymentResultPage() {
                 mb={2}
                 style={{ fontSize: "clamp(1.5rem, 4vw, 2rem)" }}
               >
-                Chào mừng bạn đến với Premium!
+                {coinsReceived != null ? "Nạp xu thành công!" : "Chào mừng bạn đến với Premium!"}
               </Text>
               <Text color="#6b7280" lineHeight="relaxed">
-                Tài khoản của bạn đã được nâng cấp thành công.
-                <br />
-                Tận hưởng toàn bộ tính năng độc quyền ngay bây giờ.
+                {coinsReceived != null
+                  ? (<>{coinsReceived} xu đã được cộng vào tài khoản của bạn.</>)
+                  : (<>Tài khoản của bạn đã được nâng cấp thành công.<br />Tận hưởng toàn bộ tính năng độc quyền ngay bây giờ.</>)
+                }
               </Text>
             </Box>
 

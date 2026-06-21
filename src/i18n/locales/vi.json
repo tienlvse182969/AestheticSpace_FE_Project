@@ -196,7 +196,9 @@
     "submit_feedback": "Gửi góp ý",
     "submit_bug": "Gửi báo lỗi",
     "success": "Đã gửi! Cảm ơn bạn đã phản hồi.",
-    "attachImages": "Đính kèm hình ảnh"
+    "attachImages": "Đính kèm hình ảnh",
+    "loginRequired": "Vui lòng đăng nhập để gửi phản hồi.",
+    "submitError": "Gửi thất bại. Vui lòng thử lại."
   },
   "widgetPicker": {
     "title": "WIDGET",
@@ -479,7 +481,7 @@
     "resetPasswordError": "Không thể gửi email. Vui lòng thử lại.",
     "topUpCoins": "Nạp xu bằng VNPAY",
     "topUpCoinsDesc": "Chọn gói xu bên dưới để thanh toán qua VNPAY.",
-    "topUpComingSoon": "Sắp ra mắt",
+    "topUpError": "Không thể xử lý thanh toán. Vui lòng thử lại.",
     "coins": "xu",
     "vnd": "đ",
     "toolbarPosition": "Vị trí thanh công cụ",
@@ -553,6 +555,7 @@
       "sounds": "Âm thanh",
       "missions": "Nhiệm vụ",
       "assets": "Tài nguyên",
+      "moderation": "Kiểm duyệt",
       "backToHome": "Về trang chủ"
     },
     "topbar": {

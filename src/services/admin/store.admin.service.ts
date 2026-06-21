@@ -8,7 +8,7 @@ export type StoreItemStatus = "AdminCreated" | "PendingReview" | "Approved" | "R
 export interface AdminStoreItemDto {
   id: string;
   category: StoreCategory;
-  themeSource: StoreThemeSource;
+  themeSource: StoreThemeSource | null;
   name: string | null;
   description: string | null;
   assetUrl: string | null;
@@ -88,7 +88,11 @@ export const adminStoreService = {
     await api.delete(`/admin/store/items/${id}`);
   },
 
-  getPendingItems: async (params?: { page?: number; pageSize?: number }): Promise<StoreItemPagedResult> => {
+  getPendingItems: async (params?: {
+    category?: StoreCategory;
+    page?: number;
+    pageSize?: number;
+  }): Promise<StoreItemPagedResult> => {
     const { data } = await api.get<ApiResponse<StoreItemPagedResult>>("/admin/store/items/pending", { params });
     return data.data;
   },
@@ -100,6 +104,16 @@ export const adminStoreService = {
 
   rejectItem: async (id: string, body: { rejectionNote: string }): Promise<AdminStoreItemDto> => {
     const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/reject`, body);
+    return data.data;
+  },
+
+  approveComponent: async (id: string, body: ApproveItemBody): Promise<AdminStoreItemDto> => {
+    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/approve-component`, body);
+    return data.data;
+  },
+
+  rejectComponent: async (id: string, body: { rejectionNote: string }): Promise<AdminStoreItemDto> => {
+    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/reject-component`, body);
     return data.data;
   },
 };

@@ -196,7 +196,9 @@
     "submit_feedback": "Send Suggestion",
     "submit_bug": "Send Bug Report",
     "success": "Sent! Thank you for your feedback.",
-    "attachImages": "Attach images"
+    "attachImages": "Attach images",
+    "loginRequired": "Please log in to submit feedback.",
+    "submitError": "Failed to send. Please try again."
   },
   "widgetPicker": {
     "title": "WIDGETS",
@@ -480,7 +482,7 @@
     "resetPasswordError": "Failed to send email. Please try again.",
     "topUpCoins": "Top Up Coins via VNPAY",
     "topUpCoinsDesc": "Select a coin pack below to pay via VNPAY.",
-    "topUpComingSoon": "Coming soon",
+    "topUpError": "Failed to process payment. Please try again.",
     "coins": "coins",
     "vnd": "₫",
     "toolbarPosition": "Toolbar Position",
@@ -554,6 +556,7 @@
       "sounds": "Ambient Sounds",
       "missions": "Missions",
       "assets": "Assets",
+      "moderation": "Moderation",
       "backToHome": "Back to Home"
     },
     "topbar": {

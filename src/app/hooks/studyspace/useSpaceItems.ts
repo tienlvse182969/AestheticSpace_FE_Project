@@ -24,18 +24,20 @@ export function useSpaceItems() {
       return next;
     });
 
-  const placeSticker = (src: string) => {
+  const placeSticker = (src: string): string => {
+    const id = `sticker-${Date.now()}`;
     const sw = window.innerWidth, sh = window.innerHeight;
     setPlacedStickers(prev => [
       ...prev,
       {
-        id: `sticker-${Date.now()}`,
+        id,
         src,
         x: Math.round(sw / 2 - 70 + (Math.random() - 0.5) * 160),
         y: Math.round(sh / 2 - 70 + (Math.random() - 0.5) * 120),
         size: 140,
       },
     ]);
+    return id;
   };
 
   const removeSticker = (id: string) =>

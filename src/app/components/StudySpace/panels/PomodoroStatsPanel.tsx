@@ -13,7 +13,7 @@ import { pomodoroService, type PomodoroStatsDto } from "../../../../services/pom
 
 const MotionBox = motion.create(Box);
 
-const PANEL_W = 460;
+const PANEL_W = 560;
 
 /* ── Aggregate history → 7-day chart data ────────────────────────────── */
 function buildChartData(history: { startTime: string; durationMinutes: number; isActive: boolean }[], locale: string, todayLabel: string) {
@@ -98,8 +98,7 @@ export function PomodoroStatsPanel({ onClose }: Props) {
     return () => { alive = false; };
   }, [locale]);
 
-  const maxSessions = chart ? Math.max(...chart.map(d => d.sessions), 0) : 0;
-  const yMax = Math.max(maxSessions + 1, 5);
+  const yMax = 12;
   const yTicks = Array.from({ length: yMax + 1 }, (_, i) => i);
 
   return (
@@ -154,7 +153,7 @@ export function PomodoroStatsPanel({ onClose }: Props) {
                   style={{ background: "rgba(255,255,255,0.06)", animation: `pulse 1.5s ease-in-out ${i * 0.15}s infinite` }} />
               ))}
             </Flex>
-            <Box h="200px" borderRadius="10px" mt={1}
+            <Box h="280px" borderRadius="10px" mt={1}
               style={{ background: "rgba(255,255,255,0.04)", animation: "pulse 1.5s ease-in-out infinite" }} />
           </Flex>
         ) : (
@@ -202,7 +201,7 @@ export function PomodoroStatsPanel({ onClose }: Props) {
 
               {chart && chart.every(d => d.sessions === 0) ? (
                 <Flex
-                  h="200px" align="center" justify="center" borderRadius="10px"
+                  h="280px" align="center" justify="center" borderRadius="10px"
                   style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
                 >
                   <Text style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.2)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
@@ -211,7 +210,7 @@ export function PomodoroStatsPanel({ onClose }: Props) {
                 </Flex>
               ) : (
                 <Box
-                  h="200px" borderRadius="10px" pt={3} pr={2} pb={1}
+                  h="280px" borderRadius="10px" pt={3} pr={2} pb={1}
                   style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
                 >
                   <ResponsiveContainer width="100%" height="100%">
@@ -232,6 +231,7 @@ export function PomodoroStatsPanel({ onClose }: Props) {
                         domain={[0, yMax]}
                         ticks={yTicks}
                         interval={0}
+                        tickFormatter={(v) => v === yMax ? `${yMax}+` : String(v)}
                         tick={{ fill: "rgba(255,255,255,0.25)", fontSize: 7, fontFamily: "'HarmonyOS Sans', sans-serif" }}
                         axisLine={false} tickLine={false}
                       />

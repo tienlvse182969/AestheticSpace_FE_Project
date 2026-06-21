@@ -9,6 +9,7 @@ import { roomService }          from "../../../services/room.service";
 import { useClockSettings }    from "./useClockSettings";
 import { usePomodoroSettings } from "./usePomodoroSettings";
 import { useSpaceItems }       from "./useSpaceItems";
+import { useAmbientSound }     from "./useAmbientSound";
 import { workspaceService }    from "../../../services/workspace.service";
 import { BACKGROUNDS }         from "../../components/StudySpace/constants";
 import type { BackgroundItem } from "../../components/StudySpace/types";
@@ -57,6 +58,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const clock    = useClockSettings();
   const pomodoro = usePomodoroSettings();
   const space    = useSpaceItems();
+  const ambient  = useAmbientSound();
 
   /* ── Default widget positions (computed once) ── */
   const WIDGET_POSITIONS = useMemo(() => {
@@ -72,6 +74,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   }, []);
 
   /* ── Restore layout helper ── */
+  const { restoreAmbient } = ambient;
   const applyLayout = useCallback((layout: LayoutConfig) => {
     if (layout.activeEffect !== undefined) setActiveEffect(layout.activeEffect as EffectType);
     if (layout.accentColor) setAccent(layout.accentColor);
@@ -101,7 +104,8 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       widgetPositions: layout.widgetPositions,
       todoItems:       layout.todoItems,
     });
-  }, [clock, pomodoro, space]);
+    restoreAmbient(layout.ambientSounds ?? []);
+  }, [clock, pomodoro, space, restoreAmbient]);
 
   /* ── On-mount workspace restore callback ── */
   const handleRestore = useCallback(({ roomId: rid, bg, layout }: {
@@ -194,6 +198,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     todoItems: space.todoItems,
     accentColor: accent,
     musicState: { source: musicSource, activeUrl: musicSource === "youtube" ? musicYtUrl : musicScUrl, ytUrl: musicYtUrl, scUrl: musicScUrl },
+    getAmbientSounds: ambient.getActiveSoundsForSave,
     captureScreenshot,
     onNewUser: handleNewUser,
     onRestore: handleRestore,
@@ -232,6 +237,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     showFirstRoomModal, handleFirstRoomCreate,
     saveStatus, saveNow, isRestoring,
     accent, setAccent,
+    ambient,
   };
 }
 

@@ -3,8 +3,8 @@ import { Box, Flex } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ChevronUp, ChevronDown, ChevronLeft, ChevronRight,
-  Image as ImageIcon, LayoutGrid, Sparkles, ShoppingBag,
-  AudioWaveform, Settings, Wand2, LayoutDashboard, BarChart2, Trophy,
+  Image as ImageIcon, LayoutGrid, ShoppingBag,
+  AudioWaveform, Settings, Wand2, Layers, BarChart2, Trophy, Sticker,
 } from "lucide-react";
 import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
@@ -152,7 +152,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
         <AnimatePresence initial={false}>
           {nearToolbar && (
             <MotionBox
-              key={`toggle-${position}`}
+              key="toggle"
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.5 }}
@@ -218,7 +218,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
         <AnimatePresence mode="wait">
           {toolbarVisible && (
             <MotionBox
-              key={`toolbar-${position}`}
+              key="toolbar"
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}
@@ -255,11 +255,11 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                   }),
                 }}
               >
-                <ToolbarBtn icon={<LayoutDashboard size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} position={position} />
+                <ToolbarBtn icon={<Layers size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} position={position} />
                 <ToolbarBtn icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} position={position} />
-                <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} position={position} />
                 <ToolbarBtn icon={<ShoppingBag size={22} />}     active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("themeStore.tooltip")} position={position} />
-                <ToolbarBtn icon={<Sparkles size={22} />}      active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} position={position} />
+                <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} position={position} />
+                <ToolbarBtn icon={<Sticker size={22} />}       active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} position={position} />
                 <ToolbarBtn icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} locked={isFree} onClick={() => isFree ? handleLockedClick("ambient") : togglePanel("ambient")} tooltip={t("space.ambientSounds")} position={position} />
                 <ToolbarBtn icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} position={position} />
                 <ToolbarBtn icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" position={position} />
