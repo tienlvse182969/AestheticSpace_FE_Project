@@ -11,6 +11,7 @@ import { useAuth } from "../../../../context/AuthContext";
 import { AvatarCircle } from "./AccountPanel";
 import { APP_VERSION } from "../../../../version";
 import { authService } from "../../../../services/auth.service";
+import { paymentService } from "../../../../services/payment.service";
 
 const MotionBox = motion.create(Box);
 
@@ -106,6 +107,32 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const [resetStatus, setResetStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
+
+  const [topUpLoading, setTopUpLoading] = useState<number | null>(null);
+  const [topUpError, setTopUpError] = useState(false);
+
+  const handleTopUp = async (coins: number, amountVnd: number) => {
+    setTopUpLoading(coins);
+    setTopUpError(false);
+    try {
+      const { transactionCode, paymentUrl } = await paymentService.createVnPayPayment({
+        amountVnd,
+        coinsAmount: coins,
+        purpose: "BuyCoins",
+        returnUrl: `${window.location.origin}/payment/result`,
+        description: null,
+        storeItemId: null,
+      });
+      sessionStorage.setItem("vnpay_transaction_code", transactionCode);
+      sessionStorage.setItem("vnpay_purpose", "BuyCoins");
+      sessionStorage.setItem("vnpay_coins_amount", String(coins));
+      window.location.href = paymentUrl;
+    } catch {
+      setTopUpError(true);
+      setTopUpLoading(null);
+      setTimeout(() => setTopUpError(false), 4000);
+    }
+  };
 
   const [notifEnabled, setNotifEnabled] = useState<boolean>(
     () => localStorage.getItem("notifications") === "enabled",
@@ -314,61 +341,62 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             <Box p="14px" borderRadius="12px"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
-              <Flex align="center" justify="space-between" mb="10px">
-                <Flex align="center" gap={2}>
-                  <CreditCard size={13} style={{ color: "rgba(255,255,255,0.35)" }} />
-                  <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    {t("settings.topUpCoins").toUpperCase()}
-                  </Text>
-                </Flex>
-                <Box style={{
-                  fontSize: "0.6rem",
-                  color: "rgba(94,234,212,0.7)",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  letterSpacing: "0.08em",
-                  background: "rgba(94,234,212,0.1)",
-                  border: "1px solid rgba(94,234,212,0.2)",
-                  borderRadius: 5,
-                  padding: "2px 7px",
-                }}>
-                  {t("settings.topUpComingSoon").toUpperCase()}
-                </Box>
+              <Flex align="center" gap={2} mb="10px">
+                <CreditCard size={13} style={{ color: "rgba(255,255,255,0.35)" }} />
+                <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                  {t("settings.topUpCoins").toUpperCase()}
+                </Text>
               </Flex>
               <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 12 }}>
                 {t("settings.topUpCoinsDesc")}
               </Text>
               <Flex wrap="wrap" gap="8px">
                 {[
-                  { coins: 10, vnd: "10.000" },
-                  { coins: 20, vnd: "20.000" },
-                  { coins: 50, vnd: "50.000" },
-                  { coins: 100, vnd: "100.000" },
-                ].map(({ coins, vnd }) => (
-                  <Box
-                    key={coins}
-                    as="button"
-                    style={{
-                      flex: "1 1 calc(50% - 4px)",
-                      minWidth: 0,
-                      padding: "10px 12px",
-                      borderRadius: 10,
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      cursor: "not-allowed",
-                      opacity: 0.55,
-                      textAlign: "left",
-                      pointerEvents: "none",
-                    }}
-                  >
-                    <Text style={{ fontSize: "1rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.2 }}>
-                      {coins.toLocaleString()} <span style={{ fontSize: "0.65rem", fontWeight: 400, color: "rgba(255,255,255,0.4)" }}>{t("settings.coins")}</span>
-                    </Text>
-                    <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
-                      {vnd}{t("settings.vnd")}
-                    </Text>
-                  </Box>
-                ))}
+                  { coins: 10,  vnd: "10.000",  amountVnd: 10000  },
+                  { coins: 20,  vnd: "20.000",  amountVnd: 20000  },
+                  { coins: 50,  vnd: "50.000",  amountVnd: 50000  },
+                  { coins: 100, vnd: "100.000", amountVnd: 100000 },
+                ].map(({ coins, vnd, amountVnd }) => {
+                  const isLoading = topUpLoading === coins;
+                  const isDisabled = topUpLoading !== null;
+                  return (
+                    <Box
+                      key={coins}
+                      as="button"
+                      onClick={isDisabled ? undefined : () => handleTopUp(coins, amountVnd)}
+                      style={{
+                        flex: "1 1 calc(50% - 4px)",
+                        minWidth: 0,
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        background: isLoading ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.03)",
+                        border: `1px solid ${isLoading ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.08)"}`,
+                        cursor: isDisabled ? "not-allowed" : "pointer",
+                        opacity: isDisabled && !isLoading ? 0.5 : 1,
+                        textAlign: "left",
+                        transition: "background 0.15s, border-color 0.15s",
+                      }}
+                    >
+                      <Flex align="center" gap={2}>
+                        {isLoading && <Loader size={13} style={{ color: "rgba(255,255,255,0.5)", animation: "spin 1s linear infinite", flexShrink: 0 }} />}
+                        <Box>
+                          <Text style={{ fontSize: "1rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.2 }}>
+                            {coins.toLocaleString()} <span style={{ fontSize: "0.65rem", fontWeight: 400, color: "rgba(255,255,255,0.4)" }}>{t("settings.coins")}</span>
+                          </Text>
+                          <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
+                            {vnd}{t("settings.vnd")}
+                          </Text>
+                        </Box>
+                      </Flex>
+                    </Box>
+                  );
+                })}
               </Flex>
+              {topUpError && (
+                <Text style={{ fontSize: "0.7rem", color: "rgba(248,113,113,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 8 }}>
+                  {t("settings.topUpError")}
+                </Text>
+              )}
             </Box>
 
           </Box>

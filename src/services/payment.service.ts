@@ -3,11 +3,11 @@ import type { ApiResponse } from "../types/api.types";
 
 interface CreateVnPayRequest {
   amountVnd: number;
-  returnUrl: string;
-  description: string;
+  returnUrl: string | null;
+  description: string | null;
   purpose: string;
-  storeItemId?: string;
-  coinsAmount?: number;
+  storeItemId?: string | null;
+  coinsAmount?: number | null;
 }
 
 export interface CreateVnPayResponse {

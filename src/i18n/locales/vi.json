@@ -481,7 +481,7 @@
     "resetPasswordError": "Không thể gửi email. Vui lòng thử lại.",
     "topUpCoins": "Nạp xu bằng VNPAY",
     "topUpCoinsDesc": "Chọn gói xu bên dưới để thanh toán qua VNPAY.",
-    "topUpComingSoon": "Sắp ra mắt",
+    "topUpError": "Không thể xử lý thanh toán. Vui lòng thử lại.",
     "coins": "xu",
     "vnd": "đ",
     "toolbarPosition": "Vị trí thanh công cụ",

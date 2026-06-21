@@ -482,7 +482,7 @@
     "resetPasswordError": "Failed to send email. Please try again.",
     "topUpCoins": "Top Up Coins via VNPAY",
     "topUpCoinsDesc": "Select a coin pack below to pay via VNPAY.",
-    "topUpComingSoon": "Coming soon",
+    "topUpError": "Failed to process payment. Please try again.",
     "coins": "coins",
     "vnd": "₫",
     "toolbarPosition": "Toolbar Position",
