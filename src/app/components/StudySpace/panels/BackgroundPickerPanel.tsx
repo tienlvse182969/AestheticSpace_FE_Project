@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
-import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Construction, ImagePlus, X, Image as ImageIcon } from "lucide-react";
+import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Palette, ImagePlus, X, Image as ImageIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
@@ -357,6 +357,38 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
     }
   }, []);
 
+  type ThemeGroup = { themeId: string; themeName: string; themeSource: string | null; bg: BackgroundItem | null };
+  const [themeGroups,    setThemeGroups]    = useState<ThemeGroup[]>([]);
+  const [themeBgLoading, setThemeBgLoading] = useState(false);
+  const [themeBgError,   setThemeBgError]   = useState(false);
+
+  const fetchThemeBgs = useCallback(async () => {
+    setThemeBgLoading(true);
+    setThemeBgError(false);
+    try {
+      const allItems = await aestheticStoreService.getItems(undefined, 1, 200);
+      const ownedThemes = allItems.filter(i => i.category === "Theme" && i.isOwned);
+      const groups: ThemeGroup[] = ownedThemes.map(theme => {
+        const bgItem = theme.themeBackgroundItemId
+          ? allItems.find(i => i.id === theme.themeBackgroundItemId)
+          : null;
+        return {
+          themeId: theme.id,
+          themeName: theme.name,
+          themeSource: theme.themeSource ?? null,
+          bg: bgItem?.assetUrl
+            ? { id: bgItem.id, url: bgItem.assetUrl, thumb: bgItem.assetUrl, label: bgItem.name }
+            : null,
+        };
+      });
+      setThemeGroups(groups);
+    } catch {
+      setThemeBgError(true);
+    } finally {
+      setThemeBgLoading(false);
+    }
+  }, []);
+
   const TABS = [
     { id: "discover",  label: t("backgrounds.discover") },
     { id: "favorites", label: favorites.length > 0 ? t("backgrounds.favoritesCount", { count: favorites.length }) : t("backgrounds.favorites") },
@@ -368,8 +400,10 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
   const [tab, setTab] = useState<TabId>("discover");
 
   useEffect(() => {
-    if (tab === "purchased" && purchasedFilter === "store") fetchPurchased();
-  }, [tab, purchasedFilter, fetchPurchased]);
+    if (tab !== "purchased") return;
+    if (purchasedFilter === "store") fetchPurchased();
+    else fetchThemeBgs();
+  }, [tab, purchasedFilter, fetchPurchased, fetchThemeBgs]);
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
     padding: "6px 14px",
@@ -988,34 +1022,114 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
 
             {/* ── Theme-bundled backgrounds ── */}
             {purchasedFilter === "theme" && (
-              <Flex direction="column" align="center" justify="center" gap={4} py={8}>
-                <Box
-                  w="60px" h="60px" borderRadius="full"
-                  display="flex" alignItems="center" justifyContent="center"
-                  style={{
-                    background: "radial-gradient(circle at 40% 35%, rgba(168,85,247,0.2), rgba(99,102,241,0.1) 70%)",
-                    border: "1px solid rgba(168,85,247,0.2)",
-                  }}
-                >
-                  <Construction size={24} color="rgba(192,132,252,0.7)" />
+              themeBgLoading ? (
+                <Box display="flex" flexDirection="column" gap="16px">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Box key={i}>
+                      <Box mb="6px" h="12px" w="100px" borderRadius="4px"
+                        className="animate-pulse" style={{ background: "rgba(255,255,255,0.07)" }} />
+                      <Box borderRadius="8px" className="animate-pulse"
+                        style={{ aspectRatio: "16/9", width: "calc(33.33% - 7px)", background: "rgba(255,255,255,0.07)" }} />
+                    </Box>
+                  ))}
                 </Box>
-                <Box
-                  px={3} py="3px" borderRadius="full"
-                  style={{ background: "rgba(168,85,247,0.1)", border: "1px solid rgba(168,85,247,0.25)" }}
-                >
-                  <Text style={{ fontSize: "0.62rem", color: "rgba(192,132,252,0.85)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-                    {t("backgrounds.inDevelopment")}
+              ) : themeBgError ? (
+                <Flex direction="column" align="center" justify="center" gap={3} py={10}>
+                  <AlertCircle size={24} color="rgba(248,113,113,0.55)" />
+                  <Text style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {t("backgrounds.errorCode", { code: "load" })}
                   </Text>
+                  <Box as="button" onClick={fetchThemeBgs}
+                    display="flex" alignItems="center" gap={2}
+                    style={{
+                      background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)",
+                      borderRadius: "7px", color: "rgba(255,255,255,0.6)",
+                      fontSize: "0.76rem", padding: "5px 14px",
+                      cursor: "pointer", fontFamily: "'HarmonyOS Sans', sans-serif",
+                    }}
+                  >
+                    <RefreshCw size={12} /> Retry
+                  </Box>
+                </Flex>
+              ) : themeGroups.length === 0 ? (
+                <Flex align="center" justify="center" h="180px" direction="column" gap={2}>
+                  <Palette size={22} color="rgba(255,255,255,0.15)" />
+                  <Text style={{ color: "rgba(255,255,255,0.28)", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    {t("backgrounds.noPurchased")}
+                  </Text>
+                  <Text style={{ color: "rgba(255,255,255,0.18)", fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    Mua theme để hình nền xuất hiện ở đây
+                  </Text>
+                </Flex>
+              ) : (
+                <Box display="flex" flexDirection="column" gap="16px">
+                  {themeGroups.map(group => (
+                    <Box key={group.themeId}>
+                      {/* Theme label */}
+                      <Flex align="center" gap="7px" mb="7px"
+                        style={{ borderLeft: "2px solid rgba(167,139,250,0.45)", paddingLeft: "8px" }}
+                      >
+                        <Palette size={11} color="rgba(167,139,250,0.65)" />
+                        <Text style={{
+                          fontSize: "0.68rem",
+                          fontFamily: "'HarmonyOS Sans', sans-serif",
+                          fontWeight: 600,
+                          color: "rgba(255,255,255,0.55)",
+                          letterSpacing: "0.05em",
+                          flex: 1,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}>
+                          {group.themeName}
+                        </Text>
+                        {group.themeSource && (
+                          <Box style={{
+                            padding: "1px 6px",
+                            borderRadius: "4px",
+                            fontSize: "0.55rem",
+                            fontFamily: "'HarmonyOS Sans', sans-serif",
+                            fontWeight: 700,
+                            letterSpacing: "0.06em",
+                            flexShrink: 0,
+                            background: group.themeSource === "Official"
+                              ? "rgba(251,191,36,0.18)"
+                              : "rgba(20,184,166,0.15)",
+                            color: group.themeSource === "Official"
+                              ? "rgba(251,191,36,0.9)"
+                              : "rgba(20,184,166,0.9)",
+                          }}>
+                            {group.themeSource === "Official" ? "✦ Official" : "Community"}
+                          </Box>
+                        )}
+                      </Flex>
+
+                      {/* Background card */}
+                      {group.bg ? (
+                        <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                          <PhotoCard
+                            bg={group.bg}
+                            isActive={group.bg.id === currentBgId}
+                            isFav={isFav(group.bg.id)}
+                            onSelect={() => onSelect(group.bg!)}
+                            onToggleFav={(e) => toggleFav(group.bg!, e)}
+                            favLabel={isFav(group.bg.id) ? t("backgrounds.removeFromFavorites") : t("backgrounds.addToFavorites")}
+                          />
+                        </Box>
+                      ) : (
+                        <Text style={{
+                          fontSize: "0.7rem",
+                          fontFamily: "'HarmonyOS Sans', sans-serif",
+                          color: "rgba(255,255,255,0.2)",
+                          paddingLeft: "10px",
+                        }}>
+                          Không có hình nền kèm theo
+                        </Text>
+                      )}
+                    </Box>
+                  ))}
                 </Box>
-                <Box textAlign="center">
-                  <Text style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.75)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: "6px" }}>
-                    {t("backgrounds.themesTitle")}
-                  </Text>
-                  <Text style={{ fontSize: "0.76rem", color: "rgba(255,255,255,0.32)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.65, maxWidth: "280px" }}>
-                    {t("backgrounds.themesDesc")}
-                  </Text>
-                </Box>
-              </Flex>
+              )
             )}
           </>
         )}

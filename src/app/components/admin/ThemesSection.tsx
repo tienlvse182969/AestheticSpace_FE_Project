@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, Edit2, Trash2, Eye, EyeOff, Check, X, ChevronLeft, ChevronRight, Palette, Image, Sparkles, Zap, Volume2, Upload, Music } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, EyeOff, Check, X, ChevronLeft, ChevronRight, Palette, Image, Sticker, Zap, Volume2, Upload, Music, Play, Pause, Search } from "lucide-react";
 import {
   adminStoreService,
   AdminStoreItemDto,
@@ -18,7 +18,7 @@ const MotionBox = motion.create(Box);
 const CATEGORY_META: Record<StoreCategory, { label: string; color: string; icon: React.ComponentType<{ size?: number }> }> = {
   Theme:        { label: "Theme",         color: "#a78bfa", icon: Palette  },
   Background:   { label: "Background",    color: "#60a5fa", icon: Image    },
-  Sticker:      { label: "Sticker",       color: "#fb923c", icon: Sparkles },
+  Sticker:      { label: "Sticker",       color: "#fb923c", icon: Sticker  },
   Effect:       { label: "Effect",        color: "#34d399", icon: Zap      },
   AmbientSound: { label: "Ambient Sound", color: "#f472b6", icon: Volume2  },
 };
@@ -30,11 +30,10 @@ const STATUS_META: Record<StoreItemStatus, { label: string; color: string; bg: s
   Rejected:      { label: "Rejected", color: "#f87171", bg: "rgba(248,113,113,0.12)" },
 };
 
-type TabType = "all" | "pending" | StoreCategory;
+type TabType = "all" | StoreCategory;
 
 const TABS: { key: TabType; label: string }[] = [
   { key: "all",          label: "All"         },
-  { key: "pending",      label: "Pending"     },
   { key: "Theme",        label: "Themes"      },
   { key: "Background",   label: "Backgrounds" },
   { key: "Sticker",      label: "Stickers"    },
@@ -49,9 +48,12 @@ const EMPTY_FORM = {
   description:            "",
   assetUrl:               "",
   previewUrls:            [] as string[],
-  themeBackgroundUrl:     "",
-  themeStickerUrl:        "",
-  themeAmbientUrl:        "",
+  themeBackgroundUrls:    [] as string[],
+  themeStickerUrls:       [] as string[],
+  themeAmbientUrls:       [] as string[],
+  themeBackgroundExistingUrls:  [] as string[],
+  themeStickerExistingUrls:     [] as string[],
+  themeAmbientExistingUrls:     [] as string[],
   themeBackgroundItemId:  "",
   themeStickerItemId:     "",
   themeAmbientSoundItemId: "",
@@ -207,13 +209,19 @@ function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
     fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 6, display: "block",
   };
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).slice(0, max - values.length);
+    if (!files.length) return;
     setProgress(0);
+    const newUrls: string[] = [];
     try {
-      const result = await uploadToCloudinary(file, "store/previews", pct => setProgress(pct));
-      onChange([...values, result.secure_url]);
+      for (let i = 0; i < files.length; i++) {
+        const result = await uploadToCloudinary(files[i], "store/previews", pct =>
+          setProgress(Math.round((i / files.length) * 100 + pct / files.length))
+        );
+        newUrls.push(result.secure_url);
+      }
+      onChange([...values, ...newUrls]);
     } catch (err: any) {
       onError(err.message ?? "Upload failed");
     } finally {
@@ -255,10 +263,167 @@ function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
           <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
             Add preview
           </Text>
-          <input id={inputId} type="file" accept="image/*"
-            onChange={handleFile} style={{ display: "none" }} />
+          <input id={inputId} type="file" accept="image/*" multiple
+            onChange={handleFiles} style={{ display: "none" }} />
         </Box>
       )}
+      {progress !== null && (
+        <Box mt={2} h="3px" borderRadius="full" overflow="hidden" style={{ background: c.rowDivider }}>
+          <Box h="full" borderRadius="full"
+            style={{ width: `${progress}%`, background: "#4e7c6a", transition: "width 0.15s" }} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+/* Multi-image upload (backgrounds / stickers) */
+function MultiImageUpload({ label, values, folder, onChange, onError, existingId }: {
+  label: string; values: string[]; folder: string;
+  onChange: (urls: string[]) => void; onError: (msg: string) => void; existingId?: string;
+}) {
+  const { c, isDark } = useAdminTheme();
+  const [progress, setProgress] = useState<number | null>(null);
+  const uid = `multi-img-${label.replace(/\s+/g,"-").toLowerCase()}`;
+
+  const labelSt: React.CSSProperties = {
+    fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.08em",
+    fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 6, display: "block",
+  };
+
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setProgress(0);
+    const newUrls: string[] = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const result = await uploadToCloudinary(files[i], folder, pct =>
+          setProgress(Math.round((i / files.length) * 100 + pct / files.length))
+        );
+        newUrls.push(result.secure_url);
+      }
+      onChange([...values, ...newUrls]);
+    } catch (err: any) {
+      onError(err.message ?? "Upload failed");
+    } finally { setProgress(null); e.target.value = ""; }
+  };
+
+  const remove = (idx: number) => onChange(values.filter((_, i) => i !== idx));
+
+  return (
+    <Box mb={3}>
+      <Text as="label" style={labelSt}>{label}</Text>
+      {existingId && values.length === 0 && (
+        <Text style={{ fontSize: "0.68rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4, display: "block" }}>
+          1 item currently linked · Upload to replace
+        </Text>
+      )}
+      {values.length > 0 && (
+        <Flex gap="8px" flexWrap="wrap" mb={2}>
+          {values.map((url, idx) => (
+            <Box key={idx} position="relative" w="80px" h="56px" borderRadius="8px" overflow="hidden"
+              style={{ border: `1px solid ${c.cardBorder}`, flexShrink: 0 }}>
+              <Box as="img" {...{ src: url }} style={{ width: "100%", height: "100%", objectFit: "cover" as const }} />
+              <Box as="button" onClick={() => remove(idx)}
+                position="absolute" top="2px" right="2px" w="16px" h="16px" borderRadius="full"
+                border="none" cursor="pointer" display="flex" alignItems="center" justifyContent="center"
+                style={{ background: "rgba(0,0,0,0.65)", color: "#fff", padding: 0 }}>
+                <X size={9} />
+              </Box>
+            </Box>
+          ))}
+        </Flex>
+      )}
+      <Box as="label" htmlFor={uid} display="inline-flex" alignItems="center" gap={2}
+        px={3} py="7px" borderRadius="8px" cursor="pointer"
+        style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}`, color: c.textMuted, opacity: progress !== null ? 0.6 : 1 }}>
+        <Upload size={13} />
+        <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+          {values.length === 0 ? "Choose file" : "Add more"}
+        </Text>
+        <input id={uid} type="file" accept="image/*" multiple onChange={handleFiles} style={{ display: "none" }} />
+      </Box>
+      {progress !== null && (
+        <Box mt={2} h="3px" borderRadius="full" overflow="hidden" style={{ background: c.rowDivider }}>
+          <Box h="full" borderRadius="full"
+            style={{ width: `${progress}%`, background: "#4e7c6a", transition: "width 0.15s" }} />
+        </Box>
+      )}
+    </Box>
+  );
+}
+
+/* Multi-audio upload (ambient sounds) */
+function MultiAudioUpload({ label, values, folder, onChange, onError, existingId }: {
+  label: string; values: string[]; folder: string;
+  onChange: (urls: string[]) => void; onError: (msg: string) => void; existingId?: string;
+}) {
+  const { c, isDark } = useAdminTheme();
+  const [progress, setProgress] = useState<number | null>(null);
+  const uid = `multi-aud-${label.replace(/\s+/g,"-").toLowerCase()}`;
+
+  const labelSt: React.CSSProperties = {
+    fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.08em",
+    fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 6, display: "block",
+  };
+
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setProgress(0);
+    const newUrls: string[] = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const result = await uploadToCloudinary(files[i], folder, pct =>
+          setProgress(Math.round((i / files.length) * 100 + pct / files.length))
+        );
+        newUrls.push(result.secure_url);
+      }
+      onChange([...values, ...newUrls]);
+    } catch (err: any) {
+      onError(err.message ?? "Upload failed");
+    } finally { setProgress(null); e.target.value = ""; }
+  };
+
+  const remove = (idx: number) => onChange(values.filter((_, i) => i !== idx));
+
+  return (
+    <Box mb={3}>
+      <Text as="label" style={labelSt}>{label}</Text>
+      {existingId && values.length === 0 && (
+        <Text style={{ fontSize: "0.68rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4, display: "block" }}>
+          1 item currently linked · Upload to replace
+        </Text>
+      )}
+      {values.length > 0 && (
+        <Flex direction="column" gap={1} mb={2}>
+          {values.map((url, idx) => (
+            <Flex key={idx} align="center" gap={2} px={3} py="6px" borderRadius="8px"
+              style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", border: `1px solid ${c.cardBorder}` }}>
+              <Music size={12} style={{ color: "#f472b6", flexShrink: 0 }} />
+              <Text style={{ flex: 1, fontSize: "0.72rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {url.split("/").pop()}
+              </Text>
+              <Box as="button" onClick={() => remove(idx)}
+                display="flex" alignItems="center" justifyContent="center" w="16px" h="16px"
+                borderRadius="full" border="none" cursor="pointer"
+                style={{ background: "rgba(248,113,113,0.15)", color: "#f87171", flexShrink: 0, padding: 0 }}>
+                <X size={9} />
+              </Box>
+            </Flex>
+          ))}
+        </Flex>
+      )}
+      <Box as="label" htmlFor={uid} display="inline-flex" alignItems="center" gap={2}
+        px={3} py="7px" borderRadius="8px" cursor="pointer"
+        style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}`, color: c.textMuted, opacity: progress !== null ? 0.6 : 1 }}>
+        <Upload size={13} />
+        <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+          {values.length === 0 ? "Choose file" : "Add more"}
+        </Text>
+        <input id={uid} type="file" accept="audio/*" multiple onChange={handleFiles} style={{ display: "none" }} />
+      </Box>
       {progress !== null && (
         <Box mt={2} h="3px" borderRadius="full" overflow="hidden" style={{ background: c.rowDivider }}>
           <Box h="full" borderRadius="full"
@@ -323,84 +488,54 @@ export function ThemesSection() {
   };
 
   /* ── Data ─────────────────────────────────────────────────────────────── */
-  const [items,        setItems]        = useState<AdminStoreItemDto[]>([]);
-  const [pendingItems, setPendingItems] = useState<AdminStoreItemDto[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [totalCount,   setTotalCount]   = useState(0);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [totalPages,   setTotalPages]   = useState(1);
+  const [items,   setItems]   = useState<AdminStoreItemDto[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const PAGE_SIZE = 20;
 
   /* ── Pagination / filters ─────────────────────────────────────────────── */
-  const [page, setPage] = useState(1);
-  const [tab,  setTab]  = useState<TabType>("all");
+  const [page,        setPage]        = useState(1);
+  const [tab,         setTab]         = useState<TabType>("all");
+  const [searchQuery, setSearchQuery] = useState("");
 
-  /* ── Theme child IDs (items auto-created as part of a Theme) ─────────── */
-  const [themeChildIds, setThemeChildIds] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    adminStoreService.getItems({ category: "Theme", includeInactive: true, page: 1, pageSize: 500 })
-      .then(r => {
-        const ids = new Set<string>();
-        r.items.forEach(item => {
-          if (item.themeBackgroundItemId)   ids.add(item.themeBackgroundItemId);
-          if (item.themeStickerItemId)       ids.add(item.themeStickerItemId);
-          if (item.themeAmbientSoundItemId)  ids.add(item.themeAmbientSoundItemId);
-        });
-        setThemeChildIds(ids);
-      })
-      .catch(() => {});
-  }, []);
 
   /* ── Create / Edit ────────────────────────────────────────────────────── */
-  const [showForm,    setShowForm]    = useState(false);
-  const [editTarget,  setEditTarget]  = useState<AdminStoreItemDto | null>(null);
-  const [form,        setForm]        = useState({ ...EMPTY_FORM });
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError,   setFormError]   = useState<string | null>(null);
-  const [priceErrors, setPriceErrors] = useState({ coin: false, vnd: false });
+  const [showForm,        setShowForm]        = useState(false);
+  const [editTarget,      setEditTarget]      = useState<AdminStoreItemDto | null>(null);
+  const [form,            setForm]            = useState({ ...EMPTY_FORM });
+  const [formLoading,     setFormLoading]     = useState(false);
+  const [formError,       setFormError]       = useState<string | null>(null);
+  const [priceErrors,     setPriceErrors]     = useState({ coin: false, vnd: false });
+  const [editChildLoading, setEditChildLoading] = useState(false);
 
-  /* ── Approve ──────────────────────────────────────────────────────────── */
-  const [approveTarget,  setApproveTarget]  = useState<AdminStoreItemDto | null>(null);
-  const [approveLoading, setApproveLoading] = useState(false);
-  const [approveForm,    setApproveForm]    = useState({ isPremium: false, coinPrice: "", realMoneyPriceVnd: "" });
-
-  /* ── Reject ───────────────────────────────────────────────────────────── */
-  const [rejectTarget,  setRejectTarget]  = useState<AdminStoreItemDto | null>(null);
-  const [rejectLoading, setRejectLoading] = useState(false);
-  const [rejectNote,    setRejectNote]    = useState("");
+  /* ── Detail preview ──────────────────────────────────────────────────── */
+  const [detailItem,   setDetailItem]   = useState<AdminStoreItemDto | null>(null);
+  const [childItems,   setChildItems]   = useState<AdminStoreItemDto[]>([]);
+  const [childLoading, setChildLoading] = useState(false);
+  const [playingId,    setPlayingId]    = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   /* ── Delete ───────────────────────────────────────────────────────────── */
   const [deleteTarget,  setDeleteTarget]  = useState<AdminStoreItemDto | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
-  /* ── Load pending ─────────────────────────────────────────────────────── */
-  const refreshPending = () => {
-    adminStoreService.getPendingItems({ page: 1, pageSize: 100 })
-      .then(r => { setPendingItems(r.items); setPendingCount(r.totalCount); })
-      .catch(() => {});
-  };
-
-  useEffect(() => { refreshPending(); }, []);
-
   /* ── Load main list ───────────────────────────────────────────────────── */
   useEffect(() => {
-    if (tab === "pending") { setLoading(false); return; }
     let cancelled = false;
     setLoading(true);
     const category = tab !== "all" ? (tab as StoreCategory) : undefined;
-    adminStoreService.getItems({ category, includeInactive: true, page, pageSize: 20 })
+    adminStoreService.getItems({ category, includeInactive: true, page: 1, pageSize: 200 })
       .then(r => {
         if (cancelled) return;
         setItems(r.items);
-        setTotalCount(r.totalCount);
-        setTotalPages(r.totalPages);
+        setPage(1);
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [tab, page]);
+  }, [tab]);
 
-  const changeTab = (t: TabType) => { setTab(t); setPage(1); };
+  const changeTab = (t: TabType) => { setTab(t); setPage(1); setSearchQuery(""); };
 
   /* ── Helpers ──────────────────────────────────────────────────────────── */
   const openCreate = () => {
@@ -419,9 +554,12 @@ export function ThemesSection() {
       description:            item.description ?? "",
       assetUrl:               item.assetUrl ?? "",
       previewUrls:            parsePreviewUrls(item.previewUrl),
-      themeBackgroundUrl:     "",
-      themeStickerUrl:        "",
-      themeAmbientUrl:        "",
+      themeBackgroundUrls:    [],
+      themeStickerUrls:       [],
+      themeAmbientUrls:       [],
+      themeBackgroundExistingUrls:  [],
+      themeStickerExistingUrls:     [],
+      themeAmbientExistingUrls:     [],
       themeBackgroundItemId:  item.themeBackgroundItemId  ?? "",
       themeStickerItemId:     item.themeStickerItemId     ?? "",
       themeAmbientSoundItemId: item.themeAmbientSoundItemId ?? "",
@@ -434,6 +572,31 @@ export function ThemesSection() {
     setFormError(null);
     setPriceErrors({ coin: false, vnd: false });
     setShowForm(true);
+
+    if (item.category === "Theme") {
+      setEditChildLoading(true);
+      const fetchUrl = async (category: StoreCategory, id: string): Promise<string | null> => {
+        try {
+          const r = await adminStoreService.getItems({ category, includeInactive: true, page: 1, pageSize: 200 });
+          return r.items.find(i => i.id === id)?.assetUrl ?? null;
+        } catch { return null; }
+      };
+      Promise.all([
+        item.themeBackgroundItemId  ? fetchUrl("Background",   item.themeBackgroundItemId)  : Promise.resolve(null),
+        item.themeStickerItemId     ? fetchUrl("Sticker",      item.themeStickerItemId)     : Promise.resolve(null),
+        item.themeAmbientSoundItemId ? fetchUrl("AmbientSound", item.themeAmbientSoundItemId) : Promise.resolve(null),
+      ]).then(([bgUrl, stickerUrl, ambUrl]) => {
+        setForm(prev => ({
+          ...prev,
+          themeBackgroundUrls:         bgUrl      ? [bgUrl]      : [],
+          themeStickerUrls:            stickerUrl ? [stickerUrl] : [],
+          themeAmbientUrls:            ambUrl     ? [ambUrl]     : [],
+          themeBackgroundExistingUrls: bgUrl      ? [bgUrl]      : [],
+          themeStickerExistingUrls:    stickerUrl ? [stickerUrl] : [],
+          themeAmbientExistingUrls:    ambUrl     ? [ambUrl]     : [],
+        }));
+      }).catch(() => {}).finally(() => setEditChildLoading(false));
+    }
   };
 
   /* ── CRUD ─────────────────────────────────────────────────────────────── */
@@ -461,32 +624,45 @@ export function ThemesSection() {
     try {
       if (form.category === "Theme") {
         const themeName = form.name.trim();
-        if (form.themeBackgroundUrl) {
+        const existingBgUrls      = new Set(form.themeBackgroundExistingUrls);
+        const existingStickerUrls = new Set(form.themeStickerExistingUrls);
+        const existingAmbUrls     = new Set(form.themeAmbientExistingUrls);
+
+        // If the existing bg URL was removed from the list, clear the reference
+        if (bgId && !form.themeBackgroundUrls.some(u => existingBgUrls.has(u))) bgId = null;
+        const newBgUrls = form.themeBackgroundUrls.filter(u => !existingBgUrls.has(u));
+        for (let i = 0; i < newBgUrls.length; i++) {
           const it = await adminStoreService.createItem({
             category: "Background", themeSource: "Official",
-            name: `${themeName} – Background`,
-            description: null, assetUrl: form.themeBackgroundUrl,
+            name: `${themeName} – Background${newBgUrls.length > 1 ? ` ${i + 1}` : ""}`,
+            description: null, assetUrl: newBgUrls[i],
             isPremium: false, coinPrice: null, realMoneyPriceVnd: null, isActive: true,
           });
-          bgId = it.id;
+          if (!bgId) bgId = it.id;
         }
-        if (form.themeStickerUrl) {
+
+        if (stId && !form.themeStickerUrls.some(u => existingStickerUrls.has(u))) stId = null;
+        const newStickerUrls = form.themeStickerUrls.filter(u => !existingStickerUrls.has(u));
+        for (let i = 0; i < newStickerUrls.length; i++) {
           const it = await adminStoreService.createItem({
             category: "Sticker", themeSource: "Official",
-            name: `${themeName} – Sticker`,
-            description: null, assetUrl: form.themeStickerUrl,
+            name: `${themeName} – Sticker${newStickerUrls.length > 1 ? ` ${i + 1}` : ""}`,
+            description: null, assetUrl: newStickerUrls[i],
             isPremium: false, coinPrice: null, realMoneyPriceVnd: null, isActive: true,
           });
-          stId = it.id;
+          if (!stId) stId = it.id;
         }
-        if (form.themeAmbientUrl) {
+
+        if (ambId && !form.themeAmbientUrls.some(u => existingAmbUrls.has(u))) ambId = null;
+        const newAmbUrls = form.themeAmbientUrls.filter(u => !existingAmbUrls.has(u));
+        for (let i = 0; i < newAmbUrls.length; i++) {
           const it = await adminStoreService.createItem({
             category: "AmbientSound", themeSource: "Official",
-            name: `${themeName} – Ambient Sound`,
-            description: null, assetUrl: form.themeAmbientUrl,
+            name: `${themeName} – Ambient Sound${newAmbUrls.length > 1 ? ` ${i + 1}` : ""}`,
+            description: null, assetUrl: newAmbUrls[i],
             isPremium: false, coinPrice: null, realMoneyPriceVnd: null, isActive: true,
           });
-          ambId = it.id;
+          if (!ambId) ambId = it.id;
         }
       }
 
@@ -512,16 +688,6 @@ export function ThemesSection() {
       } else {
         const created = await adminStoreService.createItem(body);
         setItems(prev => [created, ...prev]);
-        setTotalCount(n => n + 1);
-        if (form.category === "Theme") {
-          setThemeChildIds(prev => {
-            const next = new Set(prev);
-            if (bgId)  next.add(bgId);
-            if (stId)  next.add(stId);
-            if (ambId) next.add(ambId);
-            return next;
-          });
-        }
       }
       setShowForm(false);
     } catch (e: any) {
@@ -546,31 +712,51 @@ export function ThemesSection() {
     } catch { }
   };
 
-  const handleApprove = async () => {
-    if (!approveTarget) return;
-    setApproveLoading(true);
-    try {
-      await adminStoreService.approveItem(approveTarget.id, {
-        isPremium:         approveForm.isPremium,
-        coinPrice:         approveForm.coinPrice !== "" ? Number(approveForm.coinPrice) : null,
-        realMoneyPriceVnd: approveForm.realMoneyPriceVnd !== "" ? Number(approveForm.realMoneyPriceVnd) : null,
-      });
-      setPendingItems(prev => prev.filter(i => i.id !== approveTarget.id));
-      setPendingCount(n => n - 1);
-      setApproveTarget(null);
-    } catch { } finally { setApproveLoading(false); }
+  /* ── Detail ───────────────────────────────────────────────────────────── */
+  const stopAudio = () => {
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    setPlayingId(null);
   };
 
-  const handleReject = async () => {
-    if (!rejectTarget || !rejectNote.trim()) return;
-    setRejectLoading(true);
+  const closeDetail = () => { stopAudio(); setDetailItem(null); setChildItems([]); };
+
+  const openDetail = async (item: AdminStoreItemDto) => {
+    setDetailItem(item);
+    setChildItems([]);
+    if (item.category !== "Theme") return;
+    const queries: Promise<AdminStoreItemDto | null>[] = [];
+    if (item.themeBackgroundItemId) {
+      const id = item.themeBackgroundItemId;
+      queries.push(adminStoreService.getItems({ category: "Background", includeInactive: true, page: 1, pageSize: 100 })
+        .then(r => r.items.find(i => i.id === id) ?? null).catch(() => null));
+    }
+    if (item.themeStickerItemId) {
+      const id = item.themeStickerItemId;
+      queries.push(adminStoreService.getItems({ category: "Sticker", includeInactive: true, page: 1, pageSize: 100 })
+        .then(r => r.items.find(i => i.id === id) ?? null).catch(() => null));
+    }
+    if (item.themeAmbientSoundItemId) {
+      const id = item.themeAmbientSoundItemId;
+      queries.push(adminStoreService.getItems({ category: "AmbientSound", includeInactive: true, page: 1, pageSize: 100 })
+        .then(r => r.items.find(i => i.id === id) ?? null).catch(() => null));
+    }
+    if (queries.length === 0) return;
+    setChildLoading(true);
     try {
-      await adminStoreService.rejectItem(rejectTarget.id, { rejectionNote: rejectNote.trim() });
-      setPendingItems(prev => prev.filter(i => i.id !== rejectTarget.id));
-      setPendingCount(n => n - 1);
-      setRejectTarget(null);
-      setRejectNote("");
-    } catch { } finally { setRejectLoading(false); }
+      const results = await Promise.all(queries);
+      setChildItems(results.filter((i): i is AdminStoreItemDto => i !== null));
+    } catch {} finally { setChildLoading(false); }
+  };
+
+  const toggleDetailSound = (sound: AdminStoreItemDto) => {
+    if (!sound.assetUrl) return;
+    if (playingId === sound.id) { stopAudio(); return; }
+    stopAudio();
+    const audio = new Audio(sound.assetUrl);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    audio.onended = () => setPlayingId(null);
+    setPlayingId(sound.id);
   };
 
   const handleDelete = async () => {
@@ -579,36 +765,36 @@ export function ThemesSection() {
     try {
       await adminStoreService.deleteItem(deleteTarget.id);
       setItems(prev => prev.filter(i => i.id !== deleteTarget.id));
-      setTotalCount(n => n - 1);
       setDeleteTarget(null);
     } catch { } finally { setDeleteLoading(false); }
   };
 
-  const displayItems = tab === "pending"
-    ? pendingItems
-    : items.filter(item => !themeChildIds.has(item.id));
+  const isPaid = (item: AdminStoreItemDto) =>
+    item.coinPrice != null || item.realMoneyPriceVnd != null;
+  const isVisible = (item: AdminStoreItemDto) =>
+    isPaid(item) && (item.status === "Approved" || item.status === "AdminCreated");
+
+  const displayItems = searchQuery
+    ? items.filter(i => isVisible(i) && i.name?.toLowerCase().includes(searchQuery.toLowerCase()))
+    : items.filter(i => isVisible(i));
+
+  const totalPages = Math.max(1, Math.ceil(displayItems.length / PAGE_SIZE));
+  const pagedItems = displayItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   /* ── Render ───────────────────────────────────────────────────────────── */
   return (
     <Box>
       {/* Stats + Add button */}
       <Flex align="center" justify="space-between" mb={5}>
-        <Flex gap={3}>
-          {[
-            { label: "Total Items",    value: totalCount,   color: c.cardText  },
-            { label: "Pending Review", value: pendingCount, color: "#fbbf24"   },
-          ].map(s => (
-            <Box key={s.label} borderRadius="9px" px={4} py="10px"
-              style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
-              <Text style={{ fontSize: "1.1rem", color: s.color, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                {s.value}
-              </Text>
-              <Text style={{ fontSize: "0.68rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                {s.label}
-              </Text>
-            </Box>
-          ))}
-        </Flex>
+        <Box borderRadius="9px" px={4} py="10px"
+          style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
+          <Text style={{ fontSize: "1.1rem", color: c.cardText, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+            {displayItems.length}
+          </Text>
+          <Text style={{ fontSize: "0.68rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+            Total Items
+          </Text>
+        </Box>
 
         <Box as="button" onClick={openCreate} display="flex" alignItems="center" gap={2}
           px={4} py="10px" borderRadius="9px" border="none" cursor="pointer" transition="all 0.2s"
@@ -636,15 +822,45 @@ export function ThemesSection() {
               }}>
                 {t.label}
               </Text>
-              {t.key === "pending" && pendingCount > 0 && (
-                <Box borderRadius="full" px="6px" py="1px"
-                  style={{ background: "rgba(251,191,36,0.2)", border: "1px solid rgba(251,191,36,0.3)" }}>
-                  <Text style={{ fontSize: "0.6rem", color: "#fbbf24" }}>{pendingCount}</Text>
-                </Box>
-              )}
             </Flex>
           </Box>
         ))}
+      </Flex>
+
+      {/* Search */}
+      <Flex
+        align="center"
+        gap="8px"
+        mb={4}
+        px="10px"
+        borderRadius="9px"
+        style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, maxWidth: 340 }}
+      >
+        <Search size={13} style={{ color: c.textMuted, flexShrink: 0 }} />
+        <input
+          value={searchQuery}
+          onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
+          placeholder="Search items…"
+          style={{
+            flex: 1,
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            color: c.cardText,
+            fontSize: "0.8rem",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+            padding: "9px 0",
+          }}
+        />
+        {searchQuery && (
+          <Box as="button" onClick={() => { setSearchQuery(""); setPage(1); }}
+            display="flex" alignItems="center" border="none" bg="transparent"
+            cursor="pointer" flexShrink={0}
+            style={{ color: c.textMuted, padding: "2px", transition: "color 0.15s" }}
+          >
+            <X size={12} />
+          </Box>
+        )}
       </Flex>
 
       {/* Table */}
@@ -652,10 +868,10 @@ export function ThemesSection() {
         <Flex justify="center" py={14}>
           <Text style={{ color: c.textMuted, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>Loading…</Text>
         </Flex>
-      ) : displayItems.length === 0 ? (
+      ) : pagedItems.length === 0 ? (
         <Flex justify="center" py={14}>
           <Text style={{ color: c.textDim, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            {tab === "pending" ? "No items pending review" : "No items found"}
+            No items found
           </Text>
         </Flex>
       ) : (
@@ -667,8 +883,8 @@ export function ThemesSection() {
               { label: "ITEM",     flex: 3 },
               { label: "CATEGORY", flex: 1 },
               { label: "STATUS",   flex: 1 },
-              { label: "PRICE",    flex: 1 },
-              { label: tab === "pending" ? "CREATOR" : "ACTIVE", flex: 1 },
+              { label: "PRICE",  flex: 1 },
+              { label: "ACTIVE", flex: 1 },
             ].map(col => (
               <Box key={col.label} flex={col.flex}>
                 <Text style={{ fontSize: "0.65rem", color: c.textDim, letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
@@ -680,26 +896,35 @@ export function ThemesSection() {
           </Flex>
 
           {/* Rows */}
-          {displayItems.map((item, idx) => {
+          {pagedItems.map((item, idx) => {
             const catMeta    = CATEGORY_META[item.category];
             const statusMeta = STATUS_META[item.status];
             return (
-              <Flex key={item.id} align="center" px={4} py="12px" transition="background 0.15s"
-                style={{ borderBottom: idx < displayItems.length - 1 ? `1px solid ${c.rowDivider}` : "none" }}
+              <Flex key={item.id} align="center" px={4} py="12px" transition="background 0.15s" cursor="pointer"
+                onClick={() => openDetail(item)}
+                style={{ borderBottom: idx < pagedItems.length - 1 ? `1px solid ${c.rowDivider}` : "none" }}
                 _hover={{ background: isDark ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.02)" } as any}>
 
                 {/* Item thumbnail + name */}
                 <Flex flex={3} align="center" gap={3} minW={0}>
                   <Box w="36px" h="36px" borderRadius="8px" flexShrink={0} overflow="hidden"
                     style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}` }}>
-                    {item.assetUrl ? (
-                      <Box as="img" src={item.assetUrl}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    ) : (
-                      <Flex w="full" h="full" align="center" justify="center">
-                        <Text style={{ fontSize: "0.68rem", color: c.textDim }}>–</Text>
-                      </Flex>
-                    )}
+                    {(() => {
+                      const thumbSrc = item.category === "AmbientSound"
+                        ? parsePreviewUrls(item.previewUrl)[0] ?? null
+                        : item.assetUrl ?? null;
+                      return thumbSrc ? (
+                        <Box as="img" {...{ src: thumbSrc }}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" as const }} />
+                      ) : (
+                        <Flex w="full" h="full" align="center" justify="center">
+                          {item.category === "AmbientSound"
+                            ? <Volume2 size={14} style={{ color: c.textDim }} />
+                            : <Text style={{ fontSize: "0.68rem", color: c.textDim }}>–</Text>
+                          }
+                        </Flex>
+                      );
+                    })()}
                   </Box>
                   <Box minW={0}>
                     <Text style={{
@@ -754,63 +979,36 @@ export function ThemesSection() {
                   )}
                 </Box>
 
-                {/* Active dot / Creator */}
+                {/* Active dot */}
                 <Box flex={1}>
-                  {tab === "pending" ? (
-                    <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {item.creatorUsername ?? "—"}
-                    </Text>
-                  ) : (
-                    <Box w="8px" h="8px" borderRadius="full"
-                      style={{
-                        background: item.isActive ? "#22c55e" : "#94a3b8",
-                        boxShadow:  item.isActive ? "0 0 5px #22c55e" : "none",
-                      }} />
-                  )}
+                  <Box w="8px" h="8px" borderRadius="full"
+                    style={{
+                      background: item.isActive ? "#22c55e" : "#94a3b8",
+                      boxShadow:  item.isActive ? "0 0 5px #22c55e" : "none",
+                    }} />
                 </Box>
 
                 {/* Actions */}
                 <Flex w="96px" justify="flex-end" gap="4px">
-                  {tab === "pending" ? (
-                    <>
-                      <Box as="button"
-                        onClick={() => { setApproveTarget(item); setApproveForm({ isPremium: false, coinPrice: "", realMoneyPriceVnd: "" }); }}
-                        display="flex" alignItems="center" justifyContent="center"
-                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Approve"
-                        style={{ background: "rgba(74,222,128,0.12)", color: "#16a34a" }}>
-                        <Check size={13} />
-                      </Box>
-                      <Box as="button"
-                        onClick={() => { setRejectTarget(item); setRejectNote(""); }}
-                        display="flex" alignItems="center" justifyContent="center"
-                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Reject"
-                        style={{ background: "rgba(248,113,113,0.12)", color: "#dc2626" }}>
-                        <X size={13} />
-                      </Box>
-                    </>
-                  ) : (
-                    <>
-                      <Box as="button" onClick={() => openEdit(item)}
-                        display="flex" alignItems="center" justifyContent="center"
-                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Edit"
-                        style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", color: c.textMuted }}>
-                        <Edit2 size={12} />
-                      </Box>
-                      <Box as="button" onClick={() => handleToggleActive(item)}
-                        display="flex" alignItems="center" justifyContent="center"
-                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer"
-                        title={item.isActive ? "Deactivate" : "Activate"}
-                        style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", color: item.isActive ? "#22c55e" : "#94a3b8" }}>
-                        {item.isActive ? <Eye size={13} /> : <EyeOff size={13} />}
-                      </Box>
-                      <Box as="button" onClick={() => setDeleteTarget(item)}
-                        display="flex" alignItems="center" justifyContent="center"
-                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Delete"
-                        style={{ background: "rgba(248,113,113,0.08)", color: "#dc2626" }}>
-                        <Trash2 size={12} />
-                      </Box>
-                    </>
-                  )}
+                  <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); openEdit(item); }}
+                    display="flex" alignItems="center" justifyContent="center"
+                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Edit"
+                    style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", color: c.textMuted }}>
+                    <Edit2 size={12} />
+                  </Box>
+                  <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleToggleActive(item); }}
+                    display="flex" alignItems="center" justifyContent="center"
+                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer"
+                    title={item.isActive ? "Deactivate" : "Activate"}
+                    style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", color: item.isActive ? "#22c55e" : "#94a3b8" }}>
+                    {item.isActive ? <Eye size={13} /> : <EyeOff size={13} />}
+                  </Box>
+                  <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setDeleteTarget(item); }}
+                    display="flex" alignItems="center" justifyContent="center"
+                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Delete"
+                    style={{ background: "rgba(248,113,113,0.08)", color: "#dc2626" }}>
+                    <Trash2 size={12} />
+                  </Box>
                 </Flex>
               </Flex>
             );
@@ -819,7 +1017,7 @@ export function ThemesSection() {
       )}
 
       {/* Pagination */}
-      {tab !== "pending" && totalPages > 1 && (
+      {totalPages > 1 && (
         <Flex align="center" justify="center" gap={3} mt={5}>
           <Box as="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
             display="flex" alignItems="center" justifyContent="center"
@@ -869,9 +1067,9 @@ export function ThemesSection() {
                         setForm(f => ({
                           ...f,
                           category:               e.target.value as StoreCategory,
-                          themeBackgroundUrl:     "",
-                          themeStickerUrl:        "",
-                          themeAmbientUrl:        "",
+                          themeBackgroundUrls:    [],
+                          themeStickerUrls:       [],
+                          themeAmbientUrls:       [],
                           themeBackgroundItemId:  "",
                           themeStickerItemId:     "",
                           themeAmbientSoundItemId: "",
@@ -914,33 +1112,41 @@ export function ThemesSection() {
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
                         onError={(msg) => setFormError(msg)}
                       />
-                      <FileUploadField
-                        accept="image/*"
-                        label="BACKGROUND IMAGE"
-                        value={form.themeBackgroundUrl}
-                        folder="store/backgrounds"
-                        onChange={(url) => setForm(f => ({ ...f, themeBackgroundUrl: url }))}
-                        onError={(msg) => setFormError(msg)}
-                        existingId={form.themeBackgroundItemId}
-                      />
-                      <FileUploadField
-                        accept="image/*"
-                        label="STICKER IMAGE"
-                        value={form.themeStickerUrl}
-                        folder="store/stickers"
-                        onChange={(url) => setForm(f => ({ ...f, themeStickerUrl: url }))}
-                        onError={(msg) => setFormError(msg)}
-                        existingId={form.themeStickerItemId}
-                      />
-                      <FileUploadField
-                        accept="audio/*"
-                        label="AMBIENT SOUND"
-                        value={form.themeAmbientUrl}
-                        folder="store/ambient"
-                        onChange={(url) => setForm(f => ({ ...f, themeAmbientUrl: url }))}
-                        onError={(msg) => setFormError(msg)}
-                        existingId={form.themeAmbientSoundItemId}
-                      />
+                      {editChildLoading ? (
+                        <Flex align="center" gap={2} mb={3} px={3} py={2} borderRadius="8px"
+                          style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", border: `1px solid ${c.cardBorder}` }}>
+                          <Text style={{ fontSize: "0.75rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                            Loading existing components…
+                          </Text>
+                        </Flex>
+                      ) : (
+                        <>
+                          <MultiImageUpload
+                            label="BACKGROUND IMAGES"
+                            values={form.themeBackgroundUrls}
+                            folder="store/backgrounds"
+                            onChange={(urls) => setForm(f => ({ ...f, themeBackgroundUrls: urls }))}
+                            onError={(msg) => setFormError(msg)}
+                            existingId={form.themeBackgroundItemId}
+                          />
+                          <MultiImageUpload
+                            label="STICKER IMAGES"
+                            values={form.themeStickerUrls}
+                            folder="store/stickers"
+                            onChange={(urls) => setForm(f => ({ ...f, themeStickerUrls: urls }))}
+                            onError={(msg) => setFormError(msg)}
+                            existingId={form.themeStickerItemId}
+                          />
+                          <MultiAudioUpload
+                            label="AMBIENT SOUNDS"
+                            values={form.themeAmbientUrls}
+                            folder="store/ambient"
+                            onChange={(urls) => setForm(f => ({ ...f, themeAmbientUrls: urls }))}
+                            onError={(msg) => setFormError(msg)}
+                            existingId={form.themeAmbientSoundItemId}
+                          />
+                        </>
+                      )}
                       <MultiPreviewUpload
                         values={form.previewUrls}
                         onChange={(urls) => setForm(f => ({ ...f, previewUrls: urls }))}
@@ -990,6 +1196,7 @@ export function ThemesSection() {
                         onError={(msg) => setFormError(msg)}
                       />
                       <MultiPreviewUpload
+                        max={1}
                         values={form.previewUrls}
                         onChange={(urls) => setForm(f => ({ ...f, previewUrls: urls }))}
                         onError={(msg) => setFormError(msg)}
@@ -1063,97 +1270,238 @@ export function ThemesSection() {
         )}
       </AnimatePresence>
 
-      {/* ═══ Approve Modal ════════════════════════════════════════════════ */}
+      {/* ═══ Detail Modal ═════════════════════════════════════════════════ */}
       <AnimatePresence>
-        {approveTarget && (
+        {detailItem && (
           <>
-            <ModalBackdrop onClose={() => setApproveTarget(null)} loading={approveLoading} />
-            <ModalCenter>
-              <MotionBox style={{ width: "400px" }}
+            <ModalBackdrop onClose={closeDetail} loading={false} />
+            <ModalCenter zIndex={310}>
+              <MotionBox style={{ width: "640px", maxHeight: "88vh", overflowY: "auto" }}
                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.18, ease: [0.4,0,0.2,1] } as any}>
+                transition={{ duration: 0.2, ease: [0.4,0,0.2,1] } as any}>
                 <Box style={modalBoxSt}>
+                  {/* Header */}
                   <Flex align="center" justify="space-between" mb={4}>
-                    <Text style={{ fontSize: "0.9rem", color: "#16a34a", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      Approve Item
+                    <Text style={{ fontSize: "0.9rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      Store Item
                     </Text>
-                    <Box as="button" onClick={() => !approveLoading && setApproveTarget(null)} style={closeBtnSt}>
-                      <X size={13} />
-                    </Box>
+                    <Box as="button" onClick={closeDetail} style={closeBtnSt}><X size={13} /></Box>
                   </Flex>
-                  <Text mb={4} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Approving: <span style={{ color: c.text }}>{approveTarget.name}</span>
-                  </Text>
-                  <Flex gap={3} mb={4}>
-                    <Box flex={1}>
-                      <Text as="label" style={labelSt}>COIN PRICE</Text>
-                      <Box as="input" type="number" min={0} value={approveForm.coinPrice}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApproveForm(f => ({ ...f, coinPrice: e.target.value }))}
-                        placeholder="Optional" style={inputSt} />
-                    </Box>
-                    <Box flex={1}>
-                      <Text as="label" style={labelSt}>VND PRICE</Text>
-                      <Box as="input" type="number" min={0} value={approveForm.realMoneyPriceVnd}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setApproveForm(f => ({ ...f, realMoneyPriceVnd: e.target.value }))}
-                        placeholder="Optional" style={inputSt} />
-                    </Box>
-                  </Flex>
-                  <Box mb={5}>
-                    <Toggle value={approveForm.isPremium} onChange={() => setApproveForm(f => ({ ...f, isPremium: !f.isPremium }))} label="Premium" textColor={c.textMuted} />
-                  </Box>
-                  <Flex justify="flex-end" gap={2}>
-                    <Box as="button" onClick={() => !approveLoading && setApproveTarget(null)} style={cancelBtnSt}>Cancel</Box>
-                    <Box as="button" onClick={handleApprove} disabled={approveLoading}
-                      display="flex" alignItems="center" gap={2}
-                      px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
-                      style={{ background: "rgba(74,222,128,0.15)", outline: "1px solid rgba(74,222,128,0.4)", color: "#16a34a", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: approveLoading ? 0.6 : 1 }}>
-                      <Check size={13} />
-                      {approveLoading ? "Approving…" : "Approve"}
-                    </Box>
-                  </Flex>
-                </Box>
-              </MotionBox>
-            </ModalCenter>
-          </>
-        )}
-      </AnimatePresence>
 
-      {/* ═══ Reject Modal ═════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {rejectTarget && (
-          <>
-            <ModalBackdrop onClose={() => setRejectTarget(null)} loading={rejectLoading} />
-            <ModalCenter>
-              <MotionBox style={{ width: "400px" }}
-                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.18, ease: [0.4,0,0.2,1] } as any}>
-                <Box style={modalBoxSt}>
-                  <Flex align="center" justify="space-between" mb={4}>
-                    <Text style={{ fontSize: "0.9rem", color: "#dc2626", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      Reject Item
+                  {/* Hero */}
+                  {(() => {
+                    const isSticker = detailItem.category === "Sticker";
+                    const heroSrc = isSticker
+                      ? detailItem.assetUrl ?? null
+                      : parsePreviewUrls(detailItem.previewUrl)[0] || detailItem.assetUrl || null;
+                    return (
+                      <Box mb={4} borderRadius="10px" overflow="hidden" h="180px"
+                        style={{
+                          border: `1px solid ${c.cardBorder}`,
+                          background: isSticker
+                            ? "repeating-conic-gradient(rgba(128,128,128,0.12) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px"
+                            : isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+                        }}>
+                        {heroSrc ? (
+                          <Box as="img" {...{ src: heroSrc }}
+                            style={{ width: "100%", height: "100%", objectFit: isSticker ? "contain" as const : "cover" as const, padding: isSticker ? "12px" : undefined }} />
+                        ) : (
+                          <Flex w="full" h="full" align="center" justify="center" direction="column" gap={2}>
+                            <Palette size={32} style={{ color: c.textDim }} />
+                            <Text style={{ fontSize: "0.75rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>No preview</Text>
+                          </Flex>
+                        )}
+                      </Box>
+                    );
+                  })()}
+
+                  {/* Name + badges */}
+                  <Flex align="center" gap={2} mb="4px" flexWrap="wrap">
+                    <Text style={{ fontSize: "1.05rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      {detailItem.name ?? "—"}
                     </Text>
-                    <Box as="button" onClick={() => !rejectLoading && setRejectTarget(null)} style={closeBtnSt}>
-                      <X size={13} />
+                    {(() => { const cm = CATEGORY_META[detailItem.category]; return (
+                      <Box px="7px" py="1px" borderRadius="full"
+                        style={{ background: `${cm.color}18`, border: `1px solid ${cm.color}35` }}>
+                        <Text style={{ fontSize: "0.6rem", color: cm.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{cm.label}</Text>
+                      </Box>
+                    ); })()}
+                    {(() => { const sm = STATUS_META[detailItem.status]; return (
+                      <Box px="7px" py="1px" borderRadius="full"
+                        style={{ background: sm.bg, border: `1px solid ${sm.color}35` }}>
+                        <Text style={{ fontSize: "0.6rem", color: sm.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{sm.label}</Text>
+                      </Box>
+                    ); })()}
+                  </Flex>
+                  {detailItem.description && (
+                    <Text mb={3} style={{ fontSize: "0.8rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.55 }}>
+                      {detailItem.description}
+                    </Text>
+                  )}
+
+                  {/* Meta row */}
+                  <Flex gap={6} mb={4} flexWrap="wrap">
+                    {detailItem.creatorUsername && (
+                      <Box>
+                        <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>CREATOR</Text>
+                        <Text style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{detailItem.creatorUsername}</Text>
+                      </Box>
+                    )}
+                    <Box>
+                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>PRICE</Text>
+                      <Text style={{ fontSize: "0.82rem", color: detailItem.coinPrice ? "#d97706" : c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        {detailItem.coinPrice ? `${detailItem.coinPrice} coins` : detailItem.realMoneyPriceVnd ? `${detailItem.realMoneyPriceVnd.toLocaleString()}đ` : "Free"}
+                      </Text>
+                    </Box>
+                    <Box>
+                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4 }}>ACTIVE</Text>
+                      <Box w="8px" h="8px" borderRadius="full"
+                        style={{ background: detailItem.isActive ? "#22c55e" : "#94a3b8", boxShadow: detailItem.isActive ? "0 0 5px #22c55e" : "none" }} />
                     </Box>
                   </Flex>
-                  <Text mb={4} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Rejecting: <span style={{ color: c.text }}>{rejectTarget.name}</span>
-                  </Text>
-                  <Box mb={5}>
-                    <Text as="label" style={labelSt}>REJECTION REASON *</Text>
-                    <Box as="textarea" value={rejectNote} rows={3}
-                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectNote(e.target.value)}
-                      placeholder="Explain why this item is rejected…"
-                      style={{ ...inputSt, height: "auto", padding: "8px 12px", resize: "vertical" }} />
-                  </Box>
-                  <Flex justify="flex-end" gap={2}>
-                    <Box as="button" onClick={() => !rejectLoading && setRejectTarget(null)} style={cancelBtnSt}>Cancel</Box>
-                    <Box as="button" onClick={handleReject} disabled={rejectLoading || !rejectNote.trim()}
-                      display="flex" alignItems="center" gap={2}
-                      px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
-                      style={{ background: "rgba(248,113,113,0.15)", outline: "1px solid rgba(248,113,113,0.4)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: (rejectLoading || !rejectNote.trim()) ? 0.45 : 1 }}>
-                      <X size={13} />
-                      {rejectLoading ? "Rejecting…" : "Reject"}
+
+                  {/* Audio player — AmbientSound only */}
+                  {detailItem.category === "AmbientSound" && detailItem.assetUrl && (
+                    <Box mb={4} px={3} py="11px" borderRadius="10px"
+                      style={{ background: isDark ? "rgba(244,114,182,0.06)" : "rgba(244,114,182,0.05)", border: "1px solid rgba(244,114,182,0.2)" }}>
+                      <Text mb={2} style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        AUDIO PREVIEW
+                      </Text>
+                      <Flex align="center" gap={3}>
+                        <Box as="button"
+                          onClick={() => toggleDetailSound(detailItem)}
+                          display="flex" alignItems="center" justifyContent="center" flexShrink={0}
+                          w="36px" h="36px" borderRadius="50%" border="none" cursor="pointer"
+                          style={{
+                            background: playingId === detailItem.id ? "rgba(244,114,182,0.22)" : "rgba(244,114,182,0.1)",
+                            outline: playingId === detailItem.id ? "1px solid rgba(244,114,182,0.5)" : "1px solid rgba(244,114,182,0.22)",
+                            color: "#f472b6",
+                            transition: "all 0.15s",
+                          }}>
+                          {playingId === detailItem.id ? <Pause size={15} /> : <Play size={15} />}
+                        </Box>
+                        <Box flex={1} minW={0}>
+                          <Text style={{ fontSize: "0.82rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {detailItem.name ?? "—"}
+                          </Text>
+                          <Text style={{ fontSize: "0.65rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {detailItem.assetUrl.split("/").pop()}
+                          </Text>
+                        </Box>
+                        <Volume2 size={14} style={{ color: "rgba(244,114,182,0.35)", flexShrink: 0 }} />
+                      </Flex>
+                    </Box>
+                  )}
+
+                  {/* Child components (Theme only) */}
+                  {childLoading ? (
+                    <Flex py={6} mb={4} borderRadius="9px" align="center" justify="center"
+                      style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", border: `1px solid ${c.cardBorder}` }}>
+                      <Text style={{ fontSize: "0.8rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>Loading components…</Text>
+                    </Flex>
+                  ) : childItems.length > 0 ? (() => {
+                    const bgs      = childItems.filter(comp => comp.category === "Background");
+                    const stickers = childItems.filter(comp => comp.category === "Sticker");
+                    const sounds   = childItems.filter(comp => comp.category === "AmbientSound");
+                    return (
+                      <Box mb={4}>
+                        {bgs.length > 0 && (
+                          <Box mb={4}>
+                            <Flex align="center" gap={2} mb={2}>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>BACKGROUNDS</Text>
+                              <Box px="6px" py="1px" borderRadius="full" style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)" }}>
+                                <Text style={{ fontSize: "0.6rem", color: "#60a5fa", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{bgs.length}</Text>
+                              </Box>
+                            </Flex>
+                            <Box overflowX="auto" pb="8px">
+                              <Flex gap={2} style={{ width: "max-content" }}>
+                                {bgs.map(bg => (
+                                  <Box key={bg.id} borderRadius="9px" overflow="hidden" w="140px" h="84px"
+                                    style={{ border: `1px solid ${c.cardBorder}`, flexShrink: 0, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)" }}>
+                                    {bg.assetUrl
+                                      ? <Box as="img" {...{ src: bg.assetUrl }} style={{ width: "100%", height: "100%", objectFit: "cover" as const, display: "block" }} />
+                                      : <Flex w="full" h="full" align="center" justify="center"><Image size={20} style={{ color: "#60a5fa" }} /></Flex>}
+                                  </Box>
+                                ))}
+                              </Flex>
+                            </Box>
+                          </Box>
+                        )}
+                        {stickers.length > 0 && (
+                          <Box mb={4}>
+                            <Flex align="center" gap={2} mb={2}>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>STICKERS</Text>
+                              <Box px="6px" py="1px" borderRadius="full" style={{ background: "rgba(251,146,60,0.12)", border: "1px solid rgba(251,146,60,0.3)" }}>
+                                <Text style={{ fontSize: "0.6rem", color: "#fb923c", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{stickers.length}</Text>
+                              </Box>
+                            </Flex>
+                            <Flex gap={2} flexWrap="wrap">
+                              {stickers.map(s => (
+                                <Box key={s.id} borderRadius="9px" overflow="hidden" w="80px" h="80px"
+                                  style={{ border: `1px solid ${c.cardBorder}`, flexShrink: 0, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)" }}>
+                                  {s.assetUrl
+                                    ? <Box as="img" {...{ src: s.assetUrl }} style={{ width: "100%", height: "100%", objectFit: "contain" as const, display: "block" }} />
+                                    : <Flex w="full" h="full" align="center" justify="center"><Sparkles size={18} style={{ color: "#fb923c" }} /></Flex>}
+                                </Box>
+                              ))}
+                            </Flex>
+                          </Box>
+                        )}
+                        {sounds.length > 0 && (
+                          <Box mb={2}>
+                            <Flex align="center" gap={2} mb={2}>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>AMBIENT SOUNDS</Text>
+                              <Box px="6px" py="1px" borderRadius="full" style={{ background: "rgba(244,114,182,0.12)", border: "1px solid rgba(244,114,182,0.3)" }}>
+                                <Text style={{ fontSize: "0.6rem", color: "#f472b6", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{sounds.length}</Text>
+                              </Box>
+                            </Flex>
+                            <Flex direction="column" gap={2}>
+                              {sounds.map(sound => (
+                                <Flex key={sound.id} align="center" gap={3} px={3} py="10px" borderRadius="9px"
+                                  style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", border: `1px solid ${c.cardBorder}` }}>
+                                  <Box as="button" onClick={() => toggleDetailSound(sound)}
+                                    display="flex" alignItems="center" justifyContent="center" flexShrink={0}
+                                    w="32px" h="32px" borderRadius="50%" border="none" cursor={sound.assetUrl ? "pointer" : "default"}
+                                    style={{ background: "rgba(244,114,182,0.12)", color: "#f472b6" }}>
+                                    {playingId === sound.id ? <Pause size={14} /> : <Play size={14} />}
+                                  </Box>
+                                  <Box flex={1} minW={0}>
+                                    <Text style={{ fontSize: "0.8rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                      {sound.name ?? sound.assetUrl?.split("/").pop() ?? "Sound"}
+                                    </Text>
+                                    {sound.assetUrl && (
+                                      <Text style={{ fontSize: "0.65rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                        {sound.assetUrl.split("/").pop()}
+                                      </Text>
+                                    )}
+                                  </Box>
+                                </Flex>
+                              ))}
+                            </Flex>
+                          </Box>
+                        )}
+                      </Box>
+                    );
+                  })() : null}
+
+                  {/* Actions */}
+                  <Box mb={3} h="1px" style={{ background: c.border }} />
+                  <Flex gap={2}>
+                    <Box as="button" onClick={() => { closeDetail(); openEdit(detailItem); }}
+                      display="flex" alignItems="center" justifyContent="center" gap={2} flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
+                      style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", outline: `1px solid ${c.cardBorder}`, color: c.textMuted, fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      <Edit2 size={14} /> Edit
+                    </Box>
+                    <Box as="button" onClick={() => { closeDetail(); handleToggleActive(detailItem); }}
+                      display="flex" alignItems="center" justifyContent="center" gap={2} flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
+                      style={{ background: detailItem.isActive ? "rgba(148,163,184,0.08)" : "rgba(34,197,94,0.1)", outline: `1px solid ${detailItem.isActive ? c.cardBorder : "rgba(34,197,94,0.3)"}`, color: detailItem.isActive ? "#94a3b8" : "#22c55e", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      {detailItem.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
+                      {detailItem.isActive ? "Deactivate" : "Activate"}
+                    </Box>
+                    <Box as="button" onClick={() => { closeDetail(); setDeleteTarget(detailItem); }}
+                      display="flex" alignItems="center" justifyContent="center" gap={2} flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
+                      style={{ background: "rgba(248,113,113,0.08)", outline: "1px solid rgba(248,113,113,0.25)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      <Trash2 size={14} /> Delete
                     </Box>
                   </Flex>
                 </Box>

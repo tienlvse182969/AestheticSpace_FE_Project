@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
 import { motion } from "motion/react";
-import { ShoppingBag, Sparkles, Construction } from "lucide-react";
+import { ShoppingBag, Sticker, Palette, AlertCircle, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
@@ -12,6 +12,7 @@ import {
 import {
   aestheticStoreService,
   type InventoryItem,
+  type StoreItem,
 } from "../../../../services/aestheticStore.service";
 
 const MotionBox = motion.create(Box);
@@ -25,22 +26,75 @@ interface StickerPickerPanelProps {
 }
 
 type TabValue = "default" | "purchased";
+type PurchasedFilter = "store" | "theme";
+
+type ThemeGroup = {
+  themeId: string;
+  themeName: string;
+  themeSource: string | null;
+  sticker: { id: string; url: string; name: string } | null;
+};
+
+function StickerCard({ url, name, onClick }: { url: string; name: string; onClick: () => void }) {
+  const FONT = "'HarmonyOS Sans', sans-serif";
+  return (
+    <Box
+      as="button"
+      onClick={onClick}
+      display="flex"
+      flexDirection="column"
+      alignItems="center"
+      gap={2}
+      p={3}
+      borderRadius="12px"
+      border="none"
+      cursor="pointer"
+      style={{
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        transition: "all 0.18s",
+      }}
+      _hover={{
+        background: "rgba(255,255,255,0.09)",
+        border: "1px solid rgba(255,255,255,0.2)",
+        transform: "scale(1.04)",
+      }}
+    >
+      <img
+        src={url}
+        alt={name}
+        style={{ width: 90, height: 90, objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))" }}
+        draggable={false}
+      />
+      <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.45)", fontFamily: FONT, textAlign: "center" }}>
+        {name}
+      </Text>
+    </Box>
+  );
+}
 
 export function StickerPickerPanel({ onPlace, onClose }: StickerPickerPanelProps) {
   const { t } = useTranslation();
   const { x, y, ref } = useCenteredPanel(PANEL_W, PANEL_H);
+  const FONT = "'HarmonyOS Sans', sans-serif";
 
   const [tab, setTab] = useState<TabValue>("default");
 
-  // Default stickers (from assets)
+  /* ── Default stickers ── */
   const [stickers, setStickers] = useState<AssetDto[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [error,    setError]    = useState<string | null>(null);
 
-  // Purchased stickers (from store inventory)
+  /* ── Purchased: store-bought ── */
+  const [purchasedFilter,  setPurchasedFilter]  = useState<PurchasedFilter>("store");
   const [purchased,        setPurchased]        = useState<InventoryItem[]>([]);
   const [purchasedLoading, setPurchasedLoading] = useState(false);
   const [purchasedError,   setPurchasedError]   = useState<string | null>(null);
+
+  /* ── Purchased: theme-bundled ── */
+  const [themeGroups,       setThemeGroups]       = useState<ThemeGroup[]>([]);
+  const [themeStickerLoading, setThemeStickerLoading] = useState(false);
+  const [themeStickerError,   setThemeStickerError]   = useState(false);
 
   const fetchStickers = useCallback(async () => {
     setLoading(true);
@@ -68,13 +122,40 @@ export function StickerPickerPanel({ onPlace, onClose }: StickerPickerPanelProps
     }
   }, []);
 
+  const fetchThemeStickers = useCallback(async () => {
+    setThemeStickerLoading(true);
+    setThemeStickerError(false);
+    try {
+      const allItems = await aestheticStoreService.getItems(undefined, 1, 200);
+      const ownedThemes = allItems.filter((i: StoreItem) => i.category === "Theme" && i.isOwned);
+      const groups: ThemeGroup[] = ownedThemes.map((theme: StoreItem) => {
+        const stickerItem = theme.themeStickerItemId
+          ? allItems.find((i: StoreItem) => i.id === theme.themeStickerItemId)
+          : null;
+        return {
+          themeId: theme.id,
+          themeName: theme.name,
+          themeSource: theme.themeSource ?? null,
+          sticker: stickerItem?.assetUrl
+            ? { id: stickerItem.id, url: stickerItem.assetUrl, name: stickerItem.name }
+            : null,
+        };
+      });
+      setThemeGroups(groups);
+    } catch {
+      setThemeStickerError(true);
+    } finally {
+      setThemeStickerLoading(false);
+    }
+  }, []);
+
   useEffect(() => { fetchStickers(); }, [fetchStickers]);
 
   useEffect(() => {
-    if (tab === "purchased") fetchPurchased();
-  }, [tab, fetchPurchased]);
-
-  const FONT = "'HarmonyOS Sans', sans-serif";
+    if (tab !== "purchased") return;
+    if (purchasedFilter === "store") fetchPurchased();
+    else fetchThemeStickers();
+  }, [tab, purchasedFilter, fetchPurchased, fetchThemeStickers]);
 
   const tabStyle = (active: boolean) => ({
     padding: "6px 14px",
@@ -90,6 +171,20 @@ export function StickerPickerPanel({ onPlace, onClose }: StickerPickerPanelProps
     display: "flex",
     alignItems: "center",
     gap: "6px",
+  } as React.CSSProperties);
+
+  const pillStyle = (active: boolean) => ({
+    background: active ? "rgba(255,255,255,0.15)" : "rgba(255,255,255,0.06)",
+    border: active ? "1px solid rgba(255,255,255,0.32)" : "1px solid rgba(255,255,255,0.1)",
+    borderRadius: "20px",
+    color: active ? "#fff" : "rgba(255,255,255,0.45)",
+    fontSize: "0.74rem",
+    padding: "4px 14px",
+    cursor: "pointer",
+    fontFamily: FONT,
+    fontWeight: active ? 600 : 400,
+    transition: "all 0.15s",
+    whiteSpace: "nowrap",
   } as React.CSSProperties);
 
   return (
@@ -128,19 +223,11 @@ export function StickerPickerPanel({ onPlace, onClose }: StickerPickerPanelProps
 
         {/* Tabs */}
         <Flex mb={3} gap={1} style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: "10px" }}>
-          <Box
-            as="button"
-            style={tabStyle(tab === "default")}
-            onClick={() => setTab("default")}
-          >
-            <Sparkles size={13} />
+          <Box as="button" style={tabStyle(tab === "default")} onClick={() => setTab("default")}>
+            <Sticker size={13} />
             {t("stickerPicker.tabDefault")}
           </Box>
-          <Box
-            as="button"
-            style={tabStyle(tab === "purchased")}
-            onClick={() => setTab("purchased")}
-          >
+          <Box as="button" style={tabStyle(tab === "purchased")} onClick={() => setTab("purchased")}>
             <ShoppingBag size={13} />
             {t("stickerPicker.tabPurchased")}
           </Box>
@@ -153,164 +240,170 @@ export function StickerPickerPanel({ onPlace, onClose }: StickerPickerPanelProps
           </Text>
         )}
 
+        {/* Sub-filter pills — purchased tab only */}
+        {tab === "purchased" && (
+          <Flex gap={2} mb={3}>
+            {(["store", "theme"] as const).map(f => (
+              <Box key={f} as="button" onClick={() => setPurchasedFilter(f)} style={pillStyle(purchasedFilter === f)}>
+                {f === "store" ? "Mua lẻ" : "Kèm giao diện"}
+              </Box>
+            ))}
+          </Flex>
+        )}
+
         {/* Content */}
         <Box style={{ flex: 1, overflowY: "auto", overflowX: "hidden", marginRight: -4, paddingRight: 4 }}>
+
+          {/* ── Default tab ── */}
           {tab === "default" && (
-            <>
-              {loading ? (
-                <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
-                  <Spinner size="sm" style={{ color: "rgba(255,255,255,0.4)" }} />
-                  <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>
-                    Loading…
-                  </Text>
-                </Flex>
-              ) : error ? (
-                <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
-                  <Text style={{ fontSize: "0.78rem", color: "rgba(248,113,113,0.75)", fontFamily: FONT }}>
-                    {error}
-                  </Text>
-                  <Box
-                    as="button"
-                    onClick={fetchStickers}
-                    style={{
-                      background: "transparent",
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: 8, padding: "5px 14px",
-                      cursor: "pointer", fontSize: "0.75rem",
-                      color: "rgba(255,255,255,0.5)",
-                      fontFamily: FONT,
-                    }}
-                  >
-                    Retry
-                  </Box>
-                </Flex>
-              ) : stickers.length === 0 ? (
-                <Flex align="center" justify="center" style={{ height: "100%" }}>
-                  <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.28)", fontFamily: FONT }}>
-                    No stickers found
-                  </Text>
-                </Flex>
-              ) : (
-                <Box display="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
-                  {stickers.map((s) => (
-                    <Box
-                      key={s.id}
-                      as="button"
-                      onClick={() => s.url && onPlace(s.url)}
-                      display="flex"
-                      flexDirection="column"
-                      alignItems="center"
-                      gap={2}
-                      p={3}
-                      borderRadius="12px"
-                      border="none"
-                      cursor="pointer"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        transition: "all 0.18s",
-                      }}
-                      _hover={{
-                        background: "rgba(255,255,255,0.09)",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        transform: "scale(1.04)",
-                      }}
-                    >
-                      <img
-                        src={s.url ?? ""}
-                        alt={s.name ?? ""}
-                        style={{ width: 90, height: 90, objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))" }}
-                        draggable={false}
-                      />
-                      <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.45)", fontFamily: FONT, textAlign: "center" }}>
-                        {s.name ?? ""}
-                      </Text>
-                    </Box>
-                  ))}
+            loading ? (
+              <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
+                <Spinner size="sm" style={{ color: "rgba(255,255,255,0.4)" }} />
+                <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>Loading…</Text>
+              </Flex>
+            ) : error ? (
+              <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
+                <Text style={{ fontSize: "0.78rem", color: "rgba(248,113,113,0.75)", fontFamily: FONT }}>{error}</Text>
+                <Box as="button" onClick={fetchStickers}
+                  style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "5px 14px", cursor: "pointer", fontSize: "0.75rem", color: "rgba(255,255,255,0.5)", fontFamily: FONT }}>
+                  Retry
                 </Box>
-              )}
-            </>
+              </Flex>
+            ) : stickers.length === 0 ? (
+              <Flex align="center" justify="center" style={{ height: "100%" }}>
+                <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.28)", fontFamily: FONT }}>No stickers found</Text>
+              </Flex>
+            ) : (
+              <Box display="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+                {stickers.map((s) => (
+                  <StickerCard key={s.id} url={s.url ?? ""} name={s.name ?? ""} onClick={() => s.url && onPlace(s.url)} />
+                ))}
+              </Box>
+            )
           )}
 
-          {tab === "purchased" && (
-            <>
-              {purchasedLoading ? (
-                <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
-                  <Spinner size="sm" style={{ color: "rgba(255,255,255,0.4)" }} />
-                  <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>
-                    Loading…
-                  </Text>
-                </Flex>
-              ) : purchasedError ? (
-                <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
-                  <Text style={{ fontSize: "0.78rem", color: "rgba(248,113,113,0.75)", fontFamily: FONT }}>
-                    {purchasedError}
-                  </Text>
-                  <Box
-                    as="button"
-                    onClick={fetchPurchased}
-                    style={{
-                      background: "transparent",
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      borderRadius: 8, padding: "5px 14px",
-                      cursor: "pointer", fontSize: "0.75rem",
-                      color: "rgba(255,255,255,0.5)",
-                      fontFamily: FONT,
-                    }}
-                  >
-                    Retry
-                  </Box>
-                </Flex>
-              ) : purchased.length === 0 ? (
-                <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
-                  <Construction size={32} style={{ color: "rgba(255,255,255,0.2)" }} />
-                  <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.35)", fontFamily: FONT, fontWeight: 500 }}>
-                    {t("stickerPicker.noPurchased")}
-                  </Text>
-                  <Text style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.22)", fontFamily: FONT }}>
-                    {t("stickerPicker.noPurchasedHint")}
-                  </Text>
-                </Flex>
-              ) : (
-                <Box display="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
-                  {purchased.map((item) => (
-                    <Box
-                      key={item.inventoryId}
-                      as="button"
-                      onClick={() => item.assetUrl && onPlace(item.assetUrl)}
-                      display="flex"
-                      flexDirection="column"
-                      alignItems="center"
-                      gap={2}
-                      p={3}
-                      borderRadius="12px"
-                      border="none"
-                      cursor="pointer"
-                      style={{
-                        background: "rgba(255,255,255,0.04)",
-                        border: "1px solid rgba(255,255,255,0.08)",
-                        transition: "all 0.18s",
-                      }}
-                      _hover={{
-                        background: "rgba(255,255,255,0.09)",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        transform: "scale(1.04)",
-                      }}
-                    >
-                      <img
-                        src={item.assetUrl ?? ""}
-                        alt={item.name}
-                        style={{ width: 90, height: 90, objectFit: "contain", filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.3))" }}
-                        draggable={false}
-                      />
-                      <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.45)", fontFamily: FONT, textAlign: "center" }}>
-                        {item.name}
-                      </Text>
-                    </Box>
-                  ))}
+          {/* ── Purchased: store-bought ── */}
+          {tab === "purchased" && purchasedFilter === "store" && (
+            purchasedLoading ? (
+              <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
+                <Spinner size="sm" style={{ color: "rgba(255,255,255,0.4)" }} />
+                <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>Loading…</Text>
+              </Flex>
+            ) : purchasedError ? (
+              <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
+                <AlertCircle size={24} color="rgba(248,113,113,0.55)" />
+                <Text style={{ fontSize: "0.78rem", color: "rgba(248,113,113,0.75)", fontFamily: FONT }}>{purchasedError}</Text>
+                <Box as="button" onClick={fetchPurchased}
+                  display="flex" alignItems="center" gap={2}
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 7, color: "rgba(255,255,255,0.6)", fontSize: "0.76rem", padding: "5px 14px", cursor: "pointer", fontFamily: FONT }}>
+                  <RefreshCw size={12} /> Retry
                 </Box>
-              )}
-            </>
+              </Flex>
+            ) : purchased.length === 0 ? (
+              <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
+                <ShoppingBag size={28} color="rgba(255,255,255,0.15)" />
+                <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.35)", fontFamily: FONT, fontWeight: 500 }}>
+                  {t("stickerPicker.noPurchased")}
+                </Text>
+                <Text style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.22)", fontFamily: FONT }}>
+                  {t("stickerPicker.noPurchasedHint")}
+                </Text>
+              </Flex>
+            ) : (
+              <Box display="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+                {purchased.map((item) => (
+                  <StickerCard key={item.inventoryId} url={item.assetUrl ?? ""} name={item.name} onClick={() => item.assetUrl && onPlace(item.assetUrl)} />
+                ))}
+              </Box>
+            )
+          )}
+
+          {/* ── Purchased: theme-bundled ── */}
+          {tab === "purchased" && purchasedFilter === "theme" && (
+            themeStickerLoading ? (
+              <Box display="flex" flexDirection="column" gap="16px">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Box key={i}>
+                    <Box mb="6px" h="12px" w="100px" borderRadius="4px"
+                      className="animate-pulse" style={{ background: "rgba(255,255,255,0.07)" }} />
+                    <Box display="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+                      <Box borderRadius="12px" className="animate-pulse"
+                        style={{ aspectRatio: "1", background: "rgba(255,255,255,0.07)" }} />
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            ) : themeStickerError ? (
+              <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
+                <AlertCircle size={24} color="rgba(248,113,113,0.55)" />
+                <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", fontFamily: FONT }}>
+                  Không tải được dữ liệu
+                </Text>
+                <Box as="button" onClick={fetchThemeStickers}
+                  display="flex" alignItems="center" gap={2}
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 7, color: "rgba(255,255,255,0.6)", fontSize: "0.76rem", padding: "5px 14px", cursor: "pointer", fontFamily: FONT }}>
+                  <RefreshCw size={12} /> Retry
+                </Box>
+              </Flex>
+            ) : themeGroups.length === 0 ? (
+              <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
+                <Palette size={28} color="rgba(255,255,255,0.15)" />
+                <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.35)", fontFamily: FONT, fontWeight: 500 }}>
+                  {t("stickerPicker.noPurchased")}
+                </Text>
+                <Text style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.22)", fontFamily: FONT }}>
+                  Mua theme để sticker xuất hiện ở đây
+                </Text>
+              </Flex>
+            ) : (
+              <Box display="flex" flexDirection="column" gap="16px">
+                {themeGroups.map(group => (
+                  <Box key={group.themeId}>
+                    {/* Theme label */}
+                    <Flex align="center" gap="7px" mb="7px"
+                      style={{ borderLeft: "2px solid rgba(167,139,250,0.45)", paddingLeft: "8px" }}
+                    >
+                      <Palette size={11} color="rgba(167,139,250,0.65)" />
+                      <Text style={{
+                        fontSize: "0.68rem", fontFamily: FONT, fontWeight: 600,
+                        color: "rgba(255,255,255,0.55)", letterSpacing: "0.05em",
+                        flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      }}>
+                        {group.themeName}
+                      </Text>
+                      {group.themeSource && (
+                        <Box style={{
+                          padding: "1px 6px", borderRadius: "4px",
+                          fontSize: "0.55rem", fontFamily: FONT, fontWeight: 700,
+                          letterSpacing: "0.06em", flexShrink: 0,
+                          background: group.themeSource === "Official"
+                            ? "rgba(251,191,36,0.18)" : "rgba(20,184,166,0.15)",
+                          color: group.themeSource === "Official"
+                            ? "rgba(251,191,36,0.9)" : "rgba(20,184,166,0.9)",
+                        }}>
+                          {group.themeSource === "Official" ? "✦ Official" : "Community"}
+                        </Box>
+                      )}
+                    </Flex>
+
+                    {/* Sticker card */}
+                    {group.sticker ? (
+                      <Box display="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+                        <StickerCard
+                          url={group.sticker.url}
+                          name={group.sticker.name}
+                          onClick={() => onPlace(group.sticker!.url)}
+                        />
+                      </Box>
+                    ) : (
+                      <Text style={{ fontSize: "0.7rem", fontFamily: FONT, color: "rgba(255,255,255,0.2)", paddingLeft: "10px" }}>
+                        Không có sticker kèm theo
+                      </Text>
+                    )}
+                  </Box>
+                ))}
+              </Box>
+            )
           )}
         </Box>
       </Box>

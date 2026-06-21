@@ -3,7 +3,7 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   LayoutDashboard, Users, Palette,
-  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut, Globe, Target, FolderOpen,
+  ArrowLeft, ShieldCheck, ChevronRight, BarChart2, Sun, Moon, LogOut, Globe, Target, FolderOpen, ClipboardList,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -11,16 +11,17 @@ import { useAuth } from "../../context/AuthContext";
 import { AdminThemeProvider, useAdminTheme } from "../components/admin/AdminThemeContext";
 import { analyticsAdminService } from "../../services/admin/analytics.admin.service";
 import { AvatarCircle } from "../components/StudySpace/panels/AccountPanel";
-import { DashboardSection }  from "../components/admin/DashboardSection";
-import { UsersSection }      from "../components/admin/UsersSection";
-import { MissionsSection }   from "../components/admin/MissionsSection";
-import { ThemesSection }    from "../components/admin/ThemesSection";
-import { RevenueSection }   from "../components/admin/RevenueSection";
-import { AssetsSection }    from "../components/admin/AssetsSection";
+import { DashboardSection }         from "../components/admin/DashboardSection";
+import { UsersSection }             from "../components/admin/UsersSection";
+import { MissionsSection }          from "../components/admin/MissionsSection";
+import { ThemesSection }            from "../components/admin/ThemesSection";
+import { RevenueSection }           from "../components/admin/RevenueSection";
+import { AssetsSection }            from "../components/admin/AssetsSection";
+import { ThemeModerationSection }   from "../components/admin/ThemeModerationSection";
 
 const MotionBox = motion.create(Box);
 
-type AdminSection = "dashboard" | "users" | "missions" | "themes" | "revenue" | "assets";
+type AdminSection = "dashboard" | "users" | "missions" | "themes" | "revenue" | "assets" | "moderation";
 
 const BASE_NAV_ITEMS: {
   key: AdminSection;
@@ -32,8 +33,9 @@ const BASE_NAV_ITEMS: {
   { key: "users",     labelKey: "admin.nav.users",     icon: Users },
   { key: "missions",  labelKey: "admin.nav.missions",  icon: Target },
   { key: "revenue",   labelKey: "admin.nav.revenue",   icon: BarChart2 },
-  { key: "themes",    labelKey: "admin.nav.themes",    icon: Palette,       badge: 6 },
-  { key: "assets",   labelKey: "admin.nav.assets",   icon: FolderOpen },
+  { key: "themes",     labelKey: "admin.nav.themes",      icon: Palette,       badge: 6 },
+  { key: "assets",     labelKey: "admin.nav.assets",      icon: FolderOpen },
+  { key: "moderation", labelKey: "admin.nav.moderation",  icon: ClipboardList },
 ];
 
 function AdminPageInner() {
@@ -462,12 +464,13 @@ function AdminPageInner() {
               exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.22, ease: "easeOut" } as any}
             >
-              {activeSection === "dashboard" && <DashboardSection />}
-              {activeSection === "users"     && <UsersSection />}
-              {activeSection === "missions"  && <MissionsSection />}
-              {activeSection === "revenue"   && <RevenueSection />}
-              {activeSection === "themes"    && <ThemesSection />}
-              {activeSection === "assets"    && <AssetsSection />}
+              {activeSection === "dashboard"  && <DashboardSection />}
+              {activeSection === "users"      && <UsersSection />}
+              {activeSection === "missions"   && <MissionsSection />}
+              {activeSection === "revenue"    && <RevenueSection />}
+              {activeSection === "themes"     && <ThemesSection />}
+              {activeSection === "assets"     && <AssetsSection />}
+              {activeSection === "moderation" && <ThemeModerationSection />}
             </MotionBox>
           </AnimatePresence>
         </Box>

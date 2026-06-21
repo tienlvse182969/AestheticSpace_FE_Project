@@ -107,6 +107,15 @@ export function useAmbientSound() {
     setVolumeMap(newVolumeMap);
   }, []);
 
+  const stopSound = useCallback((id: string) => {
+    if (!activeIdsRef.current.has(id)) return;
+    activeIdsRef.current.delete(id);
+    pendingPlayRef.current.delete(id);
+    const audio = audioMapRef.current.get(id);
+    if (audio) audio.pause();
+    setActiveIds(new Set(activeIdsRef.current));
+  }, []);
+
   // Stable serializer — reads only refs, no reactive deps needed
   const getActiveSoundsForSave = useCallback((): AmbientSoundEntry[] => {
     return Array.from(activeIdsRef.current)
@@ -118,5 +127,5 @@ export function useAmbientSound() {
       .filter(s => s.url !== "");
   }, []);
 
-  return { activeIds, volumeMap, toggle, setVol, initVolume, restoreAmbient, getActiveSoundsForSave, tryResumePending };
+  return { activeIds, volumeMap, toggle, stopSound, setVol, initVolume, restoreAmbient, getActiveSoundsForSave, tryResumePending };
 }

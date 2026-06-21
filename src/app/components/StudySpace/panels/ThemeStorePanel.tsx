@@ -3,9 +3,9 @@ import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
-  Sparkles, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
+  Sticker, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
   Crown, Search, X, Heart, Package, Play, Pause, PlusCircle,
-  Loader2, Trash2, AlertCircle, Pencil,
+  Loader2, Trash2, AlertCircle, Pencil, CheckCircle, Music,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
@@ -22,6 +22,7 @@ import { coinService } from "../../../../services/coin.service";
 import {
   userThemeService,
   type UserThemeSubmission,
+  type ThemeInlineComponent,
   type ThemeSubmissionStatus,
 } from "../../../../services/userTheme.service";
 
@@ -32,13 +33,30 @@ const PANEL_H = 680;
 
 const PLACEHOLDER_IMG = "https://placehold.co/400x240/1a1a2e/888888?text=No+Preview";
 
+function getFirstPreviewImg(item: StoreItem): string {
+  if (!item.previewUrl) return PLACEHOLDER_IMG;
+  try {
+    const parsed = JSON.parse(item.previewUrl);
+    if (Array.isArray(parsed) && parsed[0]) return parsed[0];
+  } catch {}
+  return item.previewUrl;
+}
+
+export interface ThemeApplyExtras {
+  bgId?: string;
+  bgUrl?: string;
+  stickerUrl?: string;
+  ambientId?: string;
+  ambientUrl?: string;
+}
+
 interface Props {
   onClose: () => void;
   coinBalance?: number;
   onCoinBalanceChange?: (newBalance: number) => void;
-  onStartTrial?: (item: StoreItem) => void;
+  onStartTrial?: (item: StoreItem, trialBgUrl?: string, trialStickerUrl?: string, trialAmbientUrl?: string) => void;
   onTrialEnd?: () => void;
-  onApplyItem?: (item: StoreItem) => void;
+  onApplyItem?: (item: StoreItem, extras?: ThemeApplyExtras) => void;
   trialItemId?: string;
   initialDetailItemId?: string;
   onOpenCreate?: () => void;
@@ -73,7 +91,7 @@ function tabIcon(value: TabValue, size = 14): React.ReactNode {
     case "all":          return <LayoutGrid size={size} />;
     case "Theme":        return <Palette size={size} />;
     case "Background":   return <ImageIcon size={size} />;
-    case "Sticker":      return <Sparkles size={size} />;
+    case "Sticker":      return <Sticker size={size} />;
     case "AmbientSound": return <Volume2 size={size} />;
     case "Effect":       return <Wand2 size={size} />;
     case "purchased":    return <Check size={size} />;
@@ -135,7 +153,7 @@ function StoreCard({
       {/* Thumbnail */}
       <Box position="relative" overflow="hidden" style={{ aspectRatio: "5/3" }}>
         <img
-          src={item.assetUrl ?? PLACEHOLDER_IMG}
+          src={item.category === "AmbientSound" ? getFirstPreviewImg(item) : (item.assetUrl ?? PLACEHOLDER_IMG)}
           alt={item.name}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           draggable={false}
@@ -169,6 +187,29 @@ function StoreCard({
         >
           {typeLabel(item.category, t)}
         </Box>
+        {/* Source badge */}
+        {item.themeSource && (
+          <Box
+            position="absolute"
+            top="6px"
+            right="6px"
+            style={{
+              padding: "2px 7px",
+              borderRadius: "5px",
+              fontSize: "0.58rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              background: item.themeSource === "Official"
+                ? "rgba(251,191,36,0.88)"
+                : "rgba(20,184,166,0.78)",
+              color: item.themeSource === "Official" ? "#1a1000" : "#fff",
+              backdropFilter: "blur(6px)",
+            }}
+          >
+            {item.themeSource === "Official" ? "✦ Official" : "Community"}
+          </Box>
+        )}
         {/* Trialing overlay */}
         {isTrialing && !isOwned && (
           <Flex
@@ -262,6 +303,7 @@ function ItemDetailView({
   isWishlisted,
   onToggleWishlist,
   onApplyItem,
+  allItems,
 }: {
   item: StoreItem;
   t: (k: string, opts?: Record<string, unknown>) => string;
@@ -276,8 +318,9 @@ function ItemDetailView({
   canPurchase?: boolean;
   onLockedBuy?: () => void;
   isWishlisted?: boolean;
+  allItems?: StoreItem[];
   onToggleWishlist?: () => void;
-  onApplyItem?: (item: StoreItem) => void;
+  onApplyItem?: (item: StoreItem, extras?: ThemeApplyExtras) => void;
 }) {
   const color = typeColor(item.category);
   const isOwned = item.isOwned === true;
@@ -294,21 +337,28 @@ function ItemDetailView({
     return [item.previewUrl];
   })();
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [compLightboxUrl, setCompLightboxUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (lightboxIdx === null) return;
+    if (lightboxIdx === null && !compLightboxUrl) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLightboxIdx(null);
-      if (e.key === "ArrowRight") setLightboxIdx(i => i !== null ? Math.min(i + 1, previewImgs.length - 1) : null);
-      if (e.key === "ArrowLeft")  setLightboxIdx(i => i !== null ? Math.max(i - 1, 0) : null);
+      if (e.key === "Escape") {
+        setLightboxIdx(null);
+        setCompLightboxUrl(null);
+      }
+      if (lightboxIdx !== null) {
+        if (e.key === "ArrowRight") setLightboxIdx(i => i !== null ? Math.min(i + 1, previewImgs.length - 1) : null);
+        if (e.key === "ArrowLeft")  setLightboxIdx(i => i !== null ? Math.max(i - 1, 0) : null);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxIdx, previewImgs.length]);
+  }, [lightboxIdx, compLightboxUrl, previewImgs.length]);
 
   const PREVIEW_SEC = 10;
   const audioRef        = useRef<HTMLAudioElement | null>(null);
   const previewStartRef = useRef(0);
+  const previewScrollRef = useRef<HTMLDivElement | null>(null);
   const [audioPlaying,  setAudioPlaying]  = useState(false);
   const [audioProgress, setAudioProgress] = useState(0); // 0..PREVIEW_SEC
 
@@ -356,6 +406,24 @@ function ItemDetailView({
 
   const fmtTime = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
+  const compAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [compAudioPlayingId, setCompAudioPlayingId] = useState<string | null>(null);
+  useEffect(() => { return () => { compAudioRef.current?.pause(); }; }, []);
+
+  const toggleCompAudio = (id: string, url: string) => {
+    if (compAudioPlayingId === id) {
+      compAudioRef.current?.pause();
+      setCompAudioPlayingId(null);
+      return;
+    }
+    compAudioRef.current?.pause();
+    const a = new Audio(url);
+    compAudioRef.current = a;
+    a.play().catch(() => {});
+    a.onended = () => setCompAudioPlayingId(null);
+    setCompAudioPlayingId(id);
+  };
+
   return (
     <MotionBox
       initial={{ x: "100%", opacity: 0 }}
@@ -369,19 +437,12 @@ function ItemDetailView({
       <Box h="100%" display="flex" flexDirection="column">
         {/* Main image */}
         <Box position="relative" flexShrink={0} style={{ aspectRatio: "16/7", overflow: "hidden" }}>
-          {item.category === "AmbientSound" ? (
-            <Flex w="100%" h="100%" align="center" justify="center"
-              style={{ background: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)" }}>
-              <Volume2 size={52} color="rgba(255,255,255,0.12)" />
-            </Flex>
-          ) : (
-            <img
-              src={item.assetUrl ?? PLACEHOLDER_IMG}
-              alt={item.name}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              draggable={false}
-            />
-          )}
+          <img
+            src={item.category === "AmbientSound" ? getFirstPreviewImg(item) : (item.assetUrl ?? PLACEHOLDER_IMG)}
+            alt={item.name}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            draggable={false}
+          />
           <Box
             position="absolute"
             bottom={0}
@@ -447,7 +508,26 @@ function ItemDetailView({
             {t("themeStore.detail.back")}
           </Box>
           {/* Badges */}
-          <Flex position="absolute" top="10px" right="10px" gap={1}>
+          <Flex position="absolute" top="10px" right="10px" gap="5px" align="center">
+            {item.themeSource && (
+              <Box
+                style={{
+                  padding: "3px 8px",
+                  borderRadius: "6px",
+                  fontSize: "0.6rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  background: item.themeSource === "Official"
+                    ? "rgba(251,191,36,0.88)"
+                    : "rgba(20,184,166,0.78)",
+                  color: item.themeSource === "Official" ? "#1a1000" : "#fff",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                {item.themeSource === "Official" ? "✦ Official" : "Community"}
+              </Box>
+            )}
             <Box
               style={{
                 padding: "3px 8px",
@@ -492,12 +572,32 @@ function ItemDetailView({
             </Text>
           )}
 
-          {/* Preview images — Mac App Store style horizontal strip */}
+          {/* Preview images — horizontal strip with nav arrows */}
           {previewImgs.length > 0 && (
-            <Box mt="16px" mx="-20px">
+            <Box mt="16px" position="relative">
+              {previewImgs.length > 1 && (
+                <Box
+                  as="button"
+                  onClick={() => previewScrollRef.current?.scrollBy({ left: -230, behavior: "smooth" })}
+                  position="absolute" left="-8px" top="50%"
+                  w="28px" h="28px" borderRadius="full" border="none" cursor="pointer" zIndex={2}
+                  display="flex" alignItems="center" justifyContent="center"
+                  style={{
+                    transform: "translateY(-50%)",
+                    background: "rgba(10,15,22,0.72)",
+                    backdropFilter: "blur(8px)",
+                    color: "rgba(255,255,255,0.85)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                    transition: "background 0.15s",
+                  }}
+                  _hover={{ background: "rgba(30,40,55,0.9)" } as any}
+                >
+                  <ChevronLeft size={14} />
+                </Box>
+              )}
               <Box
+                ref={previewScrollRef as any}
                 overflowX="auto"
-                px="20px"
                 pb="4px"
                 style={{
                   scrollbarWidth: "none",
@@ -505,7 +605,6 @@ function ItemDetailView({
                   WebkitOverflowScrolling: "touch",
                   display: "flex",
                   gap: "10px",
-                  paddingRight: previewImgs.length > 1 ? "44px" : "20px",
                 }}
               >
                 {previewImgs.map((url, i) => (
@@ -517,8 +616,8 @@ function ItemDetailView({
                     cursor="pointer"
                     onClick={() => setLightboxIdx(i)}
                     style={{
-                      width: "260px",
-                      height: "160px",
+                      width: "220px",
+                      height: "138px",
                       scrollSnapAlign: "start",
                       boxShadow: "0 4px 20px rgba(0,0,0,0.45)",
                       border: "1px solid rgba(255,255,255,0.07)",
@@ -536,6 +635,26 @@ function ItemDetailView({
                   </Box>
                 ))}
               </Box>
+              {previewImgs.length > 1 && (
+                <Box
+                  as="button"
+                  onClick={() => previewScrollRef.current?.scrollBy({ left: 230, behavior: "smooth" })}
+                  position="absolute" right="-8px" top="50%"
+                  w="28px" h="28px" borderRadius="full" border="none" cursor="pointer" zIndex={2}
+                  display="flex" alignItems="center" justifyContent="center"
+                  style={{
+                    transform: "translateY(-50%)",
+                    background: "rgba(10,15,22,0.72)",
+                    backdropFilter: "blur(8px)",
+                    color: "rgba(255,255,255,0.85)",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.5)",
+                    transition: "background 0.15s",
+                  }}
+                  _hover={{ background: "rgba(30,40,55,0.9)" } as any}
+                >
+                  <ChevronRight size={14} />
+                </Box>
+              )}
             </Box>
           )}
 
@@ -577,6 +696,104 @@ function ItemDetailView({
               </Flex>
             </Box>
           )}
+
+          {/* Theme components — backgrounds, stickers, ambient sound */}
+          {item.category === "Theme" && allItems && (() => {
+            const bgItem      = item.themeBackgroundItemId   ? allItems.find(i => i.id === item.themeBackgroundItemId)   : null;
+            const stickerItem = item.themeStickerItemId      ? allItems.find(i => i.id === item.themeStickerItemId)      : null;
+            const soundItem   = item.themeAmbientSoundItemId ? allItems.find(i => i.id === item.themeAmbientSoundItemId) : null;
+            if (!bgItem && !stickerItem && !soundItem) return null;
+            return (
+              <Box mt="20px">
+                <Text mb="10px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                  INCLUDED
+                </Text>
+
+                {/* Background */}
+                {bgItem && bgItem.assetUrl && (
+                  <Box mb="12px">
+                    <Flex align="center" gap="5px" mb="7px">
+                      <ImageIcon size={9} color="rgba(96,165,250,0.65)" />
+                      <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
+                        BACKGROUND
+                      </Text>
+                    </Flex>
+                    <Box w="140px" h="84px" borderRadius="8px" overflow="hidden" cursor="pointer"
+                      onClick={() => setCompLightboxUrl(bgItem.assetUrl!)}
+                      style={{ border: "1px solid rgba(96,165,250,0.2)", background: "rgba(96,165,250,0.05)", transition: "opacity 0.15s" }}
+                      _hover={{ opacity: 0.82 } as any}
+                    >
+                      <img
+                        src={bgItem.assetUrl}
+                        alt="background"
+                        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        draggable={false}
+                      />
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Sticker */}
+                {stickerItem && stickerItem.assetUrl && (
+                  <Box mb="12px">
+                    <Flex align="center" gap="5px" mb="7px">
+                      <Sticker size={9} color="rgba(251,146,60,0.65)" />
+                      <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
+                        STICKER
+                      </Text>
+                    </Flex>
+                    <Box w="72px" h="72px" borderRadius="10px" overflow="hidden" cursor="pointer"
+                      onClick={() => setCompLightboxUrl(stickerItem.assetUrl!)}
+                      style={{ border: "1px solid rgba(251,146,60,0.2)", background: "rgba(255,255,255,0.03)", transition: "opacity 0.15s" }}
+                      _hover={{ opacity: 0.82 } as any}
+                    >
+                      <img
+                        src={stickerItem.assetUrl}
+                        alt="sticker"
+                        style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
+                        draggable={false}
+                      />
+                    </Box>
+                  </Box>
+                )}
+
+                {/* Ambient sound */}
+                {soundItem && soundItem.assetUrl && (
+                  <Box mb="4px">
+                    <Flex align="center" gap="5px" mb="7px">
+                      <Music size={9} color="rgba(244,114,182,0.65)" />
+                      <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
+                        AMBIENT SOUND
+                      </Text>
+                    </Flex>
+                    <Flex align="center" gap="10px" px="12px" py="10px" borderRadius="10px"
+                      style={{ background: "rgba(244,114,182,0.06)", border: "1px solid rgba(244,114,182,0.18)" }}>
+                      <Box
+                        as="button" border="none" cursor="pointer" borderRadius="full" flexShrink={0}
+                        w="30px" h="30px" display="flex" alignItems="center" justifyContent="center"
+                        onClick={() => toggleCompAudio(soundItem.id, soundItem.assetUrl!)}
+                        style={{
+                          background: compAudioPlayingId === soundItem.id ? "rgba(244,114,182,0.22)" : "rgba(255,255,255,0.07)",
+                          border: compAudioPlayingId === soundItem.id ? "1px solid rgba(244,114,182,0.45)" : "1px solid rgba(255,255,255,0.1)",
+                          color: compAudioPlayingId === soundItem.id ? "rgba(249,168,212,0.95)" : "rgba(255,255,255,0.5)",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        {compAudioPlayingId === soundItem.id ? <Pause size={11} /> : <Play size={11} />}
+                      </Box>
+                      <Text flex={1} style={{
+                        fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+                        color: "rgba(255,255,255,0.65)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      }}>
+                        {soundItem.name ?? soundItem.assetUrl.split("/").pop()}
+                      </Text>
+                      <Music size={11} style={{ color: "rgba(244,114,182,0.3)", flexShrink: 0 }} />
+                    </Flex>
+                  </Box>
+                )}
+              </Box>
+            );
+          })()}
         </Box>
 
         {/* Footer */}
@@ -646,7 +863,22 @@ function ItemDetailView({
                 ) : onApplyItem && (
                   <Box
                     as="button"
-                    onClick={() => onApplyItem(item)}
+                    onClick={() => {
+                      if (item.category === "Theme" && allItems) {
+                        const bgItem      = item.themeBackgroundItemId   ? allItems.find(i => i.id === item.themeBackgroundItemId)   : null;
+                        const stickerItem = item.themeStickerItemId      ? allItems.find(i => i.id === item.themeStickerItemId)      : null;
+                        const soundItem   = item.themeAmbientSoundItemId ? allItems.find(i => i.id === item.themeAmbientSoundItemId) : null;
+                        onApplyItem(item, {
+                          bgId:       bgItem?.id,
+                          bgUrl:      bgItem?.assetUrl ?? undefined,
+                          stickerUrl: stickerItem?.assetUrl ?? undefined,
+                          ambientId:  soundItem?.id,
+                          ambientUrl: soundItem?.assetUrl ?? undefined,
+                        });
+                      } else {
+                        onApplyItem(item);
+                      }
+                    }}
                     px="16px"
                     py="9px"
                     borderRadius="10px"
@@ -658,6 +890,8 @@ function ItemDetailView({
                     style={{
                       background: item.category === "Sticker"
                         ? "linear-gradient(135deg, rgba(236,72,153,0.9), rgba(168,85,247,0.85))"
+                        : item.category === "Theme"
+                        ? "linear-gradient(135deg, rgba(139,92,246,0.9), rgba(99,102,241,0.85))"
                         : "linear-gradient(135deg, rgba(59,130,246,0.9), rgba(6,182,212,0.85))",
                       color: "#fff",
                       fontSize: "0.8rem",
@@ -665,6 +899,8 @@ function ItemDetailView({
                       fontWeight: 600,
                       boxShadow: item.category === "Sticker"
                         ? "0 4px 14px rgba(236,72,153,0.3)"
+                        : item.category === "Theme"
+                        ? "0 4px 14px rgba(139,92,246,0.3)"
                         : "0 4px 14px rgba(59,130,246,0.3)",
                       transition: "filter 0.15s",
                       whiteSpace: "nowrap",
@@ -846,14 +1082,7 @@ function ItemDetailView({
               justifyContent="center"
               style={{ pointerEvents: "none" }}
             >
-              <Box
-                position="relative"
-                style={{
-                  maxWidth: "min(900px, 92vw)",
-                  maxHeight: "80vh",
-                  pointerEvents: "auto",
-                }}
-              >
+              <Box style={{ maxWidth: "min(900px, 92vw)", maxHeight: "80vh", pointerEvents: "auto" }}>
                 <img
                   src={previewImgs[lightboxIdx]}
                   alt={`preview-${lightboxIdx + 1}`}
@@ -867,91 +1096,129 @@ function ItemDetailView({
                   }}
                   draggable={false}
                 />
-
-                {/* Close */}
-                <Box
-                  as="button"
-                  onClick={() => setLightboxIdx(null)}
-                  position="absolute"
-                  top="-14px"
-                  right="-14px"
-                  w="32px" h="32px"
-                  borderRadius="full"
-                  border="none"
-                  cursor="pointer"
-                  display="flex" alignItems="center" justifyContent="center"
-                  style={{ background: "rgba(20,20,20,0.9)", color: "rgba(255,255,255,0.8)", backdropFilter: "blur(8px)" }}
-                >
-                  <X size={14} />
-                </Box>
-
-                {/* Prev */}
-                {lightboxIdx > 0 && (
-                  <Box
-                    as="button"
-                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i => i !== null ? i - 1 : null); }}
-                    position="absolute"
-                    top="50%" left="-20px"
-                    w="40px" h="40px"
-                    borderRadius="full"
-                    border="none"
-                    cursor="pointer"
-                    display="flex" alignItems="center" justifyContent="center"
-                    style={{ background: "rgba(20,20,20,0.85)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)", transform: "translateY(-50%)" }}
-                  >
-                    <ChevronLeft size={18} />
-                  </Box>
-                )}
-
-                {/* Next */}
-                {lightboxIdx < previewImgs.length - 1 && (
-                  <Box
-                    as="button"
-                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i => i !== null ? i + 1 : null); }}
-                    position="absolute"
-                    top="50%" right="-20px"
-                    w="40px" h="40px"
-                    borderRadius="full"
-                    border="none"
-                    cursor="pointer"
-                    display="flex" alignItems="center" justifyContent="center"
-                    style={{ background: "rgba(20,20,20,0.85)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)", transform: "translateY(-50%)" }}
-                  >
-                    <ChevronRight size={18} />
-                  </Box>
-                )}
-
-                {/* Counter */}
-                {previewImgs.length > 1 && (
-                  <Box
-                    position="absolute"
-                    bottom="-36px"
-                    left="50%"
-                    style={{ transform: "translateX(-50%)" }}
-                  >
-                    <Flex gap="6px">
-                      {previewImgs.map((_, i) => (
-                        <Box
-                          key={i}
-                          as="button"
-                          onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i); }}
-                          border="none"
-                          cursor="pointer"
-                          borderRadius="full"
-                          style={{
-                            width: i === lightboxIdx ? "20px" : "6px",
-                            height: "6px",
-                            background: i === lightboxIdx ? "#fff" : "rgba(255,255,255,0.35)",
-                            transition: "all 0.2s",
-                            padding: 0,
-                          }}
-                        />
-                      ))}
-                    </Flex>
-                  </Box>
-                )}
               </Box>
             </MotionBox>
+
+            {/* Close — fixed top-right */}
+            <Box
+              as="button"
+              onClick={() => setLightboxIdx(null)}
+              position="fixed" top="16px" right="16px"
+              w="36px" h="36px" borderRadius="full" border="none" cursor="pointer"
+              display="flex" alignItems="center" justifyContent="center"
+              zIndex={202}
+              style={{ background: "rgba(20,20,20,0.9)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)", boxShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
+            >
+              <X size={16} />
+            </Box>
+
+            {/* Prev — fixed left-center */}
+            {lightboxIdx > 0 && (
+              <Box
+                as="button"
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i => i !== null ? i - 1 : null); }}
+                position="fixed" left="16px" top="50%"
+                w="44px" h="44px" borderRadius="full" border="none" cursor="pointer"
+                display="flex" alignItems="center" justifyContent="center"
+                zIndex={202}
+                style={{ background: "rgba(20,20,20,0.85)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)", transform: "translateY(-50%)", boxShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
+              >
+                <ChevronLeft size={20} />
+              </Box>
+            )}
+
+            {/* Next — fixed right-center */}
+            {lightboxIdx < previewImgs.length - 1 && (
+              <Box
+                as="button"
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i => i !== null ? i + 1 : null); }}
+                position="fixed" right="16px" top="50%"
+                w="44px" h="44px" borderRadius="full" border="none" cursor="pointer"
+                display="flex" alignItems="center" justifyContent="center"
+                zIndex={202}
+                style={{ background: "rgba(20,20,20,0.85)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)", transform: "translateY(-50%)", boxShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
+              >
+                <ChevronRight size={20} />
+              </Box>
+            )}
+
+            {/* Dots counter — fixed bottom-center */}
+            {previewImgs.length > 1 && (
+              <Flex
+                position="fixed" bottom="24px" left="50%"
+                gap="6px" zIndex={202}
+                style={{ transform: "translateX(-50%)" }}
+              >
+                {previewImgs.map((_, i) => (
+                  <Box
+                    key={i}
+                    as="button"
+                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); setLightboxIdx(i); }}
+                    border="none" cursor="pointer" borderRadius="full"
+                    style={{
+                      width: i === lightboxIdx ? "20px" : "6px",
+                      height: "6px",
+                      background: i === lightboxIdx ? "#fff" : "rgba(255,255,255,0.35)",
+                      transition: "all 0.2s",
+                      padding: 0,
+                    }}
+                  />
+                ))}
+              </Flex>
+            )}
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Component lightbox (bg / sticker) */}
+      <AnimatePresence>
+        {compLightboxUrl && (
+          <>
+            <MotionBox
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 } as any}
+              position="fixed"
+              inset={0}
+              zIndex={200}
+              onClick={() => setCompLightboxUrl(null)}
+              style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(12px)", cursor: "zoom-out" }}
+            />
+            <MotionBox
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.92 }}
+              transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] } as any}
+              position="fixed"
+              inset={0}
+              zIndex={201}
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              style={{ pointerEvents: "none" }}
+            >
+              <Box style={{ maxWidth: "min(900px, 92vw)", maxHeight: "80vh", pointerEvents: "auto" }}>
+                <img
+                  src={compLightboxUrl}
+                  alt="preview"
+                  style={{ display: "block", maxWidth: "100%", maxHeight: "80vh", borderRadius: "14px", boxShadow: "0 24px 80px rgba(0,0,0,0.7)", objectFit: "contain" }}
+                  draggable={false}
+                />
+              </Box>
+            </MotionBox>
+            {/* Fixed close button — always top-right of viewport */}
+            <Box
+              as="button"
+              onClick={() => setCompLightboxUrl(null)}
+              position="fixed" top="16px" right="16px"
+              w="36px" h="36px" borderRadius="full" border="none" cursor="pointer"
+              display="flex" alignItems="center" justifyContent="center"
+              zIndex={202}
+              style={{ background: "rgba(20,20,20,0.9)", color: "rgba(255,255,255,0.85)", backdropFilter: "blur(8px)", boxShadow: "0 2px 12px rgba(0,0,0,0.5)" }}
+            >
+              <X size={16} />
+            </Box>
           </>
         )}
       </AnimatePresence>
@@ -1097,6 +1364,27 @@ function FeaturedCarousel({
   );
 }
 
+// ── CompBadge ─────────────────────────────────────────────────────────────
+
+function CompBadge({ icon, label, active, color }: {
+  icon: React.ReactNode; label: string; active: boolean; color: string;
+}) {
+  return (
+    <Flex align="center" gap="5px" px="9px" py="5px" borderRadius="7px"
+      style={{
+        background: active ? `rgba(${color},0.1)` : "rgba(255,255,255,0.03)",
+        border: active ? `1px solid rgba(${color},0.28)` : "1px solid rgba(255,255,255,0.07)",
+        color: active ? `rgba(${color},0.85)` : "rgba(255,255,255,0.2)",
+      }}>
+      {icon}
+      <Text style={{ fontSize: "0.65rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: active ? 600 : 400 }}>
+        {label}
+      </Text>
+      {active && <Check size={9} />}
+    </Flex>
+  );
+}
+
 // ── MyThemeCard ───────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<ThemeSubmissionStatus, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
@@ -1111,11 +1399,13 @@ function MyThemeCard({
   withdrawing,
   onWithdraw,
   onEdit,
+  onClick,
 }: {
   theme: UserThemeSubmission;
   withdrawing: boolean;
   onWithdraw: (id: string) => void;
   onEdit?: (theme: UserThemeSubmission) => void;
+  onClick?: () => void;
 }) {
   const cfg = STATUS_CONFIG[theme.status];
   const StatusIcon = cfg.icon;
@@ -1126,10 +1416,14 @@ function MyThemeCard({
     <Box
       borderRadius="10px"
       overflow="hidden"
+      cursor={onClick ? "pointer" : "default"}
+      onClick={onClick}
       style={{
         background: "rgba(255,255,255,0.03)",
         border: "1px solid rgba(255,255,255,0.07)",
+        transition: "border-color 0.15s, background 0.15s",
       }}
+      _hover={onClick ? { background: "rgba(255,255,255,0.06) !important", border: "1px solid rgba(255,255,255,0.14) !important" } as any : undefined}
     >
       <Flex gap="10px" p="10px">
         {/* Thumbnail */}
@@ -1209,7 +1503,7 @@ function MyThemeCard({
             {onEdit && (
               <Box
                 as="button"
-                onClick={() => onEdit(theme)}
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); onEdit(theme); }}
                 border="none"
                 cursor="pointer"
                 borderRadius="6px"
@@ -1230,7 +1524,7 @@ function MyThemeCard({
             )}
             <Box
               as="button"
-              onClick={() => onWithdraw(theme.id)}
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); onWithdraw(theme.id); }}
               border="none"
               cursor={withdrawing ? "not-allowed" : "pointer"}
               borderRadius="6px"
@@ -1277,6 +1571,371 @@ function MyThemeCard({
   );
 }
 
+// ── MyThemeDetailView ─────────────────────────────────────────────────────
+
+function MyThemeDetailView({
+  theme,
+  withdrawing,
+  onBack,
+  onWithdraw,
+  onEdit,
+}: {
+  theme: UserThemeSubmission;
+  withdrawing: boolean;
+  onBack: () => void;
+  onWithdraw: (id: string) => void;
+  onEdit?: (theme: UserThemeSubmission) => void;
+}) {
+  const cfg = STATUS_CONFIG[theme.status];
+  const StatusIcon = cfg.icon;
+  const canWithdraw = theme.status === "PendingReview" || theme.status === "Rejected";
+  const canEdit    = theme.status === "PendingReview" || theme.status === "Rejected";
+
+  // Pull components directly from the embedded inlineComponents array
+  const components = theme.inlineComponents ?? [];
+  const bgItems      = components.filter(c => c.category === "Background");
+  const stickerItems = components.filter(c => c.category === "Sticker");
+  const soundItems   = components.filter(c => c.category === "AmbientSound");
+
+  // Audio — one playing at a time
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => { return () => { audioRef.current?.pause(); }; }, []);
+
+  const toggleSound = (item: ThemeInlineComponent) => {
+    if (!item.assetUrl) return;
+    if (playingId === item.id) {
+      audioRef.current?.pause();
+      setPlayingId(null);
+      return;
+    }
+    audioRef.current?.pause();
+    const audio = new Audio(item.assetUrl);
+    audioRef.current = audio;
+    audio.play().catch(() => {});
+    audio.onended = () => setPlayingId(null);
+    setPlayingId(item.id);
+  };
+
+  const submittedDate = new Date(theme.submittedAt).toLocaleDateString("vi-VN", {
+    year: "numeric", month: "long", day: "numeric",
+  });
+  const reviewedDate = theme.reviewedAt
+    ? new Date(theme.reviewedAt).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric" })
+    : null;
+
+  return (
+    <MotionBox
+      initial={{ x: "100%", opacity: 0 }}
+      animate={{ x: 0, opacity: 1, transition: { type: "spring", stiffness: 380, damping: 32, mass: 0.9 } } as any}
+      exit={{ x: "100%", opacity: 0, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } } as any}
+      position="absolute" inset={0} overflow="hidden"
+      style={{ background: "rgba(10,15,20,0.98)", zIndex: 20 }}
+    >
+      <Box h="100%" display="flex" flexDirection="column">
+
+        {/* Hero */}
+        <Box flexShrink={0} position="relative" style={{ height: 160, overflow: "hidden" }}>
+          {(theme.previewUrl || theme.assetUrl) ? (
+            <img
+              src={theme.previewUrl ?? theme.assetUrl ?? ""}
+              alt={theme.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              draggable={false}
+            />
+          ) : (
+            <Flex w="100%" h="100%" align="center" justify="center"
+              style={{ background: "linear-gradient(135deg, #080d12 0%, #0f1820 60%, #0a1520 100%)" }}>
+              <Palette size={44} color="rgba(255,255,255,0.07)" />
+            </Flex>
+          )}
+          <Box position="absolute" bottom={0} left={0} right={0} h="80px"
+            style={{ background: "linear-gradient(transparent, rgba(10,15,20,0.98))" }} />
+
+          {/* Back */}
+          <Box as="button" onClick={onBack}
+            position="absolute" top="10px" left="10px"
+            display="flex" alignItems="center" gap="4px"
+            px="10px" py="5px" borderRadius="8px" border="none" cursor="pointer"
+            style={{
+              background: "rgba(10,15,22,0.72)", backdropFilter: "blur(10px)",
+              color: "rgba(255,255,255,0.8)", fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+              transition: "background 0.15s",
+            }}
+            _hover={{ background: "rgba(25,35,50,0.9)" } as any}>
+            <ChevronLeft size={14} />
+            Quay lại
+          </Box>
+
+          {/* Status badge */}
+          <Flex position="absolute" top="10px" right="10px"
+            align="center" gap="5px" px="9px" py="4px" borderRadius="7px"
+            style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, backdropFilter: "blur(6px)" }}>
+            <StatusIcon size={10} style={{ color: cfg.color }} />
+            <Text style={{ fontSize: "0.62rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: cfg.color, letterSpacing: "0.04em" }}>
+              {cfg.label}
+            </Text>
+          </Flex>
+        </Box>
+
+        {/* Scrollable body */}
+        <Box flex={1} overflowY="auto" px="20px" pt="14px" pb="8px" style={{ scrollbarWidth: "none" }}>
+
+          {/* Name */}
+          <Text mb={theme.description ? "6px" : "14px"} style={{
+            fontSize: "1.08rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700,
+            color: "rgba(255,255,255,0.95)", lineHeight: 1.3,
+          }}>
+            {theme.name}
+          </Text>
+
+          {/* Description */}
+          {theme.description && (
+            <Text mb="16px" style={{
+              fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+              color: "rgba(255,255,255,0.5)", lineHeight: 1.65,
+            }}>
+              {theme.description}
+            </Text>
+          )}
+
+          {/* Dates */}
+          <Flex align="flex-start" gap="24px" mb="16px">
+            <Box>
+              <Text mb="3px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.1em" }}>
+                NGÀY GỬI
+              </Text>
+              <Text style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.6)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                {submittedDate}
+              </Text>
+            </Box>
+            {reviewedDate && (
+              <Box>
+                <Text mb="3px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.1em" }}>
+                  {theme.status === "Approved" ? "NGÀY DUYỆT" : "NGÀY XEM XÉT"}
+                </Text>
+                <Text style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.6)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                  {reviewedDate}
+                </Text>
+              </Box>
+            )}
+          </Flex>
+
+          {/* Components */}
+          {components.length > 0 && (
+            <Box mb="16px">
+              <Text mb="10px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                THÀNH PHẦN
+              </Text>
+
+              {/* Background gallery */}
+              {bgItems.length > 0 && (
+                <Box mb={(stickerItems.length > 0 || soundItems.length > 0) ? "12px" : "0"}>
+                  <Flex align="center" gap="5px" mb="7px">
+                    <ImageIcon size={9} color="rgba(96,165,250,0.65)" />
+                    <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
+                      HÌNH NỀN{bgItems.length > 1 ? ` · ${bgItems.length} ảnh` : ""}
+                    </Text>
+                  </Flex>
+                  <Box mx="-20px" px="20px" style={{ overflowX: "auto", scrollbarWidth: "none", display: "flex", gap: "8px", paddingRight: bgItems.length > 1 ? "44px" : "20px" }}>
+                    {bgItems.map((item, i) => (
+                      <Box key={item.id} flexShrink={0} borderRadius="8px" overflow="hidden" position="relative"
+                        style={{
+                          width: bgItems.length === 1 ? "100%" : 140,
+                          height: 84,
+                          border: "1px solid rgba(96,165,250,0.3)",
+                          background: "rgba(96,165,250,0.05)",
+                        }}>
+                        {item.assetUrl
+                          ? <img src={item.assetUrl} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          : <Flex w="100%" h="100%" align="center" justify="center"><ImageIcon size={16} color="rgba(96,165,250,0.3)" /></Flex>
+                        }
+                        {bgItems.length > 1 && (
+                          <Box position="absolute" bottom="3px" right="5px"
+                            style={{ fontSize: "0.5rem", color: "rgba(255,255,255,0.55)", fontFamily: "'HarmonyOS Sans', sans-serif", background: "rgba(0,0,0,0.55)", borderRadius: "3px", padding: "1px 4px" }}>
+                            {i + 1}/{bgItems.length}
+                          </Box>
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Sticker gallery */}
+              {stickerItems.length > 0 && (
+                <Box mb={soundItems.length > 0 ? "12px" : "0"}>
+                  <Flex align="center" gap="5px" mb="7px">
+                    <Sticker size={9} color="rgba(251,146,60,0.65)" />
+                    <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
+                      STICKER{stickerItems.length > 1 ? ` · ${stickerItems.length} ảnh` : ""}
+                    </Text>
+                  </Flex>
+                  <Flex gap="8px" wrap="wrap">
+                    {stickerItems.map(item => (
+                      <Box key={item.id} borderRadius="8px" overflow="hidden" flexShrink={0}
+                        style={{ width: 72, height: 72, border: "1px solid rgba(251,146,60,0.3)", background: "rgba(255,255,255,0.03)" }}>
+                        {item.assetUrl
+                          ? <img src={item.assetUrl} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                          : <Flex w="100%" h="100%" align="center" justify="center"><Sticker size={16} color="rgba(251,146,60,0.3)" /></Flex>
+                        }
+                      </Box>
+                    ))}
+                  </Flex>
+                </Box>
+              )}
+
+              {/* Ambient sound list */}
+              {soundItems.length > 0 && (
+                <Box>
+                  <Flex align="center" gap="5px" mb="7px">
+                    <Music size={9} color="rgba(244,114,182,0.65)" />
+                    <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
+                      ÂM THANH NỀN{soundItems.length > 1 ? ` · ${soundItems.length} file` : ""}
+                    </Text>
+                  </Flex>
+                  <Box borderRadius="9px" overflow="hidden"
+                    style={{ border: "1px solid rgba(244,114,182,0.22)", background: "rgba(244,114,182,0.04)" }}>
+                    {soundItems.map((item, i) => (
+                      <Flex key={item.id} align="center" gap="10px" px="12px" py="9px"
+                        style={{ borderTop: i > 0 ? "1px solid rgba(244,114,182,0.1)" : "none" }}>
+                        <Box as="button" border="none" cursor="pointer" borderRadius="full" flexShrink={0}
+                          w="28px" h="28px" display="flex" alignItems="center" justifyContent="center"
+                          onClick={() => toggleSound(item)}
+                          style={{
+                            background: playingId === item.id ? "rgba(244,114,182,0.25)" : "rgba(255,255,255,0.07)",
+                            border: playingId === item.id ? "1px solid rgba(244,114,182,0.5)" : "1px solid rgba(255,255,255,0.1)",
+                            color: playingId === item.id ? "rgba(249,168,212,0.95)" : "rgba(255,255,255,0.5)",
+                            transition: "all 0.15s",
+                          }}>
+                          {playingId === item.id ? <Pause size={10} /> : <Play size={10} />}
+                        </Box>
+                        <Text flex={1} minW={0} style={{
+                          fontSize: "0.72rem", color: "rgba(255,255,255,0.75)",
+                          fontFamily: "'HarmonyOS Sans', sans-serif",
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        }}>
+                          {item.name}
+                        </Text>
+                        <Music size={11} style={{ color: "rgba(244,114,182,0.35)", flexShrink: 0 }} />
+                      </Flex>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {/* Pricing */}
+          {(theme.coinPrice || theme.realMoneyPriceVnd) && (
+            <Box mb="16px">
+              <Text mb="9px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                GIÁ BÁN
+              </Text>
+              <Flex gap="10px">
+                {theme.coinPrice != null && (
+                  <Flex align="center" gap="5px" px="10px" py="6px" borderRadius="8px"
+                    style={{ background: "rgba(250,204,21,0.08)", border: "1px solid rgba(250,204,21,0.2)" }}>
+                    <Text style={{ fontSize: "0.82rem" }}>🪙</Text>
+                    <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "#facc15" }}>
+                      {theme.coinPrice.toLocaleString("vi-VN")}
+                    </Text>
+                  </Flex>
+                )}
+                {theme.realMoneyPriceVnd != null && (
+                  <Flex align="center" gap="5px" px="10px" py="6px" borderRadius="8px"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
+                    <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(255,255,255,0.72)" }}>
+                      {theme.realMoneyPriceVnd.toLocaleString("vi-VN")}đ
+                    </Text>
+                  </Flex>
+                )}
+              </Flex>
+            </Box>
+          )}
+
+          {/* Status info box */}
+          {theme.status === "Rejected" && theme.rejectionNote && (
+            <Box mb="8px" px="14px" py="12px" borderRadius="10px"
+              style={{ background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.22)" }}>
+              <Flex align="center" gap="6px" mb="7px">
+                <AlertCircle size={12} color="rgba(248,113,113,0.8)" />
+                <Text style={{ fontSize: "0.6rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(248,113,113,0.75)", letterSpacing: "0.08em" }}>
+                  LÝ DO TỪ CHỐI
+                </Text>
+              </Flex>
+              <Text style={{ fontSize: "0.76rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(248,113,113,0.7)", lineHeight: 1.6 }}>
+                {theme.rejectionNote}
+              </Text>
+            </Box>
+          )}
+          {theme.status === "Approved" && (
+            <Box mb="8px" px="14px" py="11px" borderRadius="10px"
+              style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.2)" }}>
+              <Flex align="center" gap="7px">
+                <CheckCircle size={12} color="rgba(74,222,128,0.8)" />
+                <Text style={{ fontSize: "0.74rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(74,222,128,0.72)", lineHeight: 1.55 }}>
+                  Theme đã được duyệt và hiển thị trong Aesthetic Store
+                </Text>
+              </Flex>
+            </Box>
+          )}
+          {theme.status === "PendingReview" && (
+            <Box mb="8px" px="14px" py="11px" borderRadius="10px"
+              style={{ background: "rgba(250,204,21,0.07)", border: "1px solid rgba(250,204,21,0.2)" }}>
+              <Flex align="center" gap="7px">
+                <Clock size={12} color="rgba(250,204,21,0.7)" />
+                <Text style={{ fontSize: "0.74rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(250,204,21,0.62)", lineHeight: 1.55 }}>
+                  Theme đang chờ admin xem xét và phê duyệt
+                </Text>
+              </Flex>
+            </Box>
+          )}
+        </Box>
+
+        {/* Footer actions */}
+        {(canEdit || canWithdraw) && (
+          <Box px="20px" py="14px"
+            style={{ borderTop: "1px solid rgba(255,255,255,0.07)", background: "rgba(10,15,20,0.95)" }}>
+            <Flex gap="8px" justify="flex-end">
+              {canEdit && onEdit && (
+                <Box as="button" onClick={() => onEdit(theme)} border="none" cursor="pointer"
+                  display="flex" alignItems="center" gap="6px" px="14px" py="8px" borderRadius="9px"
+                  style={{
+                    background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.28)",
+                    color: "rgba(129,140,248,0.85)", fontSize: "0.78rem",
+                    fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500, transition: "all 0.15s",
+                  }}
+                  _hover={{ background: "rgba(99,102,241,0.2) !important" } as any}>
+                  <Pencil size={12} />Chỉnh sửa
+                </Box>
+              )}
+              {canWithdraw && (
+                <Box as="button" onClick={() => onWithdraw(theme.id)} border="none"
+                  cursor={withdrawing ? "not-allowed" : "pointer"}
+                  display="flex" alignItems="center" gap="6px" px="14px" py="8px" borderRadius="9px"
+                  style={{
+                    background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.22)",
+                    color: "rgba(248,113,113,0.75)", fontSize: "0.78rem",
+                    fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500,
+                    opacity: withdrawing ? 0.6 : 1, transition: "all 0.15s",
+                  }}
+                  _hover={!withdrawing ? { background: "rgba(248,113,113,0.15) !important" } as any : undefined}>
+                  {withdrawing
+                    ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                    : <Trash2 size={12} />}
+                  {withdrawing ? "Đang rút…" : "Rút lại"}
+                </Box>
+              )}
+            </Flex>
+          </Box>
+        )}
+      </Box>
+    </MotionBox>
+  );
+}
+
 // ── ThemeStorePanel (main) ─────────────────────────────────────────────────
 
 export function ThemeStorePanel({
@@ -1304,6 +1963,7 @@ export function ThemeStorePanel({
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [activeTab, setActiveTab]       = useState<TabValue>("all");
   const [searchQuery, setSearchQuery]   = useState("");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "Official" | "Community">("all");
   const [wishlistIds, setWishlistIds]   = useState<Set<string>>(new Set());
   const [selectedItem, setSelectedItem] = useState<StoreItem | null>(null);
   const [purchasing, setPurchasing]     = useState(false);
@@ -1315,6 +1975,20 @@ export function ThemeStorePanel({
   const [myThemesLoading, setMyThemesLoading] = useState(false);
   const [myThemesError, setMyThemesError] = useState<string | null>(null);
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [selectedMyTheme, setSelectedMyTheme] = useState<UserThemeSubmission | null>(null);
+
+  const myThemeChildIds = useMemo(() => {
+    const ids = new Set<string>();
+    myThemes.forEach(t => {
+      // Use embedded inlineComponents (covers all component types)
+      t.inlineComponents?.forEach(c => ids.add(c.id));
+      // Fallback to singular ID fields for safety
+      if (t.themeBackgroundItemId)  ids.add(t.themeBackgroundItemId);
+      if (t.themeStickerItemId)     ids.add(t.themeStickerItemId);
+      if (t.themeAmbientSoundItemId) ids.add(t.themeAmbientSoundItemId);
+    });
+    return ids;
+  }, [myThemes]);
 
   const loading = itemsLoading || inventoryLoading;
 
@@ -1330,10 +2004,12 @@ export function ThemeStorePanel({
     }
   }, [coinBalanceProp, user]);
 
+  useEffect(() => { setSourceFilter("all"); }, [activeTab]);
+
   // Fetch all store items on mount
   useEffect(() => {
     setItemsLoading(true);
-    aestheticStoreService.getItems()
+    aestheticStoreService.getItems(undefined, 1, 200)
       .then((data) => setItems(data))
       .catch(() => {})
       .finally(() => setItemsLoading(false));
@@ -1387,6 +2063,13 @@ export function ThemeStorePanel({
     }
   }, []);
 
+  // Auto-close my-theme detail when the theme is withdrawn
+  useEffect(() => {
+    if (selectedMyTheme && !myThemes.some(t => t.id === selectedMyTheme.id)) {
+      setSelectedMyTheme(null);
+    }
+  }, [myThemes, selectedMyTheme]);
+
   // Auto-open detail view from trial banner "Buy now"
   useEffect(() => {
     if (!initialDetailItemId || items.length === 0) return;
@@ -1394,32 +2077,34 @@ export function ThemeStorePanel({
     if (item) setSelectedItem(item);
   }, [initialDetailItemId, items]);
 
-  const themeChildIds = useMemo(() => {
-    const ids = new Set<string>();
-    items.forEach((item) => {
-      if (item.category === "Theme") {
-        if (item.themeBackgroundItemId)   ids.add(item.themeBackgroundItemId);
-        if (item.themeStickerItemId)       ids.add(item.themeStickerItemId);
-        if (item.themeAmbientSoundItemId)  ids.add(item.themeAmbientSoundItemId);
-      }
-    });
-    return ids;
-  }, [items]);
 
   const featuredItems = useMemo(() =>
-    items.filter((i) => i.category === "Theme").slice(0, 3),
+    items.filter((i) => i.category === "Theme" && i.themeSource !== null).slice(0, 3),
   [items]);
 
   const filteredItems = useMemo(() => {
+    // Search: scan toàn bộ catalog có giá, bỏ Effect và sub-component free
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return items.filter(
+        (i) => i.category !== "Effect"
+          && (i.coinPrice != null || i.realMoneyPriceVnd != null)
+          && i.name.toLowerCase().includes(q)
+      );
+    }
+
     let source: StoreItem[];
     if (activeTab === "purchased") source = inventoryItems;
     else if (activeTab === "wishlist") source = items.filter((i) => wishlistIds.has(i.id));
-    else if (activeTab === "all") source = items.filter((i) => !themeChildIds.has(i.id) && i.category !== "Effect");
-    else source = items.filter((i) => i.category === activeTab && !themeChildIds.has(i.id));
+    else if (activeTab === "all") source = items.filter((i) => i.category !== "Effect" && (i.coinPrice != null || i.realMoneyPriceVnd != null));
+    else source = items.filter((i) => i.category === activeTab && (i.coinPrice != null || i.realMoneyPriceVnd != null));
 
-    if (!searchQuery) return source;
-    return source.filter((i) => i.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [activeTab, items, inventoryItems, wishlistIds, searchQuery, themeChildIds]);
+    if (sourceFilter !== "all" && (activeTab === "all" || activeTab === "Theme")) {
+      source = source.filter((i) => i.themeSource === sourceFilter);
+    }
+
+    return source;
+  }, [activeTab, items, inventoryItems, wishlistIds, searchQuery, sourceFilter]);
 
   const toggleWishlist = useCallback((itemId: string) => {
     setWishlistIds((prev) => {
@@ -1750,6 +2435,18 @@ export function ThemeStorePanel({
         {/* ── Right content ── */}
         <Box flex={1} display="flex" flexDirection="column" position="relative" style={{ minWidth: 0 }}>
           <AnimatePresence>
+            {selectedMyTheme && (
+              <MyThemeDetailView
+                key={selectedMyTheme.id}
+                theme={selectedMyTheme}
+                withdrawing={withdrawingId === selectedMyTheme.id}
+                onBack={() => setSelectedMyTheme(null)}
+                onWithdraw={handleWithdraw}
+                onEdit={onOpenEdit}
+              />
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
             {selectedItem && (
               <ItemDetailView
                 key={selectedItem.id}
@@ -1764,7 +2461,25 @@ export function ThemeStorePanel({
                   onStartTrial && !selectedItem.isOwned
                     && selectedItem.category !== "Sticker"
                     && selectedItem.category !== "AmbientSound"
-                    ? () => { onStartTrial(selectedItem); onClose(); }
+                    ? () => {
+                        let trialBgUrl: string | undefined;
+                        let trialStickerUrl: string | undefined;
+                        let trialAmbientUrl: string | undefined;
+                        if (selectedItem.category === "Theme") {
+                          const foundBg = selectedItem.themeBackgroundItemId
+                            ? items.find(i => i.id === selectedItem.themeBackgroundItemId)?.assetUrl
+                            : undefined;
+                          trialBgUrl = foundBg ?? selectedItem.assetUrl ?? undefined;
+                          trialStickerUrl = selectedItem.themeStickerItemId
+                            ? items.find(i => i.id === selectedItem.themeStickerItemId)?.assetUrl ?? undefined
+                            : undefined;
+                          trialAmbientUrl = selectedItem.themeAmbientSoundItemId
+                            ? items.find(i => i.id === selectedItem.themeAmbientSoundItemId)?.assetUrl ?? undefined
+                            : undefined;
+                        }
+                        onStartTrial(selectedItem, trialBgUrl, trialStickerUrl, trialAmbientUrl);
+                        onClose();
+                      }
                     : undefined
                 }
                 isTrialing={selectedItem.id === trialItemId}
@@ -1774,6 +2489,7 @@ export function ThemeStorePanel({
                 isWishlisted={wishlistIds.has(selectedItem.id)}
                 onToggleWishlist={() => toggleWishlist(selectedItem.id)}
                 onApplyItem={onApplyItem}
+                allItems={items}
               />
             )}
           </AnimatePresence>
@@ -1865,13 +2581,14 @@ export function ThemeStorePanel({
                   </Flex>
                 ) : (
                   <Box display="flex" flexDirection="column" gap="8px">
-                    {myThemes.map((theme) => (
+                    {myThemes.filter(t => !myThemeChildIds.has(t.id)).map((theme) => (
                       <MyThemeCard
                         key={theme.id}
                         theme={theme}
                         withdrawing={withdrawingId === theme.id}
                         onWithdraw={handleWithdraw}
                         onEdit={onOpenEdit}
+                        onClick={() => setSelectedMyTheme(theme)}
                       />
                     ))}
                   </Box>
@@ -1886,6 +2603,57 @@ export function ThemeStorePanel({
                 t={t}
                 onItemClick={(item) => { setSelectedItem(item); setPurchaseError(null); }}
               />
+            )}
+
+            {/* Source filter chips — only on tabs that show Theme items */}
+            {(activeTab === "all" || activeTab === "Theme") && !loading && (
+              <Flex gap="6px" mb="10px" flexWrap="wrap">
+                {(["all", "Official", "Community"] as const).map((s) => {
+                  const active = sourceFilter === s;
+                  return (
+                    <Box
+                      key={s}
+                      as="button"
+                      border="none"
+                      cursor="pointer"
+                      borderRadius="20px"
+                      px="10px"
+                      py="4px"
+                      onClick={() => setSourceFilter(s)}
+                      style={{
+                        background: active
+                          ? s === "Official"
+                            ? "rgba(251,191,36,0.2)"
+                            : s === "Community"
+                            ? "rgba(20,184,166,0.2)"
+                            : "rgba(255,255,255,0.12)"
+                          : "rgba(255,255,255,0.05)",
+                        border: active
+                          ? s === "Official"
+                            ? "1px solid rgba(251,191,36,0.5)"
+                            : s === "Community"
+                            ? "1px solid rgba(20,184,166,0.45)"
+                            : "1px solid rgba(255,255,255,0.2)"
+                          : "1px solid rgba(255,255,255,0.08)",
+                        color: active
+                          ? s === "Official"
+                            ? "rgba(251,191,36,0.95)"
+                            : s === "Community"
+                            ? "rgba(20,184,166,0.95)"
+                            : "rgba(255,255,255,0.9)"
+                          : "rgba(255,255,255,0.38)",
+                        fontSize: "0.68rem",
+                        fontFamily: "'HarmonyOS Sans', sans-serif",
+                        fontWeight: active ? 700 : 400,
+                        letterSpacing: "0.04em",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {s === "all" ? "Tất cả" : s === "Official" ? "✦ Official" : "⬡ Community"}
+                    </Box>
+                  );
+                })}
+              </Flex>
             )}
 
             {activeTab !== "my-themes" && (

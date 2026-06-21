@@ -3,6 +3,21 @@ import type { ApiResponse } from "../types/api.types";
 
 export type ThemeSubmissionStatus = "AdminCreated" | "PendingReview" | "Approved" | "Rejected";
 
+export interface ThemeInlineComponent {
+  id: string;
+  category: "Background" | "Sticker" | "AmbientSound" | "Effect";
+  name: string;
+  description: string | null;
+  assetUrl: string | null;
+  previewUrl: string | null;
+  coinPrice: number | null;
+  realMoneyPriceVnd: number | null;
+  status: ThemeSubmissionStatus;
+  rejectionNote: string | null;
+  submittedAt: string;
+  reviewedAt: string | null;
+}
+
 export interface UserThemeSubmission {
   id: string;
   name: string;
@@ -20,6 +35,16 @@ export interface UserThemeSubmission {
   rejectionNote: string | null;
   submittedAt: string;
   reviewedAt: string | null;
+  /** All component items embedded by the backend */
+  inlineComponents: ThemeInlineComponent[];
+}
+
+export interface InlineComponentDto {
+  category: "Background" | "Sticker" | "AmbientSound";
+  name: string;
+  description?: string;
+  assetUrl: string;
+  previewUrl?: string;
 }
 
 export interface SubmitThemeDto {
@@ -27,17 +52,11 @@ export interface SubmitThemeDto {
   description?: string;
   assetUrl: string;
   previewUrl?: string;
-  // Store item UUIDs (inventory items only)
-  themeStickerItemId?: string;
-  themeBackgroundItemId?: string;
-  themeEffectItemId?: string;
-  themeAmbientSoundItemId?: string;
+  inlineBackground?: InlineComponentDto;
+  inlineSticker?: InlineComponentDto;
+  inlineAmbientSound?: InlineComponentDto;
   coinPrice?: number;
   realMoneyPriceVnd?: number;
-  // Custom uploaded asset URLs — pending backend support for these fields
-  customBackgroundUrl?: string;
-  customStickerUrl?: string;
-  customAmbientSoundUrl?: string;
 }
 
 interface PagedData<T> {
