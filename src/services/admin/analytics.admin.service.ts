@@ -21,6 +21,20 @@ export interface AdminFeatureUsage {
   paymentsSucceeded: number;
 }
 
+export interface AdminRevenueSummary {
+  totalRevenueVnd: number;
+  subscriptionRevenueVnd: number;
+  coinPackRevenueVnd: number;
+  assetRevenueVnd: number;
+  totalTransactions: number;
+}
+
+export interface AdminRevenueTrend {
+  date: string;
+  amountVnd: number;
+  transactions: number;
+}
+
 export const analyticsAdminService = {
   getOverview: async (): Promise<AdminOverview> => {
     const { data } = await api.get<ApiResponse<AdminOverview>>("/admin/analytics/overview");
@@ -37,5 +51,17 @@ export const analyticsAdminService = {
   getFeatureUsage: async (): Promise<AdminFeatureUsage> => {
     const { data } = await api.get<ApiResponse<AdminFeatureUsage>>("/admin/analytics/feature-usage");
     return data.data;
+  },
+
+  getRevenueSummary: async (): Promise<AdminRevenueSummary> => {
+    const { data } = await api.get<ApiResponse<AdminRevenueSummary>>("/admin/analytics/revenue");
+    return data.data;
+  },
+
+  getRevenueTrend: async (days = 30): Promise<AdminRevenueTrend[]> => {
+    const { data } = await api.get<ApiResponse<AdminRevenueTrend[]>>("/admin/analytics/revenue-trend", {
+      params: { days },
+    });
+    return data.data ?? [];
   },
 };

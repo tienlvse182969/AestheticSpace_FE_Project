@@ -16,6 +16,7 @@ import {
   type AdminOverview,
   type AdminDateCount,
   type AdminFeatureUsage,
+  type AdminRevenueSummary,
 } from "../../../services/admin/analytics.admin.service";
 import { adminUsersService, type AdminUserDto } from "../../../services/admin/user.admin.services";
 
@@ -74,13 +75,15 @@ export function DashboardSection() {
   const { c } = useAdminTheme();
   const { t } = useTranslation();
 
-  const [overview,      setOverview]      = useState<AdminOverview | null>(null);
-  const [featureUsage,  setFeatureUsage]  = useState<AdminFeatureUsage | null>(null);
-  const [growthData,    setGrowthData]    = useState<AdminDateCount[]>([]);
-  const [recentUsers,   setRecentUsers]   = useState<AdminUserDto[]>([]);
-  const [selectedDays,  setSelectedDays]  = useState<7 | 30 | 90>(30);
+  const [overview,        setOverview]        = useState<AdminOverview | null>(null);
+  const [featureUsage,    setFeatureUsage]    = useState<AdminFeatureUsage | null>(null);
+  const [revenueSummary,  setRevenueSummary]  = useState<AdminRevenueSummary | null>(null);
+  const [growthData,      setGrowthData]      = useState<AdminDateCount[]>([]);
+  const [recentUsers,     setRecentUsers]     = useState<AdminUserDto[]>([]);
+  const [selectedDays,    setSelectedDays]    = useState<7 | 30 | 90>(30);
   const [loadingOverview, setLoadingOverview] = useState(true);
   const [loadingFeature,  setLoadingFeature]  = useState(true);
+  const [loadingRevenue,  setLoadingRevenue]  = useState(true);
   const [loadingGrowth,   setLoadingGrowth]   = useState(true);
   const [loadingUsers,    setLoadingUsers]    = useState(true);
 
@@ -89,6 +92,8 @@ export function DashboardSection() {
       .then(setOverview).catch(() => {}).finally(() => setLoadingOverview(false));
     analyticsAdminService.getFeatureUsage()
       .then(setFeatureUsage).catch(() => {}).finally(() => setLoadingFeature(false));
+    analyticsAdminService.getRevenueSummary()
+      .then(setRevenueSummary).catch(() => {}).finally(() => setLoadingRevenue(false));
     adminUsersService.getUsers(1, 5)
       .then(r => setRecentUsers(r.items)).catch(() => {}).finally(() => setLoadingUsers(false));
   }, []);
@@ -111,11 +116,11 @@ export function DashboardSection() {
 
   // ── Stat cards (5) ──
   const stats = [
-    { label: t("admin.dashboard.totalUsers"),    icon: Users,     color: "#38bdf8", bg: "rgba(56,189,248,0.1)",  border: "rgba(56,189,248,0.2)",  value: overview?.totalUsers },
-    { label: t("admin.dashboard.activeToday"),   icon: Activity,  color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.2)",  value: overview?.activeUsersToday },
-    { label: t("admin.dashboard.newThisMonth"),  icon: TrendingUp,color: "#a78bfa", bg: "rgba(167,139,250,0.1)", border: "rgba(167,139,250,0.2)", value: overview?.newUsersThisMonth },
-    { label: t("admin.dashboard.premiumUsers"),  icon: Crown,     color: "#fbbf24", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.2)",  value: overview?.totalPremiumUsers },
-    { label: t("admin.dashboard.totalRevenue"),  icon: Banknote,  color: "#34d399", bg: "rgba(52,211,153,0.1)",  border: "rgba(52,211,153,0.2)",  value: overview?.totalRevenueVnd, isRevenue: true },
+    { label: t("admin.dashboard.totalUsers"),   icon: Users,      color: "#38bdf8", bg: "rgba(56,189,248,0.1)",  border: "rgba(56,189,248,0.2)",  value: overview?.totalUsers,         loading: loadingOverview },
+    { label: t("admin.dashboard.activeToday"),  icon: Activity,   color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.2)",  value: overview?.activeUsersToday,   loading: loadingOverview },
+    { label: t("admin.dashboard.newThisMonth"), icon: TrendingUp, color: "#a78bfa", bg: "rgba(167,139,250,0.1)", border: "rgba(167,139,250,0.2)", value: overview?.newUsersThisMonth,  loading: loadingOverview },
+    { label: t("admin.dashboard.premiumUsers"), icon: Crown,      color: "#fbbf24", bg: "rgba(251,191,36,0.1)",  border: "rgba(251,191,36,0.2)",  value: overview?.totalPremiumUsers,  loading: loadingOverview },
+    { label: t("admin.dashboard.totalRevenue"), icon: Banknote,   color: "#34d399", bg: "rgba(52,211,153,0.1)",  border: "rgba(52,211,153,0.2)",  value: revenueSummary?.totalRevenueVnd, isRevenue: true, loading: loadingRevenue },
   ];
 
   const featureStats = [
@@ -131,7 +136,7 @@ export function DashboardSection() {
       <Box display="grid" mb={6} style={{ gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }}>
         {stats.map((stat) => {
           const Icon  = stat.icon;
-          const loading = loadingOverview;
+          const loading = stat.loading;
           const displayVal = loading
             ? "—"
             : stat.value == null
