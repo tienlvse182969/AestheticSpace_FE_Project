@@ -373,7 +373,14 @@
     "totalSessionsSub": "Number of focus sessions",
     "summary": "SUMMARY",
     "breakdown": "{{sessions}} × {{focus}}m focus + {{breaks}} × {{break}}m break",
-    "totalTime": "≈ {{time}} total time"
+    "totalTime": "≈ {{time}} total time",
+    "sounds": "SOUNDS",
+    "soundEnabled": "Enable sounds",
+    "soundStartFocus": "Start focus",
+    "soundStartBreak": "Start break",
+    "soundComplete": "Complete",
+    "soundPause": "Pause",
+    "soundReset": "Reset"
   },
   "clockWidget": {
     "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],

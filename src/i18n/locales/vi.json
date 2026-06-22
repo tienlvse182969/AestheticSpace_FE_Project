@@ -373,7 +373,14 @@
     "totalSessionsSub": "Số hiệp tập trung",
     "summary": "TỔNG KẾT",
     "breakdown": "{{sessions}} × {{focus}}m tập trung + {{breaks}} × {{break}}m nghỉ",
-    "totalTime": "≈ {{time}} tổng thời gian"
+    "totalTime": "≈ {{time}} tổng thời gian",
+    "sounds": "ÂM THANH",
+    "soundEnabled": "Bật âm thanh",
+    "soundStartFocus": "Bắt đầu tập trung",
+    "soundStartBreak": "Bắt đầu nghỉ",
+    "soundComplete": "Hoàn thành",
+    "soundPause": "Dừng",
+    "soundReset": "Đặt lại"
   },
   "clockWidget": {
     "days": ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],

@@ -7,7 +7,7 @@ import { useAccent } from "../../context/AccentContext";
 import { useWorkspaceAutoSave } from "./useWorkspaceAutoSave";
 import { roomService }          from "../../../services/room.service";
 import { useClockSettings }    from "./useClockSettings";
-import { usePomodoroSettings } from "./usePomodoroSettings";
+import { usePomodoroSettings, DEFAULT_POMODORO_SOUNDS } from "./usePomodoroSettings";
 import { useSpaceItems }       from "./useSpaceItems";
 import { useAmbientSound }     from "./useAmbientSound";
 import { workspaceService }    from "../../../services/workspace.service";
@@ -96,6 +96,8 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       pomodoro.setFocusMin(layout.pomodoroSettings.focusMin);
       pomodoro.setBreakMin(layout.pomodoroSettings.breakMin);
       pomodoro.setTotalSes(layout.pomodoroSettings.totalSes);
+      if (layout.pomodoroSettings.soundEnabled !== undefined) pomodoro.setSoundEnabled(layout.pomodoroSettings.soundEnabled);
+      if (layout.pomodoroSettings.sounds) pomodoro.setSounds({ ...DEFAULT_POMODORO_SOUNDS, ...layout.pomodoroSettings.sounds });
     }
     space.restoreItems({
       activeWidgets:   layout.activeWidgets,
@@ -194,6 +196,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     },
     pomodoroSettings: {
       focusMin: pomodoro.focusMin, breakMin: pomodoro.breakMin, totalSes: pomodoro.totalSes,
+      soundEnabled: pomodoro.soundEnabled, sounds: pomodoro.sounds,
     },
     todoItems: space.todoItems,
     accentColor: accent,
