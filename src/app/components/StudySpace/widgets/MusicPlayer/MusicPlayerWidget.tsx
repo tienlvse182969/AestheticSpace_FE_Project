@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { Play, Pause, SkipBack, SkipForward, Repeat, Repeat1, Shuffle } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Repeat, Repeat1, Shuffle, Volume2, VolumeX } from "lucide-react";
 import type { MusicSource } from "../../constants";
 import { loadYouTubeApi, parseYouTubeUrl } from "../../../../../services/youtube.service";
 import { buildScWidgetSrc } from "../../../../../services/soundcloud.service";
@@ -59,6 +59,11 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekValue, setSeekValue] = useState(0);
 
+  /* ── volume ── */
+  const [volume, setVolume] = useState(80);
+  const volumeRef    = useRef(80);
+  const prevVolumeRef = useRef(80);
+
   /* ── derived from current source ── */
   const activeUrl   = source === "youtube" ? ytUrl        : scUrl;
   const trackName   = source === "youtube" ? ytTrackName  : scTrackName;
@@ -86,6 +91,7 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
   useEffect(() => { loopModeRef.current  = loopMode;  }, [loopMode]);
   useEffect(() => { shuffleRef.current   = shuffle;   }, [shuffle]);
   useEffect(() => { isSeekingRef.current = isSeeking; }, [isSeeking]);
+  useEffect(() => { volumeRef.current    = volume;    }, [volume]);
 
   /* ─── seek polling ─── */
   useEffect(() => {
@@ -172,6 +178,7 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
         onReady: (e: any) => {
           if (destroyed) return;
           setYtReady(true);
+          try { e.target.setVolume?.(volumeRef.current); } catch {}
           if (loopModeRef.current === "all") try { e.target.setLoop?.(true); } catch {}
           if (shuffleRef.current)           try { e.target.setShuffle?.(true); } catch {}
           const data = e.target.getVideoData?.();
@@ -244,6 +251,7 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
       if (scTimeoutRef.current) clearTimeout(scTimeoutRef.current);
       setScReady(true);
       setPlayerError(null);
+      try { widget.setVolume(volumeRef.current); } catch {}
       widget.getCurrentSound((sound: any) => {
         if (sound?.title) setScTrackName(sound.title.split(" - ")[0]);
       });
@@ -328,6 +336,21 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
   };
   const handleShuffleToggle = () => setShuffle(v => !v);
 
+  const handleVolumeChange = (val: number) => {
+    setVolume(val);
+    try { ytPlayerRef.current?.setVolume?.(val); } catch {}
+    try { scWidgetRef.current?.setVolume?.(val); } catch {}
+  };
+
+  const handleVolumeMute = () => {
+    if (volume > 0) {
+      prevVolumeRef.current = volume;
+      handleVolumeChange(0);
+    } else {
+      handleVolumeChange(prevVolumeRef.current || 80);
+    }
+  };
+
   /* Switch service: only pause current, preserve all state on both sides */
   const handleSourceSwitch = (next: MusicSource) => {
     if (next === source) return;
@@ -408,6 +431,22 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
           width: 11px; height: 11px;
           border-radius: 50%;
           background: var(--accent);
+          cursor: pointer;
+          border: none;
+        }
+        .music-volume::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          width: 10px; height: 10px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.75);
+          cursor: pointer;
+          transition: transform 0.15s;
+        }
+        .music-volume::-webkit-slider-thumb:hover { transform: scale(1.3); }
+        .music-volume::-moz-range-thumb {
+          width: 10px; height: 10px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.75);
           cursor: pointer;
           border: none;
         }
@@ -743,6 +782,41 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
           {loopMode === "one" ? <Repeat1 size={14} /> : <Repeat size={14} />}
         </Box>
       </Flex>}
+
+      {/* ── Volume bar ── */}
+      {activeUrl && (
+        <Flex align="center" gap="8px" mt="10px" px="2px">
+          <Box as="button" onClick={handleVolumeMute}
+            bg="transparent" border="none" cursor="pointer" flexShrink={0}
+            display="flex" alignItems="center"
+            style={{ color: "rgba(255,255,255,0.45)", transition: "color 0.15s" }}>
+            {volume === 0 ? <VolumeX size={13} /> : <Volume2 size={13} />}
+          </Box>
+          <input
+            type="range"
+            className="music-volume"
+            min={0}
+            max={100}
+            step={1}
+            value={volume}
+            onChange={(e) => handleVolumeChange(Number(e.target.value))}
+            style={{
+              flex: 1, height: 3, borderRadius: 4,
+              appearance: "none", WebkitAppearance: "none",
+              background: `linear-gradient(to right, rgba(255,255,255,0.6) ${volume}%, rgba(255,255,255,0.13) ${volume}%)`,
+              outline: "none",
+              cursor: "pointer",
+            }}
+          />
+          <Text style={{
+            fontSize: "0.6rem", color: "rgba(255,255,255,0.3)",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+            minWidth: "22px", textAlign: "right",
+          }}>
+            {volume}
+          </Text>
+        </Flex>
+      )}
     </Box>
   );
 }
