@@ -11,7 +11,7 @@ import { usePomodoroSettings } from "./usePomodoroSettings";
 import { useSpaceItems }       from "./useSpaceItems";
 import { useAmbientSound }     from "./useAmbientSound";
 import { workspaceService }    from "../../../services/workspace.service";
-import { BACKGROUNDS }         from "../../components/StudySpace/constants";
+import { DEFAULT_BG } from "../../components/StudySpace/constants";
 import type { BackgroundItem } from "../../components/StudySpace/types";
 import type { LayoutConfig }   from "../../../types/workspace.types";
 import type { UserInfo }       from "../../components/StudySpace/panels/AccountPanel";
@@ -43,7 +43,7 @@ export function useStudySpace() {
   const [layoutLocked,   setLayoutLocked]   = useState(false);
 const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const [accountOpen,         setAccountOpen]         = useState(false);
-  const [currentBg,           setCurrentBg]           = useState<BackgroundItem>(BACKGROUNDS[3]);
+  const [currentBg,           setCurrentBg]           = useState<BackgroundItem>(DEFAULT_BG);
   const [roomId,              setRoomId]              = useState<string | null>(null);
   const [showFirstRoomModal,  setShowFirstRoomModal]  = useState(false);
   const [musicSource,    setMusicSource]    = useState<"youtube" | "soundcloud">("youtube");
@@ -149,7 +149,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     const created = await roomService.createMyRoom({ name, description: null, thumbnailUrl: null, backgroundUrl: null });
     const bg: BackgroundItem = {
       id: created.id,
-      url: created.thumbnailUrl ?? BACKGROUNDS[3].url,
+      url: created.thumbnailUrl ?? DEFAULT_BG.url,
       thumb: created.thumbnailUrl ?? "",
       label: created.name,
     };
