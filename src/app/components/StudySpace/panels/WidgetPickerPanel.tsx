@@ -180,6 +180,7 @@ const THUMBNAIL_MAP: Record<string, React.FC> = {
   todo:     TodoThumbnail,
   clock:    ClockThumbnail,
   quote:    QuoteThumbnail,
+  sticky:   StickyThumbnail,
 };
 
 /* ── Main component ──────────────────────────────────────────────────────── */
@@ -290,10 +291,10 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
             })}
           </Flex>
         ) : (
-          /* ── Desktop: 2-column thumbnail grid ── */
+          /* ── Desktop: 3-column thumbnail grid ── */
           <div style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr 1fr",
+            gridTemplateColumns: "1fr 1fr 1fr",
             gap: "10px",
             marginTop: "14px",
           }}>
@@ -412,15 +413,68 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
                 </div>
               );
             })}
+
+            {/* Sticky Notes card — inline in grid */}
+            <div style={{
+              borderRadius: "12px",
+              overflow: "hidden",
+              border: "1px solid rgba(254,224,71,0.22)",
+              background: "rgba(254,224,71,0.04)",
+              display: "flex",
+              flexDirection: "column",
+            }}>
+              <div style={{
+                width: "100%",
+                height: "100px",
+                overflow: "hidden",
+                background: "linear-gradient(145deg, rgba(254,224,71,0.1) 0%, rgba(12,18,22,0.5) 100%)",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <StickyThumbnail />
+              </div>
+              <div style={{ padding: "10px 11px 11px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                <div>
+                  <div style={{ fontSize: "0.8rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.88)", marginBottom: "2px" }}>
+                    {t("widgetPicker.stickyNotes")}
+                  </div>
+                  <Flex gap="4px" align="center" mt="2px">
+                    {STICKY_COLORS.map(c => (
+                      <Box key={c.id} w="7px" h="7px" borderRadius="50%" style={{ background: c.swatch, flexShrink: 0 }} />
+                    ))}
+                    <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.32)", fontFamily: "'HarmonyOS Sans', sans-serif", marginLeft: 3 }}>
+                      {t("widgetPicker.unlimitedInstances")}
+                    </span>
+                  </Flex>
+                </div>
+                <button
+                  onClick={onAddStickyNote}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 5,
+                    width: "100%",
+                    padding: "6px 0",
+                    borderRadius: "8px",
+                    fontSize: "0.72rem",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    cursor: "pointer",
+                    transition: "all 0.18s",
+                    background: "rgba(254,240,138,0.13)",
+                    color: "#fde047",
+                    border: "1px solid rgba(254,224,71,0.32)",
+                  }}
+                >
+                  <Plus size={11} /> {t("widgetPicker.addNote")}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* ── Sticky Notes ────────────────────────────────────────────── */}
-        <Box mt="12px" style={{ height: 1, background: "rgba(255,255,255,0.07)", marginBottom: 12 }} />
-
-        {isMobile ? (
-          /* Mobile sticky list row */
-          <Flex align="center" gap={3} px={3} py={3} borderRadius="10px" style={{
+        {/* Mobile sticky list row — appended after WIDGET_DEFS list */}
+        {isMobile && (
+          <Flex align="center" gap={3} px={3} py={3} borderRadius="10px" mt={2} style={{
             background: "rgba(255,255,255,0.03)",
             border: "1px solid rgba(255,255,255,0.07)",
           }}>
@@ -449,62 +503,6 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
               <Plus size={10} /><span style={{ marginLeft: 3 }}>{t("widgetPicker.addNote")}</span>
             </Box>
           </Flex>
-        ) : (
-          /* Desktop sticky full-width card */
-          <div style={{
-            borderRadius: "12px",
-            overflow: "hidden",
-            border: "1px solid rgba(254,224,71,0.18)",
-            background: "rgba(254,224,71,0.04)",
-          }}>
-            {/* Thumbnail */}
-            <div style={{
-              height: "72px",
-              background: "linear-gradient(145deg, rgba(254,224,71,0.1) 0%, rgba(12,18,22,0.4) 100%)",
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
-              overflow: "hidden",
-            }}>
-              <StickyThumbnail />
-            </div>
-
-            {/* Info + action row */}
-            <div style={{ padding: "10px 14px 12px", display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.88)", marginBottom: 2 }}>
-                  {t("widgetPicker.stickyNotes")}
-                </div>
-                <Flex gap="5px" align="center">
-                  {STICKY_COLORS.map(c => (
-                    <Box key={c.id} w="8px" h="8px" borderRadius="50%" style={{ background: c.swatch, flexShrink: 0 }} />
-                  ))}
-                  <span style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif", marginLeft: 4 }}>
-                    {t("widgetPicker.unlimitedInstances")}
-                  </span>
-                </Flex>
-              </div>
-
-              <button
-                onClick={onAddStickyNote}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 5,
-                  padding: "6px 14px",
-                  borderRadius: "8px",
-                  fontSize: "0.72rem",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  cursor: "pointer",
-                  flexShrink: 0,
-                  background: "rgba(254,240,138,0.13)",
-                  color: "#fde047",
-                  border: "1px solid rgba(254,224,71,0.3)",
-                  transition: "all 0.18s",
-                }}
-              >
-                <Plus size={11} /> {t("widgetPicker.addNote")}
-              </button>
-            </div>
-          </div>
         )}
 
         <Text mt="14px" style={{
