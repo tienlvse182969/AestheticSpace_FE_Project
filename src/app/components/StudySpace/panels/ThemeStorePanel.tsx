@@ -2477,41 +2477,65 @@ export function ThemeStorePanel({
                 <Box
                   as="button"
                   w="100%"
-                  onClick={onOpenCreate}
+                  onClick={canPurchase ? onOpenCreate : undefined}
                   border="none"
-                  cursor="pointer"
+                  cursor={canPurchase ? "pointer" : "not-allowed"}
                   borderRadius="12px"
                   mb="14px"
                   overflow="hidden"
                   style={{
-                    background: "linear-gradient(135deg, rgba(78,124,106,0.18) 0%, rgba(20,184,166,0.12) 100%)",
-                    border: "1px dashed rgba(78,124,106,0.45)",
+                    background: canPurchase
+                      ? "linear-gradient(135deg, rgba(78,124,106,0.18) 0%, rgba(20,184,166,0.12) 100%)"
+                      : "rgba(255,255,255,0.03)",
+                    border: canPurchase
+                      ? "1px dashed rgba(78,124,106,0.45)"
+                      : "1px dashed rgba(255,255,255,0.12)",
                     padding: "20px 16px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     gap: 10,
                     transition: "all 0.18s",
+                    opacity: canPurchase ? 1 : 0.5,
                   }}
-                  _hover={{ background: "rgba(78,124,106,0.25) !important", border: "1px dashed rgba(78,124,106,0.7) !important" } as any}
+                  _hover={canPurchase ? { background: "rgba(78,124,106,0.25) !important", border: "1px dashed rgba(78,124,106,0.7) !important" } as any : undefined}
                 >
                   <Box
                     style={{
                       width: 40, height: 40,
                       borderRadius: "12px",
-                      background: "rgba(78,124,106,0.22)",
-                      border: "1px solid rgba(78,124,106,0.4)",
+                      background: canPurchase ? "rgba(78,124,106,0.22)" : "rgba(255,255,255,0.06)",
+                      border: canPurchase ? "1px solid rgba(78,124,106,0.4)" : "1px solid rgba(255,255,255,0.1)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}
                   >
-                    <Palette size={18} color="rgba(78,124,106,0.9)" />
+                    {canPurchase
+                      ? <Palette size={18} color="rgba(78,124,106,0.9)" />
+                      : <Crown size={18} color="rgba(251,191,36,0.7)" />}
                   </Box>
                   <Box>
-                    <Text style={{ fontSize: "0.86rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(255,255,255,0.82)", marginBottom: 3 }}>
-                      Tạo theme mới
-                    </Text>
+                    <Flex align="center" gap="6px" justify="center" mb="3px">
+                      <Text style={{ fontSize: "0.86rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: canPurchase ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
+                        Tạo theme mới
+                      </Text>
+                      {!canPurchase && (
+                        <Box style={{
+                          padding: "1px 6px",
+                          borderRadius: 20,
+                          background: "rgba(251,191,36,0.12)",
+                          border: "1px solid rgba(251,191,36,0.3)",
+                          fontSize: "0.62rem",
+                          color: "#fbbf24",
+                          fontFamily: "'HarmonyOS Sans', sans-serif",
+                          fontWeight: 600,
+                          letterSpacing: "0.04em",
+                        }}>
+                          Premium
+                        </Box>
+                      )}
+                    </Flex>
                     <Text style={{ fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
-                      Tuỳ chỉnh màu nhấn, hình nền và âm thanh
+                      {canPurchase ? "Tuỳ chỉnh màu nhấn, hình nền và âm thanh" : "Nâng cấp Premium để tạo và gửi theme"}
                     </Text>
                   </Box>
                 </Box>

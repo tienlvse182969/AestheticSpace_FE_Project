@@ -337,8 +337,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
               )}
             </Box>
 
-            {/* Top up coins via VNPAY */}
-            <Box p="14px" borderRadius="12px"
+            {/* Top up coins via VNPAY — premium only */}
+            {user?.accountTier?.toLowerCase() === "premium" && <Box p="14px" borderRadius="12px"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
               <Flex align="center" gap={2} mb="10px">
@@ -397,7 +397,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   {t("settings.topUpError")}
                 </Text>
               )}
-            </Box>
+            </Box>}
 
           </Box>
         );
