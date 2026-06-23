@@ -351,7 +351,62 @@
     "desc": "A distraction-free environment crafted to help you focus, stay inspired, and make every study session feel effortless.",
     "contributors": "CONTRIBUTORS",
     "copyright": "© AESTHETIC GROUP",
-    "version": "Version Dev"
+    "version": "Version Dev",
+    "openSpace": "Open Study Space →"
+  },
+  "pricing": {
+    "sectionLabel": "PRICING",
+    "title": "Choose the plan",
+    "titleHighlight": "that fits you",
+    "subtitle": "Start free, upgrade when you're ready. New users get a",
+    "subtitleBold": "3-day Premium trial",
+    "subtitleEnd": "completely free.",
+    "trialBanner": "Sign up now — try Premium free for",
+    "trialDays": "3 days",
+    "trialEnd": ", no credit card required",
+    "freemium": {
+      "currentBadge": "Current plan",
+      "desc": "All the tools you need to start building your perfect study space.",
+      "price": "Free",
+      "cta": "Get started free",
+      "features": [
+        "Preset room with customizable & saveable layout",
+        "Free backgrounds from Unsplash",
+        "Add widgets to your study space",
+        "Music player with YouTube / SoundCloud",
+        "Change default theme colors",
+        "Create up to 3 rooms"
+      ]
+    },
+    "premium": {
+      "popularBadge": "Most popular",
+      "currentBadge": "Your plan",
+      "desc": "Unlock your full creative potential with exclusive content.",
+      "priceAmount": "130.000₫",
+      "priceUnit": "/ month",
+      "trialHighlight": "3-day free trial for new accounts",
+      "currentPlanText": "You are on this plan",
+      "currentPlanSubtext": "Your account has Premium activated",
+      "cta": "Upgrade to Premium",
+      "ctaGuest": "Start free trial",
+      "features": [
+        "All Freemium features",
+        "Access Aesthetic Store — exclusive theme library",
+        "Exclusive backgrounds, stickers & effects per theme",
+        "Special ambient sounds included with each theme",
+        "Premium widget styles (coming soon)",
+        "Unlimited room preset saves",
+        "Create & publish your own themes to earn coins",
+        "Coin & daily mission system"
+      ]
+    },
+    "footer": "Pay via VNPay · Cancel anytime · No hidden fees",
+    "modal": {
+      "title": "Choose payment method",
+      "subtitle": "130.000₫ / month · Auto-renews",
+      "vnpayDesc": "ATM, Visa, MasterCard, QR Code",
+      "redirect": "Redirect"
+    }
   },
   "pomodoroStats": {
     "title": "POMODORO ANALYTICS",

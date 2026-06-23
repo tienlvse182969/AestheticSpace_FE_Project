@@ -351,7 +351,62 @@
     "desc": "Môi trường không xao nhãng được tạo ra để giúp bạn tập trung, luôn được truyền cảm hứng và làm cho mỗi phiên học trở nên dễ dàng.",
     "contributors": "ĐÓNG GÓP",
     "copyright": "© AESTHETIC GROUP",
-    "version": "Phiên bản Dev"
+    "version": "Phiên bản Dev",
+    "openSpace": "Mở Study Space →"
+  },
+  "pricing": {
+    "sectionLabel": "BẢNG GIÁ",
+    "title": "Chọn gói phù hợp",
+    "titleHighlight": "với bạn",
+    "subtitle": "Bắt đầu miễn phí, nâng cấp khi bạn sẵn sàng. Người dùng mới được dùng thử",
+    "subtitleBold": "gói Premium 3 ngày",
+    "subtitleEnd": "hoàn toàn miễn phí.",
+    "trialBanner": "Đăng ký tài khoản mới — dùng thử Premium",
+    "trialDays": "3 ngày miễn phí",
+    "trialEnd": ", không cần thẻ tín dụng",
+    "freemium": {
+      "currentBadge": "Gói hiện tại",
+      "desc": "Đầy đủ công cụ để bắt đầu xây dựng không gian học tập của bạn.",
+      "price": "Miễn phí",
+      "cta": "Bắt đầu miễn phí",
+      "features": [
+        "Preset room với layout có thể tuỳ chỉnh & lưu lại",
+        "Hình nền miễn phí từ Unsplash",
+        "Thêm widget vào không gian học",
+        "Music player tích hợp YouTube / SoundCloud",
+        "Đổi màu theme mặc định",
+        "Tạo tối đa 3 rooms"
+      ]
+    },
+    "premium": {
+      "popularBadge": "Phổ biến nhất",
+      "currentBadge": "Gói của bạn",
+      "desc": "Mở khoá toàn bộ tiềm năng sáng tạo với kho nội dung độc quyền.",
+      "priceAmount": "130.000₫",
+      "priceUnit": "/ tháng",
+      "trialHighlight": "Dùng thử 3 ngày miễn phí cho tài khoản mới",
+      "currentPlanText": "Bạn đang sử dụng gói này",
+      "currentPlanSubtext": "Tài khoản của bạn đã được kích hoạt Premium",
+      "cta": "Nâng cấp Premium",
+      "ctaGuest": "Bắt đầu dùng thử miễn phí",
+      "features": [
+        "Tất cả tính năng của gói Freemium",
+        "Truy cập Aesthetic Store — kho theme độc quyền",
+        "Hình nền, sticker & hiệu ứng độc quyền theo theme",
+        "Ambient sound đặc biệt đi kèm từng theme",
+        "Kiểu widget premium (sắp ra mắt)",
+        "Lưu preset room không giới hạn",
+        "Tự sáng tạo & đăng theme lên Store để kiếm xu",
+        "Hệ thống điểm xu & nhiệm vụ hằng ngày"
+      ]
+    },
+    "footer": "Thanh toán qua VNPay · Huỷ bất cứ lúc nào · Không tính phí ẩn",
+    "modal": {
+      "title": "Chọn phương thức thanh toán",
+      "subtitle": "130.000₫ / tháng · Gia hạn tự động",
+      "vnpayDesc": "Thẻ ATM, Visa, MasterCard, QR Code",
+      "redirect": "Chuyển hướng"
+    }
   },
   "pomodoroStats": {
     "title": "PHÂN TÍCH POMODORO",

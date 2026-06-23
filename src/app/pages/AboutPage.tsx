@@ -195,7 +195,7 @@ export function AboutPage() {
                 fontFamily: "'HarmonyOS Sans', sans-serif",
               }}
             >
-              Open Study Space →
+              {t("about.openSpace")}
             </Box>
             <Text
               style={{
