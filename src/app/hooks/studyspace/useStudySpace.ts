@@ -45,6 +45,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const [accountOpen,         setAccountOpen]         = useState(false);
   const [currentBg,           setCurrentBg]           = useState<BackgroundItem>(DEFAULT_BG);
   const [roomId,              setRoomId]              = useState<string | null>(null);
+  const [roomName,            setRoomName]            = useState<string | null>(null);
   const [showFirstRoomModal,  setShowFirstRoomModal]  = useState(false);
   const [musicSource,    setMusicSource]    = useState<"youtube" | "soundcloud">("youtube");
   const [musicYtUrl,     setMusicYtUrl]     = useState("");
@@ -110,10 +111,11 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   }, [clock, pomodoro, space, restoreAmbient]);
 
   /* ── On-mount workspace restore callback ── */
-  const handleRestore = useCallback(({ roomId: rid, bg, layout }: {
-    roomId: string; bg: BackgroundItem; layout: LayoutConfig;
+  const handleRestore = useCallback(({ roomId: rid, roomName: rname, bg, layout }: {
+    roomId: string; roomName?: string | null; bg: BackgroundItem; layout: LayoutConfig;
   }) => {
     setRoomId(rid);
+    setRoomName(rname ?? null);
     setCurrentBg(bg);
     applyLayout(layout);
   }, [applyLayout]);
@@ -121,6 +123,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   /* ── Room select: switch room + restore saved layout ── */
   const handleRoomSelect = useCallback(async (id: string, bg: BackgroundItem) => {
     setRoomId(id);
+    setRoomName(bg.label);
     setCurrentBg(bg);
 
     const emptyLayout: LayoutConfig = {
@@ -159,7 +162,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       activeEffect: null, activeWidgets: [], placedStickers: [],
       stickyNotes: [], widgetPositions: {}, todoItems: [],
     };
-    handleRestore({ roomId: created.id, bg, layout: emptyLayout });
+    handleRestore({ roomId: created.id, roomName: created.name, bg, layout: emptyLayout });
     setShowFirstRoomModal(false);
   }, [handleRestore]);
 
@@ -184,6 +187,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const { saveStatus, saveNow, isRestoring } = useWorkspaceAutoSave({
     isLoggedIn: !!user,
     roomId,
+    roomName,
     currentBg,
     activeEffect,
     activeWidgets:    space.activeWidgets,

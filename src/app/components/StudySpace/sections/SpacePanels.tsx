@@ -280,6 +280,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
           <RoomManagerPanel
             key="room-panel"
             currentRoomId={roomId}
+            currentBg={currentBg}
             onSelect={handleRoomSelect}
             onClose={() => setActivePanel(null)}
           />

@@ -55,11 +55,12 @@ const DEFAULT_FORM: UserRoomRequest = { name: "", description: "", thumbnailUrl:
 
 interface RoomManagerPanelProps {
   currentRoomId: string | null;
+  currentBg?: BackgroundItem;
   onSelect: (roomId: string, bg: BackgroundItem) => void;
   onClose: () => void;
 }
 
-export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManagerPanelProps) {
+export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }: RoomManagerPanelProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -359,7 +360,7 @@ export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManag
                   onMouseLeave={() => setHoveredCard(null)}
                   onClick={() => { if (!isHovered) onSelect(room.id, bg); }}
                 >
-                  <RoomThumb url={room.thumbnailUrl} name={room.name} />
+                  <RoomThumb url={isActive && currentBg ? currentBg.url : room.thumbnailUrl} name={room.name} />
 
                   {/* Gradient overlay */}
                   <Box position="absolute" inset={0}
