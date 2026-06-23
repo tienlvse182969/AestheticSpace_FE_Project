@@ -123,7 +123,7 @@ export function Navbar() {
     const heroEl = document.getElementById("home");
     if (!heroEl) {
       // Pages with dark backgrounds at top get white navbar; others get dark
-      const DARK_BG_ROUTES = ["/about"];
+      const DARK_BG_ROUTES = ["/about", "/login", "/signup"];
       const isDark = DARK_BG_ROUTES.includes(location.pathname);
       if (isDark) {
         const sync = () => setIsInHero(window.scrollY <= 20);

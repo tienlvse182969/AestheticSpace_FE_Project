@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { GoogleAuthButton } from "../components/GoogleAuthButton";
 import { useAuth } from "../../context/AuthContext";
+import { Navbar } from "../components/homepage/Navbar";
 import axios from "axios";
 
 const MotionBox  = motion.create(Box);
@@ -66,7 +67,7 @@ export function LoginPage() {
 
     if (!password)
       newErrors.password = t("auth.errors.passwordRequired");
-    else if (password.length < 6)
+    else if (password.length < 8)
       newErrors.password = t("auth.errors.passwordTooShort");
 
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
@@ -95,45 +96,10 @@ export function LoginPage() {
       }} />
       <Box position="absolute" inset={0} style={{ background: "rgba(10, 15, 20, 0.55)" }} />
 
-      {/* Navbar */}
-      <Box position="relative" zIndex={10} px={{ base: 6, lg: 10 }} h="80px">
-        <Flex maxW="1280px" mx="auto" h="full" align="center" justify="space-between">
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }} style={{ cursor: "pointer", textDecoration: "none" }}>
-            <Text style={{ fontFamily: "'Manrope', sans-serif", fontSize: "clamp(1.1rem, 2vw, 1.45rem)", color: "rgba(255,255,255,0.92)", letterSpacing: "0.01em" }}>
-              A<span style={{ fontFamily: "'Manrope', sans-serif" }}>ē</span>sthetic Group
-            </Text>
-          </a>
-          <Flex display={{ base: "none", md: "flex" }} align="center" gap={10}>
-            {[t("nav.home"), t("nav.aboutUs"), t("nav.contact")].map((link) => (
-              <Box key={link} position="relative"
-                css={{ "&:hover .nav-underline": { width: "100%" } }}>
-                <a href="#" style={{ color: "white", fontSize: "1rem", textDecoration: "none", cursor: "pointer", opacity: 0.9 }}>
-                  {link}
-                </a>
-                <Box className="nav-underline" position="absolute" bottom="-4px" left={0} w={0} h="1.5px" bg="white" transition="width 0.3s" />
-              </Box>
-            ))}
-            <button
-              type="button"
-              onClick={() => navigate("/signup")}
-              style={{
-                padding: "8px 20px", borderRadius: "8px",
-                border: "2px solid white", color: "white",
-                fontSize: "0.875rem", background: "transparent",
-                cursor: "pointer", transition: "all 0.2s",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "white"; (e.currentTarget as HTMLElement).style.color = "#1a3c34"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "white"; }}
-            >
-              {t("auth.signUp")}
-            </button>
-          </Flex>
-        </Flex>
-      </Box>
+      <Navbar />
 
       {/* Split layout */}
-      <Flex position="relative" zIndex={10} minH="calc(100vh - 80px)">
+      <Flex position="relative" zIndex={10} minH="calc(100vh - 80px)" pt="80px">
 
         {/* ── Left: tagline (desktop only) ── */}
         <MotionFlex

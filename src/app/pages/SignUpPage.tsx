@@ -6,6 +6,7 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { GoogleAuthButton } from "../components/GoogleAuthButton";
 import { useAuth } from "../../context/AuthContext";
+import { Navbar } from "../components/homepage/Navbar";
 import axios from "axios";
 
 const MotionBox  = motion.create(Box);
@@ -32,7 +33,10 @@ const inputFocus = (hasError: boolean) => ({
   boxShadow: hasError ? "0 0 0 2px rgba(248,113,113,0.2)" : "0 0 0 2px rgba(78,124,106,0.2)",
 });
 
-type Errors = { username?: string; email?: string; password?: string; server?: string };
+type Errors = { username?: string; email?: string; password?: string; confirmPassword?: string; server?: string };
+
+const isStrongPassword = (val: string) =>
+  val.length >= 8 && /[A-Z]/.test(val) && /[a-z]/.test(val) && /[0-9]/.test(val);
 
 export function SignUpPage() {
   const navigate = useNavigate();
@@ -40,11 +44,13 @@ export function SignUpPage() {
   const { register, googleLogin, isLoading } = useAuth();
   const reduce = useReducedMotion();
 
-  const [username,     setUsername]     = useState("");
-  const [email,        setEmail]        = useState("");
-  const [password,     setPassword]     = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [errors,       setErrors]       = useState<Errors>({});
+  const [username,          setUsername]          = useState("");
+  const [email,             setEmail]             = useState("");
+  const [password,          setPassword]          = useState("");
+  const [confirmPassword,   setConfirmPassword]   = useState("");
+  const [showPassword,      setShowPassword]      = useState(false);
+  const [showConfirmPwd,    setShowConfirmPwd]    = useState(false);
+  const [errors,            setErrors]            = useState<Errors>({});
 
   const isEmailFormat = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
 
@@ -68,8 +74,13 @@ export function SignUpPage() {
 
     if (!password)
       newErrors.password = t("auth.errors.passwordRequired");
-    else if (password.length < 6)
-      newErrors.password = t("auth.errors.passwordTooShort");
+    else if (!isStrongPassword(password))
+      newErrors.password = t("auth.errors.passwordTooWeak");
+
+    if (!confirmPassword)
+      newErrors.confirmPassword = t("auth.errors.confirmPasswordRequired");
+    else if (password && confirmPassword !== password)
+      newErrors.confirmPassword = t("auth.errors.passwordsDoNotMatch");
 
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setErrors({});
@@ -97,45 +108,10 @@ export function SignUpPage() {
       }} />
       <Box position="absolute" inset={0} style={{ background: "rgba(10, 15, 20, 0.55)" }} />
 
-      {/* Navbar */}
-      <Box position="relative" zIndex={10} px={{ base: 6, lg: 10 }} h="80px">
-        <Flex maxW="1280px" mx="auto" h="full" align="center" justify="space-between">
-          <a href="/" onClick={(e) => { e.preventDefault(); navigate("/"); }} style={{ cursor: "pointer", textDecoration: "none" }}>
-            <Text style={{ fontFamily: "'Manrope', sans-serif", fontSize: "clamp(1.1rem, 2vw, 1.45rem)", color: "rgba(255,255,255,0.92)", letterSpacing: "0.01em" }}>
-              A<span style={{ fontFamily: "'Manrope', sans-serif" }}>ē</span>sthetic Group
-            </Text>
-          </a>
-          <Flex display={{ base: "none", md: "flex" }} align="center" gap={10}>
-            {[t("nav.home"), t("nav.aboutUs"), t("nav.contact")].map((link) => (
-              <Box key={link} position="relative"
-                css={{ "&:hover .nav-underline": { width: "100%" } }}>
-                <a href="#" style={{ color: "white", fontSize: "1rem", textDecoration: "none", cursor: "pointer", opacity: 0.9 }}>
-                  {link}
-                </a>
-                <Box className="nav-underline" position="absolute" bottom="-4px" left={0} w={0} h="1.5px" bg="white" transition="width 0.3s" />
-              </Box>
-            ))}
-            <button
-              type="button"
-              onClick={() => navigate("/login")}
-              style={{
-                padding: "8px 20px", borderRadius: "8px",
-                border: "2px solid white", color: "white",
-                fontSize: "0.875rem", background: "transparent",
-                cursor: "pointer", transition: "all 0.2s",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-              }}
-              onMouseEnter={e => { (e.currentTarget).style.background = "white"; (e.currentTarget).style.color = "#1a3c34"; }}
-              onMouseLeave={e => { (e.currentTarget).style.background = "transparent"; (e.currentTarget).style.color = "white"; }}
-            >
-              {t("auth.login")}
-            </button>
-          </Flex>
-        </Flex>
-      </Box>
+      <Navbar />
 
       {/* Split layout */}
-      <Flex position="relative" zIndex={10} minH="calc(100vh - 80px)">
+      <Flex position="relative" zIndex={10} minH="calc(100vh - 80px)" pt="80px">
 
         {/* ── Left: tagline (desktop only) ── */}
         <MotionFlex
@@ -252,6 +228,12 @@ export function SignUpPage() {
                     setEmail(e.target.value);
                     if (errors.email) setErrors(p => ({ ...p, email: undefined }));
                   }}
+                  onBlur={() => {
+                    if (!email.trim())
+                      setErrors(p => ({ ...p, email: t("auth.errors.emailRequired") }));
+                    else if (!isEmailFormat(email.trim()))
+                      setErrors(p => ({ ...p, email: t("auth.errors.invalidEmailFormat") }));
+                  }}
                   style={inputStyle(!!errors.email)}
                   _placeholder={{ color: "#666" }}
                   _focus={inputFocus(!!errors.email) as any}
@@ -263,7 +245,7 @@ export function SignUpPage() {
               {errors.email && <Text fontSize="xs" color="#f87171" mb={3} pl={1}>{errors.email}</Text>}
 
               {/* Password */}
-              <Box mb={errors.password ? 1 : 5} position="relative">
+              <Box mb={errors.password ? 1 : 4} position="relative">
                 <Input
                   placeholder={t("auth.passwordPlaceholder")}
                   type={showPassword ? "text" : "password"}
@@ -289,7 +271,36 @@ export function SignUpPage() {
                   {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
               </Box>
-              {errors.password && <Text fontSize="xs" color="#f87171" mb={5} pl={1}>{errors.password}</Text>}
+              {errors.password && <Text fontSize="xs" color="#f87171" mb={3} pl={1}>{errors.password}</Text>}
+
+              {/* Confirm Password */}
+              <Box mb={errors.confirmPassword ? 1 : 5} position="relative">
+                <Input
+                  placeholder={t("auth.confirmPasswordPlaceholder")}
+                  type={showConfirmPwd ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) setErrors(p => ({ ...p, confirmPassword: undefined }));
+                  }}
+                  style={inputStyle(!!errors.confirmPassword)}
+                  _placeholder={{ color: "#666" }}
+                  _focus={inputFocus(!!errors.confirmPassword) as any}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPwd(!showConfirmPwd)}
+                  style={{
+                    position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                    color: errors.confirmPassword ? "#f87171" : "#888",
+                    background: "none", border: "none", cursor: "pointer",
+                    display: "flex", alignItems: "center", padding: 0,
+                  }}
+                >
+                  {showConfirmPwd ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+              </Box>
+              {errors.confirmPassword && <Text fontSize="xs" color="#f87171" mb={5} pl={1}>{errors.confirmPassword}</Text>}
 
               {/* Submit */}
               <button
