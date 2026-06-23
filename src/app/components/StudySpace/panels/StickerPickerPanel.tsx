@@ -217,9 +217,12 @@ export function StickerPickerPanel({ onPlace, onClose }: StickerPickerPanelProps
         <PanelCloseBtn onClose={onClose} />
 
         {/* Header */}
-        <Text mb={3} style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: FONT }}>
-          {t("stickerPicker.title")}
-        </Text>
+        <Flex align="center" gap={2} mb={3}>
+          <Sticker size={13} style={{ color: "rgba(255,255,255,0.32)", flexShrink: 0 }} />
+          <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: FONT }}>
+            {t("stickerPicker.title")}
+          </Text>
+        </Flex>
 
         {/* Tabs */}
         <Flex mb={3} gap={1} style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: "10px" }}>

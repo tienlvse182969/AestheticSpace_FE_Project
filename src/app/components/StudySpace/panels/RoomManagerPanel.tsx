@@ -207,7 +207,7 @@ export function RoomManagerPanel({ currentRoomId, onSelect, onClose }: RoomManag
         width: 480,
         height: panelH,
         borderRadius: "16px",
-        background: "rgba(12,18,22,0.78)",
+        background: "rgba(12,18,22,0.75)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
         border: "1px solid rgba(255,255,255,0.1)",

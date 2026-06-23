@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, useDragControls } from "motion/react";
-import { Trash2, Plus, StickyNote } from "lucide-react";
+import { Trash2, Plus, StickyNote, LayoutGrid } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { WIDGET_DEFS } from "../constants";
@@ -265,7 +265,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
         width: panelW,
         height: panelH,
         borderRadius: "16px",
-        background: "rgba(12,18,22,0.80)",
+        background: "rgba(12,18,22,0.75)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
         border: "1px solid rgba(255,255,255,0.1)",
@@ -283,14 +283,17 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
       >
         <PanelCloseBtn onClose={onClose} />
 
-        <Text mb={1} style={{
-          fontSize: "0.7rem",
-          color: "rgba(255,255,255,0.35)",
-          letterSpacing: "0.1em",
-          fontFamily: "'HarmonyOS Sans', sans-serif",
-        }}>
-          {t("widgetPicker.title")}
-        </Text>
+        <Flex align="center" gap={2} mb={1}>
+          <LayoutGrid size={13} style={{ color: "rgba(255,255,255,0.32)", flexShrink: 0 }} />
+          <Text style={{
+            fontSize: "0.7rem",
+            color: "rgba(255,255,255,0.35)",
+            letterSpacing: "0.1em",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+          }}>
+            {t("widgetPicker.title")}
+          </Text>
+        </Flex>
       </Box>
 
       {/* ── Scrollable content ── */}

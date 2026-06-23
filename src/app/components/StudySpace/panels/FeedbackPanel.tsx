@@ -88,7 +88,7 @@ export function FeedbackPanel({ onClose }: { onClose: () => void }) {
         x, y,
         width: 440,
         borderRadius: "16px",
-        background: "rgba(12,18,22,0.82)",
+        background: "rgba(12,18,22,0.75)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
         border: "1px solid rgba(255,255,255,0.1)",

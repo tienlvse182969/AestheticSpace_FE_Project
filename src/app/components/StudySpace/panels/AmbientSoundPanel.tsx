@@ -522,9 +522,9 @@ export function AmbientSoundPanel({
       style={{
         x, y, width: 548, height: 580,
         borderRadius: "18px",
-        background: "rgba(10,16,14,0.88)",
-        backdropFilter: "blur(22px)", WebkitBackdropFilter: "blur(22px)",
-        border: "1px solid rgba(255,255,255,0.09)",
+        background: "rgba(12,18,22,0.75)",
+        backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
+        border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 28px 90px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.06)",
         cursor: "grab", display: "flex", flexDirection: "column", overflow: "hidden",
       }}
