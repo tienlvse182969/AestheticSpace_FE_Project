@@ -17,11 +17,14 @@ interface PomodoroSettings {
   focusMin: number;
   breakMin: number;
   totalSes: number;
+  soundEnabled?: boolean;
+  sounds?: { startFocus: string; startBreak: string; complete: string; pause: string; reset: string };
 }
 
 interface WorkspaceSaveParams {
   isLoggedIn: boolean;
   roomId: string | null;
+  roomName: string | null;
   currentBg: BackgroundItem | null;
   activeEffect: string | null;
   activeWidgets: Set<string>;
@@ -38,6 +41,7 @@ interface WorkspaceSaveParams {
   onNewUser?: () => void;
   onRestore: (data: {
     roomId: string;
+    roomName?: string | null;
     bg: BackgroundItem;
     layout: LayoutConfig;
   }) => void;
@@ -48,6 +52,7 @@ export type SaveStatus = "idle" | "saving" | "saved" | "error";
 export function useWorkspaceAutoSave({
   isLoggedIn,
   roomId,
+  roomName,
   currentBg,
   activeEffect,
   activeWidgets,
@@ -71,13 +76,13 @@ export function useWorkspaceAutoSave({
 
   // Always-current refs so saveNow captures latest state at call time
   const stateRef = useRef({
-    roomId, currentBg, activeEffect, activeWidgets,
+    roomId, roomName, currentBg, activeEffect, activeWidgets,
     widgetPositions, placedStickers, stickyNotes,
     clockSettings, pomodoroSettings, todoItems, accentColor, musicState,
   });
   useEffect(() => {
     stateRef.current = {
-      roomId, currentBg, activeEffect, activeWidgets,
+      roomId, roomName, currentBg, activeEffect, activeWidgets,
       widgetPositions, placedStickers, stickyNotes,
       clockSettings, pomodoroSettings, todoItems, accentColor, musicState,
     };
@@ -107,7 +112,7 @@ export function useWorkspaceAutoSave({
               activeEffect: null, activeWidgets: [], placedStickers: [],
               stickyNotes: [], widgetPositions: {}, todoItems: [],
             };
-            onRestore({ roomId: room.id, bg, layout: emptyLayout });
+            onRestore({ roomId: room.id, roomName: room.name, bg, layout: emptyLayout });
             return;
           }
           // New user — show first-room naming modal if handler provided
@@ -133,7 +138,7 @@ export function useWorkspaceAutoSave({
             label: room.name,
           };
         }
-        onRestore({ roomId: config.roomId, bg, layout });
+        onRestore({ roomId: config.roomId, roomName: config.roomName, bg, layout });
       })
       .catch(() => {})
       .finally(() => setIsRestoring(false));
@@ -177,11 +182,11 @@ export function useWorkspaceAutoSave({
         });
         setSaveStatus("saved");
         setTimeout(() => setSaveStatus("idle"), 2000);
-        // Update room thumbnail silently (no-op for preset rooms that aren't owned by the user)
-        if (thumbnail && s.currentBg?.label) {
-          roomService.updateMyRoom(s.roomId!, {
-            name: s.currentBg.label,
-            thumbnailUrl: thumbnail,
+        // Sync room thumbnail with current background URL (no-op for preset/unowned rooms)
+        if (s.roomId && s.roomName && s.currentBg?.url) {
+          roomService.updateMyRoom(s.roomId, {
+            name: s.roomName,
+            thumbnailUrl: s.currentBg.url,
           }).catch(() => {});
         }
       } catch {

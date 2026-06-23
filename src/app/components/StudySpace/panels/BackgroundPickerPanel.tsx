@@ -8,6 +8,7 @@ import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { BACKGROUNDS } from "../constants";
 import type { BackgroundItem } from "../types";
 import { aestheticStoreService } from "../../../../services/aestheticStore.service";
+import { useAuth } from "../../../../context/AuthContext";
 
 const MotionBox = motion.create(Box);
 
@@ -23,12 +24,13 @@ interface PhotoCardProps {
   bg: BackgroundItem;
   isActive: boolean;
   isFav: boolean;
+  isLoading?: boolean;
   onSelect: () => void;
   onToggleFav: (e: React.MouseEvent) => void;
   favLabel: string;
 }
 
-const PhotoCard = memo(function PhotoCard({ bg, isActive, isFav, onSelect, onToggleFav, favLabel }: PhotoCardProps) {
+const PhotoCard = memo(function PhotoCard({ bg, isActive, isFav, isLoading, onSelect, onToggleFav, favLabel }: PhotoCardProps) {
   return (
     <Box
       position="relative"
@@ -36,7 +38,7 @@ const PhotoCard = memo(function PhotoCard({ bg, isActive, isFav, onSelect, onTog
       overflow="hidden"
       style={{
         aspectRatio: "16/9",
-        cursor: "pointer",
+        cursor: isLoading ? "default" : "pointer",
         border: isActive
           ? "2px solid rgba(255,255,255,0.9)"
           : "2px solid rgba(255,255,255,0.06)",
@@ -47,15 +49,15 @@ const PhotoCard = memo(function PhotoCard({ bg, isActive, isFav, onSelect, onTog
         transition: "all 0.18s ease",
       }}
       css={{
-        "&:hover": {
+        "&:hover": !isLoading ? {
           border: "2px solid rgba(255,255,255,0.5) !important",
           boxShadow: "0 6px 22px rgba(0,0,0,0.7) !important",
           transform: "scale(1.04) !important",
-        },
+        } : {},
         "&:hover .card-overlay": { opacity: "1 !important" },
         "&:hover .fav-btn":     { opacity: "1 !important" },
       }}
-      onClick={onSelect}
+      onClick={isLoading ? undefined : onSelect}
     >
       {/* Thumbnail */}
       <Box
@@ -67,6 +69,46 @@ const PhotoCard = memo(function PhotoCard({ bg, isActive, isFav, onSelect, onTog
           backgroundPosition: "center",
         }}
       />
+
+      {/* Loading overlay */}
+      {isLoading && (
+        <Box
+          position="absolute"
+          inset={0}
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          gap="6px"
+          style={{
+            background: "rgba(0,0,0,0.58)",
+            backdropFilter: "blur(3px)",
+            zIndex: 10,
+          }}
+        >
+          <Box
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              border: "2px solid rgba(255,255,255,0.2)",
+              borderTopColor: "rgba(255,255,255,0.9)",
+              animation: "spin 0.75s linear infinite",
+            }}
+          />
+          <Box
+            style={{
+              fontSize: "0.6rem",
+              color: "rgba(255,255,255,0.8)",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              letterSpacing: "0.03em",
+            }}
+          >
+            Đang tải ảnh…
+          </Box>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </Box>
+      )}
 
       {/* Gradient overlay with label */}
       <Box
@@ -185,6 +227,8 @@ interface BackgroundPickerPanelProps {
 export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: BackgroundPickerPanelProps) {
   const { t } = useTranslation();
   const { x, y, ref } = useCenteredPanel(604, 580);
+  const { user } = useAuth();
+  const isPremium = user?.accountTier?.toLowerCase() === "premium";
 
   /* ── Search state ── */
   const [inputValue, setInputValue]   = useState("Aesthetic Study");
@@ -197,6 +241,18 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
   const [error, setError]             = useState<string | null>(null);
 
   const reqIdRef = useRef(0);
+
+  const [loadingBgId, setLoadingBgId] = useState<string | null>(null);
+
+  const handleBgSelect = useCallback((bg: BackgroundItem) => {
+    if (!bg.url) { onSelect(bg); return; }
+    setLoadingBgId(bg.id);
+    const img = new window.Image();
+    const finish = () => { setLoadingBgId(null); onSelect(bg); };
+    img.onload  = finish;
+    img.onerror = finish;
+    img.src = bg.url;
+  }, [onSelect]);
 
   /* ── Favorites (localStorage) ── */
   const [favorites, setFavorites] = useState<BackgroundItem[]>(() => {
@@ -265,7 +321,8 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
       bg,
       isActive: bg.id === currentBgId,
       isFav: favored,
-      onSelect: () => { triggerUnsplashDownload(bg.downloadLocation); onSelect(bg); },
+      isLoading: loadingBgId === bg.id,
+      onSelect: () => { triggerUnsplashDownload(bg.downloadLocation); handleBgSelect(bg); },
       onToggleFav: (e: React.MouseEvent) => toggleFav(bg, e),
       favLabel: favored ? t("backgrounds.removeFromFavorites") : t("backgrounds.addToFavorites"),
     };
@@ -472,7 +529,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
 
         {/* Tabs */}
         <Flex mb={3} gap={1} style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: "10px" }}>
-          {TABS.map(tabItem => (
+          {TABS.filter(tabItem => isPremium || tabItem.id !== "purchased").map(tabItem => (
             <Box
               key={tabItem.id}
               as="button"

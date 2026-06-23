@@ -4,22 +4,58 @@ import { useTranslation } from "react-i18next";
 
 const MotionBox = motion.create(Box);
 
-const FOREST_IMG =
-  "https://images.unsplash.com/photo-1618756501529-a591ffb93392?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZXN0aGV0aWMlMjBmb3Jlc3QlMjBuYXR1cmUlMjBjYWxtJTIwZ3JlZW58ZW58MXx8fHwxNzc0Mjc0MDgwfDA&ixlib=rb-4.1.0&q=80&w=1080";
-const ROOM_IMG =
-  "https://images.unsplash.com/photo-1769184618473-58c1f0e294f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjb3p5JTIwc3R1ZHklMjByb29tJTIwaW50ZXJpb3IlMjBwbGFudHMlMjBib29rc3xlbnwxfHx8fDE3NzQyNzQwODR8MA&ixlib=rb-4.1.0&q=80&w=1080";
-const ZEN_IMG =
-  "https://images.unsplash.com/photo-1762932922297-767ca87bfe3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwZWFjZWZ1bCUyMGphcGFuZXNlJTIwZ2FyZGVuJTIwemVuJTIwbWluaW1hbHxlbnwxfHx8fDE3NzQyNzQxNTh8MA&ixlib=rb-4.1.0&q=80&w=1080";
+const SCENES = [
+  {
+    labelKey: "spacePreview.cozyRoom",
+    img: "https://images.unsplash.com/photo-1633945984522-a19268cc75ad?w=1080&q=80&fit=crop&auto=format",
+    wide: true,
+  },
+  {
+    labelKey: "spacePreview.starryNight",
+    img: "https://images.unsplash.com/photo-1707755939969-e9c1da71c5bb?w=1080&q=80&fit=crop&auto=format",
+    wide: true,
+  },
+  {
+    labelKey: "spacePreview.forest",
+    img: "https://images.unsplash.com/photo-1549576691-27846291ae50?w=1080&q=80&fit=crop&auto=format",
+    wide: false,
+  },
+  {
+    labelKey: "spacePreview.zenGarden",
+    img: "https://images.unsplash.com/photo-1670854753472-4d7cbe07a1c0?w=1080&q=80&fit=crop&auto=format",
+    wide: false,
+  },
+  {
+    labelKey: "spacePreview.rainyWindow",
+    img: "https://images.unsplash.com/photo-1509635022432-0220ac12960b?w=1080&q=80&fit=crop&auto=format",
+    wide: false,
+  },
+];
 
 export function SpacePreview() {
   const { t } = useTranslation();
-  const scenes = [
-    { labelKey: "spacePreview.forest", img: FOREST_IMG },
-    { labelKey: "spacePreview.cozyRoom", img: ROOM_IMG },
-    { labelKey: "spacePreview.zenGarden", img: ZEN_IMG },
-  ];
+
   return (
     <Box as="section" bg="#f5f0e8" py={24} px={{ base: 6, lg: 10 }}>
+      <style>{`
+        .scenes-grid {
+          display: grid;
+          grid-template-columns: repeat(6, 1fr);
+          gap: 16px;
+        }
+        .scene-wide  { grid-column: span 3; }
+        .scene-small { grid-column: span 2; }
+        @media (max-width: 900px) {
+          .scenes-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+          .scene-wide, .scene-small { grid-column: span 1; }
+        }
+        @media (max-width: 520px) {
+          .scenes-grid { grid-template-columns: 1fr; }
+        }
+        .scene-img { transform: scale(1); transition: transform 0.7s ease; }
+        .scene-card:hover .scene-img { transform: scale(1.06); }
+      `}</style>
+
       <Box maxW="1280px" mx="auto">
         <MotionBox
           textAlign="center"
@@ -32,8 +68,7 @@ export function SpacePreview() {
           <Box
             as="span"
             display="inline-block"
-            px={4}
-            py={1}
+            px={4} py={1}
             borderRadius="full"
             fontSize="sm"
             mb={4}
@@ -57,79 +92,47 @@ export function SpacePreview() {
           </Text>
         </MotionBox>
 
-        <Box
-          display="grid"
-          gridTemplateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }}
-          gap={5}
-        >
-          {scenes.map((scene, index) => (
+        <div className="scenes-grid">
+          {SCENES.map((scene, index) => (
             <MotionBox
               key={scene.labelKey}
+              className={`scene-card ${scene.wide ? "scene-wide" : "scene-small"}`}
               position="relative"
               overflow="hidden"
               borderRadius="2xl"
-              cursor="pointer"
-              style={{ aspectRatio: "16/10" }}
+              style={{ aspectRatio: scene.wide ? "16/10" : "4/3" }}
               initial={{ opacity: 0, scale: 0.96 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.5, delay: index * 0.15 } as any}
-              css={{
-                "&:hover img": { transform: "scale(1.1)" },
-                "&:hover .hover-tag": { opacity: 1 },
-              }}
+              transition={{ duration: 0.5, delay: index * 0.1 } as any}
             >
-              <Box
-                as="img"
+              <img
+                className="scene-img"
                 src={scene.img}
                 alt={t(scene.labelKey)}
-                w="full"
-                h="full"
-                objectFit="cover"
-                transition="transform 0.7s"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
               />
-              {/* Gradient overlay */}
               <Box
                 position="absolute"
                 inset={0}
                 style={{
-                  background: "linear-gradient(to top, rgba(26,60,52,0.7), transparent)",
+                  background: "linear-gradient(to top, rgba(26,60,52,0.65) 0%, transparent 50%)",
                 }}
               />
-              {/* Label */}
               <Box position="absolute" bottom={4} left={4}>
-                <Text color="white/90" fontSize="1.1rem" fontWeight="700">
+                <Text color="white" fontSize="1rem" fontWeight="700" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>
                   {t(scene.labelKey)}
                 </Text>
               </Box>
-              {/* Hover tag */}
-              <Box
-                className="hover-tag"
-                position="absolute"
-                inset={0}
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                opacity={0}
-                transition="opacity 0.3s"
-              >
-                <Box
-                  as="span"
-                  px={4}
-                  py={2}
-                  borderRadius="full"
-                  color="white"
-                  fontSize="sm"
-                  fontWeight="600"
-                  bg="#4e7c6a"
-                >
-                  {t("spacePreview.useScene")}
-                </Box>
-              </Box>
             </MotionBox>
           ))}
-        </Box>
+        </div>
       </Box>
     </Box>
   );

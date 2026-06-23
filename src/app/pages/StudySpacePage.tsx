@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Box } from "@chakra-ui/react";
+import { useLocation } from "react-router";
 import { useStudySpace } from "../hooks/studyspace/useStudySpace";
 import { SpaceBackground }   from "../components/StudySpace/sections/SpaceBackground";
 import { SpacePanels }       from "../components/StudySpace/sections/SpacePanels";
@@ -11,6 +12,12 @@ import { FirstRoomModal }    from "../components/StudySpace/ui/FirstRoomModal";
 export function StudySpacePage() {
   const ctx = useStudySpace();
   const [coinBalance, setCoinBalance] = useState<number | undefined>(undefined);
+  const location = useLocation();
+
+  useEffect(() => {
+    const panel = (location.state as any)?.openPanel;
+    if (panel) ctx.setActivePanel(panel);
+  }, []);
 
   return (
     <SpaceContextMenu ctx={ctx}>

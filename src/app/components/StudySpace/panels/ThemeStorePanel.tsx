@@ -1952,7 +1952,7 @@ export function ThemeStorePanel({
 }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const { x, y, ref } = useCenteredPanel(PANEL_W, PANEL_H);
+  const { x, y, ref } = useCenteredPanel(PANEL_W, PANEL_H, 64);
 
   const canPurchase = user?.accountTier !== "Free";
 
@@ -2127,10 +2127,11 @@ export function ThemeStorePanel({
         x, y,
         width: PANEL_W,
         height: PANEL_H,
+        maxHeight: "calc(100vh - 88px)",
         borderRadius: "16px",
-        background: "rgba(10,15,20,0.82)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
+        background: "rgba(12,18,22,0.75)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
         border: "1px solid rgba(255,255,255,0.1)",
         boxShadow: "0 24px 80px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.06)",
         overflow: "hidden",
@@ -2141,47 +2142,41 @@ export function ThemeStorePanel({
       {/* ── Header ── */}
       <Box
         flexShrink={0}
-        px="16px"
-        py="12px"
-        style={{ paddingRight: "52px", borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ padding: "18px 18px 14px", paddingRight: "52px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
       >
         <PanelCloseBtn onClose={onClose} />
         <Flex align="center" justify="space-between">
-          <Flex align="center" gap="8px">
-            <Box w="28px" h="28px" borderRadius="8px" display="flex" alignItems="center" justifyContent="center"
-              style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.25) 0%, rgba(59,130,246,0.25) 100%)", border: "1px solid rgba(139,92,246,0.3)" }}
-            >
-              <ShoppingBag size={14} color="rgba(167,139,250,0.9)" />
-            </Box>
+          <Flex align="center" gap="7px">
+            <ShoppingBag size={13} style={{ color: "rgba(167,139,250,0.45)", flexShrink: 0 }} />
             <Flex align="center" gap="6px">
-              <Text style={{ fontSize: "1.25rem", color: "rgba(255,255,255,0.92)", letterSpacing: "-0.01em" }}>
+              <Text style={{ fontSize: "0.95rem", color: "rgba(255,255,255,0.65)", letterSpacing: "-0.01em" }}>
                 <span style={{ fontFamily: "'Manrope', sans-serif" }}>Aēsthetic</span>
                 <span style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}> Store</span>
               </Text>
-              <Box px="5px" py="2px" borderRadius="4px"
-                style={{ background: "linear-gradient(135deg, rgba(139,92,246,0.3) 0%, rgba(59,130,246,0.3) 100%)", border: "1px solid rgba(139,92,246,0.45)" }}
+              <Box px="4px" py="1px" borderRadius="3px"
+                style={{ background: "rgba(139,92,246,0.12)", border: "1px solid rgba(139,92,246,0.22)" }}
               >
-                <Text style={{ fontSize: "0.6rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(167,139,250,0.95)", letterSpacing: "0.06em" }}>
+                <Text style={{ fontSize: "0.52rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(167,139,250,0.55)", letterSpacing: "0.07em" }}>
                   BETA
                 </Text>
               </Box>
             </Flex>
           </Flex>
           {canPurchase ? (
-            <Flex align="center" gap="5px" px="10px" py="4px" borderRadius="20px"
-              style={{ background: "rgba(250,204,21,0.1)", border: "1px solid rgba(250,204,21,0.22)" }}
+            <Flex align="center" gap="4px" px="8px" py="3px" borderRadius="16px"
+              style={{ background: "rgba(250,204,21,0.07)", border: "1px solid rgba(250,204,21,0.15)" }}
             >
-              <Coins size={12} color="#facc15" />
-              <Text style={{ fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "#facc15" }}>
+              <Coins size={10} color="rgba(250,204,21,0.65)" />
+              <Text style={{ fontSize: "0.68rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(250,204,21,0.65)" }}>
                 {localCoinBalance.toLocaleString("vi-VN")}
               </Text>
             </Flex>
           ) : (
-            <Flex align="center" gap="5px" px="10px" py="4px" borderRadius="20px"
-              style={{ background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.25)" }}
+            <Flex align="center" gap="4px" px="8px" py="3px" borderRadius="16px"
+              style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.18)" }}
             >
-              <Crown size={11} color="#fbbf24" />
-              <Text style={{ fontSize: "0.68rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "#fbbf24" }}>
+              <Crown size={10} color="rgba(251,191,36,0.5)" />
+              <Text style={{ fontSize: "0.65rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500, color: "rgba(251,191,36,0.5)" }}>
                 Premium
               </Text>
             </Flex>
@@ -2482,41 +2477,65 @@ export function ThemeStorePanel({
                 <Box
                   as="button"
                   w="100%"
-                  onClick={onOpenCreate}
+                  onClick={canPurchase ? onOpenCreate : undefined}
                   border="none"
-                  cursor="pointer"
+                  cursor={canPurchase ? "pointer" : "not-allowed"}
                   borderRadius="12px"
                   mb="14px"
                   overflow="hidden"
                   style={{
-                    background: "linear-gradient(135deg, rgba(78,124,106,0.18) 0%, rgba(20,184,166,0.12) 100%)",
-                    border: "1px dashed rgba(78,124,106,0.45)",
+                    background: canPurchase
+                      ? "linear-gradient(135deg, rgba(78,124,106,0.18) 0%, rgba(20,184,166,0.12) 100%)"
+                      : "rgba(255,255,255,0.03)",
+                    border: canPurchase
+                      ? "1px dashed rgba(78,124,106,0.45)"
+                      : "1px dashed rgba(255,255,255,0.12)",
                     padding: "20px 16px",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
                     gap: 10,
                     transition: "all 0.18s",
+                    opacity: canPurchase ? 1 : 0.5,
                   }}
-                  _hover={{ background: "rgba(78,124,106,0.25) !important", border: "1px dashed rgba(78,124,106,0.7) !important" } as any}
+                  _hover={canPurchase ? { background: "rgba(78,124,106,0.25) !important", border: "1px dashed rgba(78,124,106,0.7) !important" } as any : undefined}
                 >
                   <Box
                     style={{
                       width: 40, height: 40,
                       borderRadius: "12px",
-                      background: "rgba(78,124,106,0.22)",
-                      border: "1px solid rgba(78,124,106,0.4)",
+                      background: canPurchase ? "rgba(78,124,106,0.22)" : "rgba(255,255,255,0.06)",
+                      border: canPurchase ? "1px solid rgba(78,124,106,0.4)" : "1px solid rgba(255,255,255,0.1)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}
                   >
-                    <Palette size={18} color="rgba(78,124,106,0.9)" />
+                    {canPurchase
+                      ? <Palette size={18} color="rgba(78,124,106,0.9)" />
+                      : <Crown size={18} color="rgba(251,191,36,0.7)" />}
                   </Box>
                   <Box>
-                    <Text style={{ fontSize: "0.86rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(255,255,255,0.82)", marginBottom: 3 }}>
-                      Tạo theme mới
-                    </Text>
+                    <Flex align="center" gap="6px" justify="center" mb="3px">
+                      <Text style={{ fontSize: "0.86rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: canPurchase ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
+                        Tạo theme mới
+                      </Text>
+                      {!canPurchase && (
+                        <Box style={{
+                          padding: "1px 6px",
+                          borderRadius: 20,
+                          background: "rgba(251,191,36,0.12)",
+                          border: "1px solid rgba(251,191,36,0.3)",
+                          fontSize: "0.62rem",
+                          color: "#fbbf24",
+                          fontFamily: "'HarmonyOS Sans', sans-serif",
+                          fontWeight: 600,
+                          letterSpacing: "0.04em",
+                        }}>
+                          Premium
+                        </Box>
+                      )}
+                    </Flex>
                     <Text style={{ fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
-                      Tuỳ chỉnh màu nhấn, hình nền và âm thanh
+                      {canPurchase ? "Tuỳ chỉnh màu nhấn, hình nền và âm thanh" : "Nâng cấp Premium để tạo và gửi theme"}
                     </Text>
                   </Box>
                 </Box>

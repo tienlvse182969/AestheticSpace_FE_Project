@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Settings, Moon, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, Loader, CreditCard, Monitor } from "lucide-react";
+import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, Loader, CreditCard, Monitor } from "lucide-react";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { useAccent } from "../../../context/AccentContext";
@@ -337,8 +337,8 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
               )}
             </Box>
 
-            {/* Top up coins via VNPAY */}
-            <Box p="14px" borderRadius="12px"
+            {/* Top up coins via VNPAY — premium only */}
+            {user?.accountTier?.toLowerCase() === "premium" && <Box p="14px" borderRadius="12px"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
               <Flex align="center" gap={2} mb="10px">
@@ -397,7 +397,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   {t("settings.topUpError")}
                 </Text>
               )}
-            </Box>
+            </Box>}
 
           </Box>
         );
@@ -405,28 +405,6 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       case "display":
         return (
           <Box style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-            {/* Dark mode */}
-            <Box style={{ opacity: 0.38, pointerEvents: "none", userSelect: "none" }}>
-              <Flex
-                align="center" justify="space-between"
-                px="14px" py="12px" borderRadius="10px"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-              >
-                <Flex align="center" gap={3}>
-                  <Moon size={15} style={{ color: "rgba(255,255,255,0.4)" }} />
-                  <Box>
-                    <Text style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.82)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {t("settings.darkMode")}
-                    </Text>
-                    <Text style={{ fontSize: "0.7rem", color: "rgba(251,191,36,0.65)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
-                      {t("settings.comingSoon")}
-                    </Text>
-                  </Box>
-                </Flex>
-                <Toggle on={false} onChange={() => {}} disabled />
-              </Flex>
-            </Box>
 
             {/* Accent color */}
             <Box px="14px" py="12px" borderRadius="10px"

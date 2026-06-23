@@ -5,19 +5,21 @@ import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../../../context/AuthContext";
 import { pomodoroService } from "../../../../../services/pomodoro.service";
+import type { PomodoroSounds } from "../../../../../types/workspace.types";
 
 const MotionBox = motion.create(Box);
 
-const chime = {
-  startPomodoro: new Audio("/assets/PomodoroChime/StartPomodoroChime.mp3"),
-  startBreak:    new Audio("/assets/PomodoroChime/StartBreakTimeChime.mp3"),
-  pause:         new Audio("/assets/PomodoroChime/PauseChime.mp3"),
-  reset:         new Audio("/assets/PomodoroChime/ResetPomodoroChime.mp3"),
-  success:       new Audio("/assets/PomodoroChime/SuccessChime.mp3"),
+const DEFAULT_SOUNDS: PomodoroSounds = {
+  startFocus: "/assets/PomodoroChime/StartPomodoroChime.mp3",
+  startBreak: "/assets/PomodoroChime/StartBreakTimeChime.mp3",
+  complete:   "/assets/PomodoroChime/SuccessChime.mp3",
+  pause:      "/assets/PomodoroChime/PauseChime.mp3",
+  reset:      "/assets/PomodoroChime/ResetPomodoroChime.mp3",
 };
 
-const playChime = (audio: HTMLAudioElement) => {
-  audio.currentTime = 0;
+const playChime = (path: string, enabled = true) => {
+  if (!enabled || !path) return;
+  const audio = new Audio(path);
   audio.play().catch(() => {});
 };
 
@@ -30,9 +32,11 @@ interface PomodoroWidgetProps {
   focusMinutes:   number;
   breakMinutes:   number;
   totalSessions:  number;
+  soundEnabled?:  boolean;
+  sounds?:        PomodoroSounds;
 }
 
-export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: PomodoroWidgetProps) {
+export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soundEnabled = true, sounds = DEFAULT_SOUNDS }: PomodoroWidgetProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -81,7 +85,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     if (seconds === 0 && running) {
       setRunning(false);
       if (phase === "focus") {
-        playChime(chime.success);
+        playChime(sounds.complete, soundEnabled);
         notify(t("pomodoroWidget.focusEndTitle"), t("pomodoroWidget.focusEndBody"));
         if (user && currentSessionId) {
           pomodoroService.end(currentSessionId).catch(() => {});
@@ -91,7 +95,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
         setPhase("idle");
         setDialog("break-prompt");
       } else if (phase === "break") {
-        playChime(chime.success);
+        playChime(sounds.complete, soundEnabled);
         notify(t("pomodoroWidget.breakEndTitle"), t("pomodoroWidget.breakEndBody"));
         setPhase("idle");
         setDialog("next-prompt");
@@ -108,7 +112,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     setSeconds(focusTotal);
     setRunning(true);
     setDialog(null);
-    playChime(chime.startPomodoro);
+    playChime(sounds.startFocus, soundEnabled);
 
     if (user) {
       try {
@@ -123,7 +127,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
   };
 
   const startBreak = () => {
-    playChime(chime.startBreak);
+    playChime(sounds.startBreak, soundEnabled);
     setPhase("break");
     setSeconds(breakTotal);
     setRunning(true);
@@ -133,7 +137,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
   const skipToNext = () => { setDialog(null); startFocus(); };
 
   const performReset = () => {
-    playChime(chime.reset);
+    playChime(sounds.reset, soundEnabled);
     startingRef.current = false;
     setRunning(false);
     setPhase("idle");
@@ -173,10 +177,10 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions }: Po
     if (phase === "idle") {
       startFocus();
     } else if (running) {
-      playChime(chime.pause);
+      playChime(sounds.pause, soundEnabled);
       setRunning(false);
     } else {
-      playChime(phase === "break" ? chime.startBreak : chime.startPomodoro);
+      playChime(phase === "break" ? sounds.startBreak : sounds.startFocus, soundEnabled);
       setRunning(true);
     }
   };

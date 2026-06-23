@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 import { Check, Sparkles, Crown, Gift, X, Loader } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import { paymentService } from "../../services/payment.service";
 
@@ -12,34 +13,17 @@ const MotionFlex = motion.create(Flex);
 const BG_IMG =
   "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZXN0aGV0aWMlMjBncmFkaWVudCUyMHB1cnBsZSUyMHBpbmt8ZW58MXx8fHwxNzQ4NzQyMjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080";
 
-const freemiumFeatures = [
-  { label: "Preset room với layout có thể tuỳ chỉnh & lưu lại" },
-  { label: "Hình nền miễn phí từ Unsplash" },
-  { label: "Thêm widget vào không gian học" },
-  { label: "Music player tích hợp YouTube / SoundCloud" },
-  { label: "Đổi màu theme mặc định" },
-  { label: "Tạo tối đa 3 rooms" },
-];
-
-const premiumFeatures = [
-  { label: "Tất cả tính năng của gói Freemium", highlight: false },
-  { label: "Truy cập Aesthetic Store — kho theme độc quyền", highlight: true },
-  {
-    label: "Hình nền, sticker & hiệu ứng độc quyền theo theme",
-    highlight: true,
-  },
-  { label: "Ambient sound đặc biệt đi kèm từng theme", highlight: true },
-  { label: "Kiểu widget premium (sắp ra mắt)", highlight: false },
-  { label: "Lưu preset room không giới hạn", highlight: true },
-  { label: "Tự sáng tạo & đăng theme lên Store để kiếm xu", highlight: false },
-  { label: "Hệ thống điểm xu & nhiệm vụ hằng ngày", highlight: false },
-];
+const PREMIUM_HIGHLIGHTS = [false, true, true, true, false, true, false, false];
 
 type PaymentMethod = "vnpay" | null;
 
 export function PricingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useTranslation();
+
+  const freemiumFeatures = (t("pricing.freemium.features", { returnObjects: true }) as string[]);
+  const premiumFeatures  = (t("pricing.premium.features",  { returnObjects: true }) as string[]);
 
   // Modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -139,7 +123,7 @@ export function PricingPage() {
               }}
             >
               <Sparkles size={14} />
-              BẢNG GIÁ
+              {t("pricing.sectionLabel")}
             </Box>
 
             <Heading
@@ -152,10 +136,10 @@ export function PricingPage() {
                 color: "#1a3c34",
               }}
             >
-              Chọn gói phù hợp
+              {t("pricing.title")}
               <br />
               <Box as="span" style={{ color: "#4e7c6a" }}>
-                với bạn
+                {t("pricing.titleHighlight")}
               </Box>
             </Heading>
 
@@ -166,12 +150,11 @@ export function PricingPage() {
               lineHeight="relaxed"
               fontSize={{ base: "md", md: "lg" }}
             >
-              Bắt đầu miễn phí, nâng cấp khi bạn sẵn sàng. Người dùng mới được
-              dùng thử gói Premium trong{" "}
+              {t("pricing.subtitle")}{" "}
               <Box as="span" fontWeight="700" color="#1a3c34">
-                3 ngày hoàn toàn miễn phí
-              </Box>
-              .
+                {t("pricing.subtitleBold")}
+              </Box>{" "}
+              {t("pricing.subtitleEnd")}
             </Text>
           </MotionBox>
         </Box>
@@ -202,11 +185,11 @@ export function PricingPage() {
         >
           <Gift size={20} color="#7aab97" />
           <Text color="white" fontWeight="700" fontSize="md" textAlign="center">
-            Đăng ký tài khoản mới — dùng thử Premium{" "}
+            {t("pricing.trialBanner")}{" "}
             <Box as="span" style={{ color: "#7aab97" }}>
-              3 ngày miễn phí
+              {t("pricing.trialDays")}
             </Box>
-            , không cần thẻ tín dụng
+            {t("pricing.trialEnd")}
           </Text>
         </Flex>
       </MotionBox>
@@ -253,7 +236,7 @@ export function PricingPage() {
                   letterSpacing: "0.06em",
                 }}
               >
-                Gói hiện tại
+                {t("pricing.freemium.currentBadge")}
               </Box>
             )}
             <Flex align="center" gap={2} mb={2}>
@@ -274,7 +257,7 @@ export function PricingPage() {
             </Flex>
 
             <Text color="#6b7280" fontSize="sm" mb={6} lineHeight="relaxed">
-              Đầy đủ công cụ để bắt đầu xây dựng không gian học tập của bạn.
+              {t("pricing.freemium.desc")}
             </Text>
 
             <Box mb={7}>
@@ -286,12 +269,12 @@ export function PricingPage() {
                   color: "#1a3c34",
                 }}
               >
-                Miễn phí
+                {t("pricing.freemium.price")}
               </Box>
             </Box>
 
             <Flex direction="column" gap={3} mb={8}>
-              {freemiumFeatures.map((f, i) => (
+              {freemiumFeatures.map((label, i) => (
                 <Flex key={i} align="flex-start" gap={3}>
                   <Box
                     mt="3px"
@@ -307,7 +290,7 @@ export function PricingPage() {
                     <Check size={11} color="#4e7c6a" strokeWidth={3} />
                   </Box>
                   <Text fontSize="sm" color="#374151" lineHeight="relaxed">
-                    {f.label}
+                    {label}
                   </Text>
                 </Flex>
               ))}
@@ -329,7 +312,7 @@ export function PricingPage() {
               onClick={handleGetStarted}
               _hover={{ bg: "#4e7c6a", color: "white" }}
             >
-              Bắt đầu miễn phí
+              {t("pricing.freemium.cta")}
             </Box>
           </Box>
 
@@ -370,10 +353,10 @@ export function PricingPage() {
               {user?.accountTier === "Premium" ? (
                 <>
                   <Check size={11} strokeWidth={3} />
-                  Gói của bạn
+                  {t("pricing.premium.currentBadge")}
                 </>
               ) : (
-                "Phổ biến nhất"
+                t("pricing.premium.popularBadge")
               )}
             </Flex>
 
@@ -414,7 +397,7 @@ export function PricingPage() {
               mb={6}
               lineHeight="relaxed"
             >
-              Mở khoá toàn bộ tiềm năng sáng tạo với kho nội dung độc quyền.
+              {t("pricing.premium.desc")}
             </Text>
 
             <Flex align="baseline" gap={2} mb={1}>
@@ -426,10 +409,10 @@ export function PricingPage() {
                   color: "white",
                 }}
               >
-                130.000₫
+                {t("pricing.premium.priceAmount")}
               </Box>
               <Text color="rgba(255,255,255,0.5)" fontSize="sm">
-                / tháng
+                {t("pricing.premium.priceUnit")}
               </Text>
             </Flex>
 
@@ -448,48 +431,51 @@ export function PricingPage() {
             >
               <Gift size={14} color="#7aab97" />
               <Text fontSize="xs" fontWeight="600" color="#7aab97">
-                Dùng thử 3 ngày miễn phí cho tài khoản mới
+                {t("pricing.premium.trialHighlight")}
               </Text>
             </Flex>
 
             <Flex direction="column" gap={3} mb={8}>
-              {premiumFeatures.map((f, i) => (
-                <Flex key={i} align="flex-start" gap={3}>
-                  <Box
-                    mt="3px"
-                    w="18px"
-                    h="18px"
-                    borderRadius="full"
-                    flexShrink={0}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    style={{
-                      background: f.highlight
-                        ? "rgba(122,171,151,0.25)"
-                        : "rgba(255,255,255,0.1)",
-                    }}
-                  >
-                    <Check
-                      size={11}
-                      color={f.highlight ? "#7aab97" : "rgba(255,255,255,0.6)"}
-                      strokeWidth={3}
-                    />
-                  </Box>
-                  <Text
-                    fontSize="sm"
-                    lineHeight="relaxed"
-                    color={
-                      f.highlight
-                        ? "rgba(255,255,255,0.9)"
-                        : "rgba(255,255,255,0.6)"
-                    }
-                    fontWeight={f.highlight ? "500" : "400"}
-                  >
-                    {f.label}
-                  </Text>
-                </Flex>
-              ))}
+              {premiumFeatures.map((label, i) => {
+                const highlight = PREMIUM_HIGHLIGHTS[i] ?? false;
+                return (
+                  <Flex key={i} align="flex-start" gap={3}>
+                    <Box
+                      mt="3px"
+                      w="18px"
+                      h="18px"
+                      borderRadius="full"
+                      flexShrink={0}
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      style={{
+                        background: highlight
+                          ? "rgba(122,171,151,0.25)"
+                          : "rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      <Check
+                        size={11}
+                        color={highlight ? "#7aab97" : "rgba(255,255,255,0.6)"}
+                        strokeWidth={3}
+                      />
+                    </Box>
+                    <Text
+                      fontSize="sm"
+                      lineHeight="relaxed"
+                      color={
+                        highlight
+                          ? "rgba(255,255,255,0.9)"
+                          : "rgba(255,255,255,0.6)"
+                      }
+                      fontWeight={highlight ? "500" : "400"}
+                    >
+                      {label}
+                    </Text>
+                  </Flex>
+                );
+              })}
             </Flex>
 
             {/* Premium CTA — conditional on accountTier */}
@@ -509,7 +495,7 @@ export function PricingPage() {
                 >
                   <Crown size={15} color="#fbbf24" />
                   <Text color="#fbbf24" fontWeight="700" fontSize="sm">
-                    Bạn đang sử dụng gói này
+                    {t("pricing.premium.currentPlanText")}
                   </Text>
                 </Flex>
                 <Text
@@ -517,7 +503,7 @@ export function PricingPage() {
                   color="rgba(255,255,255,0.35)"
                   textAlign="center"
                 >
-                  Tài khoản của bạn đã được kích hoạt Premium
+                  {t("pricing.premium.currentPlanSubtext")}
                 </Text>
               </Flex>
             ) : (
@@ -540,7 +526,7 @@ export function PricingPage() {
                 _hover={{ transform: "scale(1.02)" }}
                 _active={{ transform: "scale(0.98)" }}
               >
-                {user ? "Nâng cấp Premium" : "Bắt đầu dùng thử miễn phí"}
+                {user ? t("pricing.premium.cta") : t("pricing.premium.ctaGuest")}
               </Box>
             )}
           </Box>
@@ -555,11 +541,7 @@ export function PricingPage() {
           textAlign="center"
         >
           <Text color="#9ca3af" fontSize="sm" lineHeight="relaxed">
-            Thanh toán qua{" "}
-            <Box as="span" color="#4e7c6a" fontWeight="600">
-              VNPay
-            </Box>{" "}
-            · Huỷ bất cứ lúc nào · Không tính phí ẩn
+            {t("pricing.footer")}
           </Text>
         </MotionBox>
       </Box>
@@ -623,10 +605,10 @@ export function PricingPage() {
                 {!paymentMethod && (
                   <Box>
                     <Text fontWeight="800" fontSize="lg" color="#1a3c34" mb={1}>
-                      Chọn phương thức thanh toán
+                      {t("pricing.modal.title")}
                     </Text>
                     <Text fontSize="sm" color="#6b7280" mb={6}>
-                      130.000₫ / tháng · Gia hạn tự động
+                      {t("pricing.modal.subtitle")}
                     </Text>
 
                     <Flex direction="column" gap={3}>
@@ -667,7 +649,7 @@ export function PricingPage() {
                               VNPay
                             </Text>
                             <Text fontSize="xs" color="#6b7280">
-                              Thẻ ATM, Visa, MasterCard, QR Code
+                              {t("pricing.modal.vnpayDesc")}
                             </Text>
                           </Box>
                           {isProcessing ? (
@@ -688,7 +670,7 @@ export function PricingPage() {
                                 fontWeight="600"
                                 color="#4e7c6a"
                               >
-                                Chuyển hướng
+                                {t("pricing.modal.redirect")}
                               </Text>
                             </Box>
                           )}

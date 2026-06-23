@@ -73,9 +73,13 @@ export function SpaceWidgets({ ctx }: Props) {
                 focusMinutes={pomodoro.focusMin}
                 breakMinutes={pomodoro.breakMin}
                 totalSessions={pomodoro.totalSes}
+                soundEnabled={pomodoro.soundEnabled}
+                sounds={pomodoro.sounds}
                 onFocusMinutes={v => { pomodoro.setFocusMin(v); saveNow(); }}
                 onBreakMinutes={v => { pomodoro.setBreakMin(v); saveNow(); }}
                 onTotalSessions={v => { pomodoro.setTotalSes(v); saveNow(); }}
+                onSoundEnabled={v => { pomodoro.setSoundEnabled(v); saveNow(); }}
+                onSounds={v => { pomodoro.setSounds(v); saveNow(); }}
                 onClose={() => pomodoro.setSettingsOpen(false)}
               />
             }
@@ -84,6 +88,8 @@ export function SpaceWidgets({ ctx }: Props) {
               focusMinutes={pomodoro.focusMin}
               breakMinutes={pomodoro.breakMin}
               totalSessions={pomodoro.totalSes}
+              soundEnabled={pomodoro.soundEnabled}
+              sounds={pomodoro.sounds}
             />
           </DraggableWidget>
         )}

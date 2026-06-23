@@ -72,6 +72,13 @@ export const SC_PRESETS: PresetPlaylist[] = [
   },
 ];
 
+export const DEFAULT_BG: BackgroundItem = {
+  id: "dan-otis-default",
+  url: "/assets/AboutWallpaper/dan-otis-OYFHT4X5isg-unsplash.jpg",
+  thumb: "/assets/AboutWallpaper/dan-otis-OYFHT4X5isg-unsplash.jpg",
+  label: "Aesthetic Room",
+};
+
 export const BACKGROUNDS: BackgroundItem[] = [
   {
     id: "cherry",

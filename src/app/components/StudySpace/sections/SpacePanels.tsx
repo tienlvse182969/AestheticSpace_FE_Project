@@ -212,6 +212,12 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             activeWidgets={space.activeWidgets}
             onToggle={id => { space.toggleWidget(id); saveNow(); }}
             onAddStickyNote={() => { space.addStickyNote(); setActivePanel(null); saveNow(); }}
+            onDropWidget={(id, x, y) => {
+              if (!space.activeWidgets.has(id)) space.toggleWidget(id);
+              space.setWidgetPosition(id, { x, y });
+              saveNow();
+            }}
+            onDropStickyNote={(x, y) => { space.addStickyNoteAt(x, y); saveNow(); }}
             onClose={() => setActivePanel(null)}
           />
         )}
@@ -219,6 +225,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
           <StickerPickerPanel
             key="sticker-panel"
             onPlace={src => { space.placeSticker(src); saveNow(); }}
+            onDropSticker={(src, x, y) => { space.placeStickerAt(src, x, y); saveNow(); }}
             onClose={() => setActivePanel(null)}
           />
         )}
@@ -273,6 +280,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
           <RoomManagerPanel
             key="room-panel"
             currentRoomId={roomId}
+            currentBg={currentBg}
             onSelect={handleRoomSelect}
             onClose={() => setActivePanel(null)}
           />

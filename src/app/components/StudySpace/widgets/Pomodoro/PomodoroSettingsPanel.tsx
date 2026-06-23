@@ -1,13 +1,24 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus, Play, Upload } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { PomodoroSounds } from "../../../../../types/workspace.types";
 
 /* ── Panel geometry ─────────────────────────────────────────────────────────── */
 const PANEL_W = 226 + 10;
-const PANEL_H = 320;
+const PANEL_H = 560;
 const MARGIN  = 12;
+
+/* ── Built-in sound options (5 original chimes only) ────────────────────────── */
+const SOUND_OPTIONS = [
+  { label: "Start Focus",  value: "/assets/PomodoroChime/StartPomodoroChime.mp3"  },
+  { label: "Start Break",  value: "/assets/PomodoroChime/StartBreakTimeChime.mp3" },
+  { label: "Pause",        value: "/assets/PomodoroChime/PauseChime.mp3"           },
+  { label: "Reset",        value: "/assets/PomodoroChime/ResetPomodoroChime.mp3"  },
+  { label: "Success",      value: "/assets/PomodoroChime/SuccessChime.mp3"        },
+  { label: "None",         value: ""                                               },
+];
 
 /* ── Props ──────────────────────────────────────────────────────────────────── */
 interface PomodoroSettingsPanelProps {
@@ -16,9 +27,13 @@ interface PomodoroSettingsPanelProps {
   focusMinutes: number;
   breakMinutes: number;
   totalSessions: number;
+  soundEnabled: boolean;
+  sounds: PomodoroSounds;
   onFocusMinutes: (v: number) => void;
   onBreakMinutes: (v: number) => void;
   onTotalSessions: (v: number) => void;
+  onSoundEnabled: (v: boolean) => void;
+  onSounds: (v: PomodoroSounds) => void;
   onClose: () => void;
 }
 
@@ -59,7 +74,6 @@ function StepperRow({
       </Box>
 
       <Flex align="center" gap="4px">
-        {/* Decrement */}
         <Box as="button"
           onClick={() => onChange(Math.max(min, value - 1))}
           display="flex" alignItems="center" justifyContent="center"
@@ -74,7 +88,6 @@ function StepperRow({
           <Minus size={10} color="rgba(255,255,255,0.65)" />
         </Box>
 
-        {/* Value display / input */}
         {editing ? (
           <input
             ref={inputRef}
@@ -112,7 +125,6 @@ function StepperRow({
           </Box>
         )}
 
-        {/* Increment */}
         <Box as="button"
           onClick={() => onChange(Math.min(max, value + 1))}
           display="flex" alignItems="center" justifyContent="center"
@@ -131,11 +143,121 @@ function StepperRow({
   );
 }
 
+/* ── Sound selector row ─────────────────────────────────────────────────────── */
+function SoundRow({
+  label, value, onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const safeValue = value ?? "";
+  const isCustom = safeValue.startsWith("data:");
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { if (reader.result) onChange(reader.result as string); };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const previewSound = () => {
+    if (!safeValue) return;
+    new Audio(safeValue).play().catch(() => {});
+  };
+
+  return (
+    <Flex align="center" gap="5px" py="5px">
+      <Text style={{
+        fontSize: "0.68rem", color: "rgba(255,255,255,0.5)",
+        fontFamily: "'HarmonyOS Sans', sans-serif",
+        flexShrink: 0, width: 68,
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>
+        {label}
+      </Text>
+
+      {/* Dropdown — shows "Custom" if a file was uploaded */}
+      <select
+        value={isCustom ? "__custom__" : safeValue}
+        onChange={(e) => { if (e.target.value !== "__custom__") onChange(e.target.value); }}
+        style={{
+          flex: 1, minWidth: 0,
+          background: "rgba(20,28,34,0.9)",
+          border: "1px solid rgba(74,166,134,0.22)",
+          borderRadius: 7, color: "#e0f5ee",
+          fontSize: "0.66rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+          padding: "3px 4px", cursor: "pointer", outline: "none",
+        }}
+      >
+        {isCustom && (
+          <option value="__custom__" disabled style={{ background: "#0c1216" }}>
+            Custom
+          </option>
+        )}
+        {SOUND_OPTIONS.map(opt => (
+          <option key={opt.value} value={opt.value} style={{ background: "#0c1216" }}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+
+      {/* Upload button */}
+      <Box
+        as="button"
+        onClick={() => fileInputRef.current?.click()}
+        display="flex" alignItems="center" justifyContent="center"
+        w="22px" h="22px" borderRadius="6px"
+        style={{
+          flexShrink: 0,
+          background: "rgba(74,166,134,0.1)",
+          border: "1px solid rgba(74,166,134,0.2)",
+          cursor: "pointer",
+        }}
+        title="Upload audio file"
+      >
+        <Upload size={9} color="#7aab97" />
+      </Box>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        style={{ display: "none" }}
+        onChange={handleUpload}
+      />
+
+      {/* Preview button */}
+      <Box
+        as="button"
+        onClick={previewSound}
+        display="flex" alignItems="center" justifyContent="center"
+        w="22px" h="22px" borderRadius="6px"
+        style={{
+          flexShrink: 0,
+          background: "rgba(74,166,134,0.1)",
+          border: "1px solid rgba(74,166,134,0.2)",
+          cursor: safeValue ? "pointer" : "default",
+          opacity: safeValue ? 1 : 0.3,
+          transition: "opacity 0.15s",
+        }}
+        title="Preview"
+      >
+        <Play size={9} color="#7aab97" fill="#7aab97" />
+      </Box>
+    </Flex>
+  );
+}
+
 /* ── Main panel ─────────────────────────────────────────────────────────────── */
 export function PomodoroSettingsPanel({
   show, containerRef,
   focusMinutes, breakMinutes, totalSessions,
+  soundEnabled, sounds,
   onFocusMinutes, onBreakMinutes, onTotalSessions,
+  onSoundEnabled, onSounds,
   onClose,
 }: PomodoroSettingsPanelProps) {
   const { t } = useTranslation();
@@ -248,6 +370,65 @@ export function PomodoroSettingsPanel({
               <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                 {t("pomodoroSettings.totalTime", { time: totalTimeStr })}
               </Text>
+            </Box>
+
+            {/* Sound section */}
+            <Box mt="12px" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 10 }}>
+              {/* Section header + enable toggle */}
+              <Flex align="center" justify="space-between" mb="8px">
+                <Text style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.1em" }}>
+                  {t("pomodoroSettings.sounds")}
+                </Text>
+                <Box
+                  as="button"
+                  onClick={() => onSoundEnabled(!soundEnabled)}
+                  style={{
+                    width: 30, height: 16, borderRadius: 8, flexShrink: 0,
+                    background: soundEnabled ? "rgba(74,222,128,0.35)" : "rgba(255,255,255,0.1)",
+                    border: soundEnabled ? "1px solid rgba(74,222,128,0.5)" : "1px solid rgba(255,255,255,0.15)",
+                    position: "relative", cursor: "pointer", transition: "all 0.2s",
+                  }}
+                >
+                  <Box style={{
+                    position: "absolute", top: 2,
+                    left: soundEnabled ? 13 : 2,
+                    width: 10, height: 10, borderRadius: "50%",
+                    background: soundEnabled ? "#4ade80" : "rgba(255,255,255,0.4)",
+                    transition: "left 0.2s, background 0.2s",
+                  }} />
+                </Box>
+              </Flex>
+
+              {/* Per-event sound selectors (visible when enabled) */}
+              {soundEnabled && (
+                <>
+                  <SoundRow
+                    label={t("pomodoroSettings.soundStartFocus")}
+                    value={sounds.startFocus}
+                    onChange={v => onSounds({ ...sounds, startFocus: v })}
+                  />
+                  <SoundRow
+                    label={t("pomodoroSettings.soundStartBreak")}
+                    value={sounds.startBreak}
+                    onChange={v => onSounds({ ...sounds, startBreak: v })}
+                  />
+                  <SoundRow
+                    label={t("pomodoroSettings.soundComplete")}
+                    value={sounds.complete}
+                    onChange={v => onSounds({ ...sounds, complete: v })}
+                  />
+                  <SoundRow
+                    label={t("pomodoroSettings.soundPause")}
+                    value={sounds.pause}
+                    onChange={v => onSounds({ ...sounds, pause: v })}
+                  />
+                  <SoundRow
+                    label={t("pomodoroSettings.soundReset")}
+                    value={sounds.reset}
+                    onChange={v => onSounds({ ...sounds, reset: v })}
+                  />
+                </>
+              )}
             </Box>
           </motion.div>
         </div>

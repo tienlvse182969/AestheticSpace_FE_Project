@@ -24,7 +24,7 @@
     "community": "Cộng đồng",
     "privacyPolicy": "Chính sách bảo mật",
     "termsOfService": "Điều khoản dịch vụ",
-    "copyright": "© {{year}} Aēsthetic Group. Được làm với tình yêu dành cho các bạn học sinh."
+    "copyright": "© {{year}} Aēsthetic Group. Được làm với tình yêu dành cho các bạn học sinh sinh viên."
   },
   "hero": {
     "description": "Tùy chỉnh không gian làm việc kỹ thuật số cá nhân theo nhu cầu và quy trình làm việc của bạn. Tạo môi trường phù hợp với phong cách của bạn, dù bạn thích sự tập trung tối giản hay sáng tạo đắm chìm. Làm việc thông minh hơn, luôn được truyền cảm hứng.",
@@ -62,10 +62,11 @@
     "sectionLabel": "KHÁM PHÁ CẢNH NỀN",
     "title": "Tạo Không Gian Cho Sự Tập Trung",
     "subtitle": "Khám phá hàng chục hình nền thẩm mỹ được tuyển chọn — từ rừng sương mù đến góc quán cà phê ấm cúng. Thay đổi cảnh quan, thay đổi năng lượng.",
-    "forest": "Rừng",
-    "cozyRoom": "Phòng Ấm Cúng",
-    "zenGarden": "Vườn Zen",
-    "useScene": "Dùng Cảnh Này →"
+    "forest": "Rừng Cây",
+    "cozyRoom": "Góc Học Ấm",
+    "zenGarden": "Đêm Nhật Bản",
+    "starryNight": "Đêm Đầy Sao",
+    "rainyWindow": "Mưa Ngoài Cửa"
   },
   "testimonials": {
     "sectionLabel": "ĐƯỢC YÊU THÍCH BỞI HỌC SINH",
@@ -91,12 +92,12 @@
     "remaining": "CÒN LẠI",
     "slide1title": "Phiên Pomodoro",
     "slide1desc": "Các khối tập trung 25 phút có cấu trúc với nhắc nhở nghỉ tự động để giữ bạn luôn tỉnh táo.",
-    "slide2title": "Âm Thanh Được Tuyển Chọn",
-    "slide2desc": "Kết hợp tiếng cà phê, sóng biển, mưa rừng và nhạc lo-fi thành bản mix hoàn hảo.",
+    "slide2title": "Music Player & Âm Thanh Môi Trường",
+    "slide2desc": "Nghe nhạc từ YouTube hoặc SoundCloud, kết hợp cùng âm thanh môi trường như lửa, mưa… tất cả cùng lúc.",
     "slide3title": "Không Gian Của Bạn, Tâm Trạng Của Bạn",
     "slide3desc": "Chọn từ các cảnh được tuyển chọn — núi sương mù, thư viện ấm cúng, vườn zen và nhiều hơn nữa.",
     "focusTimer": "Đồng Hồ",
-    "soundscapes": "Âm Thanh",
+    "soundscapes": "Nhạc & Âm Thanh",
     "backgrounds": "Hình Nền"
   },
   "cta": {
@@ -144,7 +145,8 @@
       "emailRequired": "Vui lòng nhập email.",
       "invalidEmailFormat": "Vui lòng nhập email hợp lệ.",
       "passwordRequired": "Vui lòng nhập mật khẩu.",
-      "passwordTooShort": "Mật khẩu phải có ít nhất 6 ký tự.",
+      "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
+      "passwordTooWeak": "Mật khẩu phải có ít nhất 8 ký tự và bao gồm chữ hoa, chữ thường và chữ số.",
       "confirmPasswordRequired": "Vui lòng xác nhận mật khẩu.",
       "passwordsDoNotMatch": "Mật khẩu xác nhận không khớp.",
       "resetTokenMissing": "Liên kết đặt lại không hợp lệ. Vui lòng yêu cầu liên kết mới.",
@@ -349,7 +351,62 @@
     "desc": "Môi trường không xao nhãng được tạo ra để giúp bạn tập trung, luôn được truyền cảm hứng và làm cho mỗi phiên học trở nên dễ dàng.",
     "contributors": "ĐÓNG GÓP",
     "copyright": "© AESTHETIC GROUP",
-    "version": "Phiên bản Dev"
+    "version": "Phiên bản Dev",
+    "openSpace": "Mở Study Space →"
+  },
+  "pricing": {
+    "sectionLabel": "BẢNG GIÁ",
+    "title": "Chọn gói phù hợp",
+    "titleHighlight": "với bạn",
+    "subtitle": "Bắt đầu miễn phí, nâng cấp khi bạn sẵn sàng. Người dùng mới được dùng thử",
+    "subtitleBold": "gói Premium 3 ngày",
+    "subtitleEnd": "hoàn toàn miễn phí.",
+    "trialBanner": "Đăng ký tài khoản mới — dùng thử Premium",
+    "trialDays": "3 ngày miễn phí",
+    "trialEnd": ", không cần thẻ tín dụng",
+    "freemium": {
+      "currentBadge": "Gói hiện tại",
+      "desc": "Đầy đủ công cụ để bắt đầu xây dựng không gian học tập của bạn.",
+      "price": "Miễn phí",
+      "cta": "Bắt đầu miễn phí",
+      "features": [
+        "Preset room với layout có thể tuỳ chỉnh & lưu lại",
+        "Hình nền miễn phí từ Unsplash",
+        "Thêm widget vào không gian học",
+        "Music player tích hợp YouTube / SoundCloud",
+        "Đổi màu theme mặc định",
+        "Tạo tối đa 3 rooms"
+      ]
+    },
+    "premium": {
+      "popularBadge": "Phổ biến nhất",
+      "currentBadge": "Gói của bạn",
+      "desc": "Mở khoá toàn bộ tiềm năng sáng tạo với kho nội dung độc quyền.",
+      "priceAmount": "130.000₫",
+      "priceUnit": "/ tháng",
+      "trialHighlight": "Dùng thử 3 ngày miễn phí cho tài khoản mới",
+      "currentPlanText": "Bạn đang sử dụng gói này",
+      "currentPlanSubtext": "Tài khoản của bạn đã được kích hoạt Premium",
+      "cta": "Nâng cấp Premium",
+      "ctaGuest": "Bắt đầu dùng thử miễn phí",
+      "features": [
+        "Tất cả tính năng của gói Freemium",
+        "Truy cập Aesthetic Store — kho theme độc quyền",
+        "Hình nền, sticker & hiệu ứng độc quyền theo theme",
+        "Ambient sound đặc biệt đi kèm từng theme",
+        "Kiểu widget premium (sắp ra mắt)",
+        "Lưu preset room không giới hạn",
+        "Tự sáng tạo & đăng theme lên Store để kiếm xu",
+        "Hệ thống điểm xu & nhiệm vụ hằng ngày"
+      ]
+    },
+    "footer": "Thanh toán qua VNPay · Huỷ bất cứ lúc nào · Không tính phí ẩn",
+    "modal": {
+      "title": "Chọn phương thức thanh toán",
+      "subtitle": "130.000₫ / tháng · Gia hạn tự động",
+      "vnpayDesc": "Thẻ ATM, Visa, MasterCard, QR Code",
+      "redirect": "Chuyển hướng"
+    }
   },
   "pomodoroStats": {
     "title": "PHÂN TÍCH POMODORO",
@@ -373,7 +430,14 @@
     "totalSessionsSub": "Số hiệp tập trung",
     "summary": "TỔNG KẾT",
     "breakdown": "{{sessions}} × {{focus}}m tập trung + {{breaks}} × {{break}}m nghỉ",
-    "totalTime": "≈ {{time}} tổng thời gian"
+    "totalTime": "≈ {{time}} tổng thời gian",
+    "sounds": "ÂM THANH",
+    "soundEnabled": "Bật âm thanh",
+    "soundStartFocus": "Bắt đầu tập trung",
+    "soundStartBreak": "Bắt đầu nghỉ",
+    "soundComplete": "Hoàn thành",
+    "soundPause": "Dừng",
+    "soundReset": "Đặt lại"
   },
   "clockWidget": {
     "days": ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],

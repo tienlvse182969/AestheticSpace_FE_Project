@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text, Link } from "@chakra-ui/react";
-import { Menu, X, Info, Settings, LogOut, Layers, Crown } from "lucide-react";
+import { Menu, X, Settings, LogOut, Layers, Crown } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -110,6 +110,7 @@ export function Navbar() {
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, i18n } = useTranslation();
 
   useEffect(() => {
@@ -120,14 +121,26 @@ export function Navbar() {
 
   useEffect(() => {
     const heroEl = document.getElementById("home");
-    if (!heroEl) return;
+    if (!heroEl) {
+      // Pages with dark backgrounds at top get white navbar; others get dark
+      const DARK_BG_ROUTES = ["/about", "/login", "/signup"];
+      const isDark = DARK_BG_ROUTES.includes(location.pathname);
+      if (isDark) {
+        const sync = () => setIsInHero(window.scrollY <= 20);
+        sync();
+        window.addEventListener("scroll", sync);
+        return () => window.removeEventListener("scroll", sync);
+      }
+      setIsInHero(false);
+      return;
+    }
     const observer = new IntersectionObserver(
       ([entry]) => setIsInHero(entry.isIntersecting),
       { threshold: 0.1 }
     );
     observer.observe(heroEl);
     return () => observer.disconnect();
-  }, []);
+  }, [location.pathname]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -146,10 +159,8 @@ export function Navbar() {
   const onHero = isInHero;
 
   const navLinks = [
-    { key: "home",     href: "#home",     label: t("nav.home"),    route: null },
-    { key: "about-us", href: "#about-us", label: t("nav.aboutUs"), route: null },
+    { key: "about-us", href: "/about-us", label: t("nav.aboutUs"), route: "/about" },
     { key: "pricing",  href: "/pricing",  label: t("nav.pricing"), route: "/pricing" },
-    { key: "contact",  href: "#contact",  label: t("nav.contact"), route: null },
   ];
 
   const changeLang = (lang: string) => {
@@ -177,7 +188,7 @@ export function Navbar() {
       <Flex maxW="1280px" mx="auto" px={{ base: 6, lg: 10 }} h="80px" align="center" justify="space-between">
 
         {/* Logo */}
-        <Flex as="a" href="#" align="center">
+        <Flex as="a" href="/" align="center">
           <Text style={{
             fontFamily: "'Manrope', sans-serif",
             fontSize: "clamp(1.25rem, 2.5vw, 1.6rem)",
@@ -304,17 +315,6 @@ export function Navbar() {
                       {t("account.mySpace")}
                     </Box>
 
-                    {/* About */}
-                    <Box as="button"
-                      onClick={() => { setAccountOpen(false); navigate("/about"); }}
-                      style={menuItemBase}
-                      onMouseEnter={e => Object.assign((e.currentTarget as HTMLElement).style, { background: "rgba(255,255,255,0.08)", color: "white" })}
-                      onMouseLeave={e => Object.assign((e.currentTarget as HTMLElement).style, { background: "transparent", color: "rgba(255,255,255,0.78)" })}
-                    >
-                      <Info size={15} style={{ opacity: 0.65, flexShrink: 0 }} />
-                      {t("account.about")}
-                    </Box>
-
                     {/* Settings */}
                     <Box as="button"
                       onClick={() => { setAccountOpen(false); navigate("/space", { state: { openPanel: "settings" } }); }}
@@ -434,11 +434,6 @@ export function Navbar() {
                   style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: "transparent", border: "none", cursor: "pointer", color: "#1a3c34", fontSize: "0.84rem" }}>
                   <Layers size={15} style={{ opacity: 0.6 }} />
                   {t("account.mySpace")}
-                </Box>
-                <Box as="button" onClick={() => { setMobileOpen(false); navigate("/about"); }}
-                  style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: "transparent", border: "none", cursor: "pointer", color: "#1a3c34", fontSize: "0.84rem" }}>
-                  <Info size={15} style={{ opacity: 0.6 }} />
-                  {t("account.about")}
                 </Box>
                 <Box as="button" onClick={() => { setMobileOpen(false); navigate("/space", { state: { openPanel: "settings" } }); }}
                   style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 10px", borderRadius: "8px", background: "transparent", border: "none", cursor: "pointer", color: "#1a3c34", fontSize: "0.84rem" }}>

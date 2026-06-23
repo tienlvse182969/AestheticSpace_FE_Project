@@ -1,3 +1,11 @@
+export interface PomodoroSounds {
+  startFocus: string;
+  startBreak: string;
+  complete:   string;
+  pause:      string;
+  reset:      string;
+}
+
 export interface LayoutConfig {
   activeEffect: string | null;
   activeWidgets: string[];
@@ -30,6 +38,8 @@ export interface LayoutConfig {
     focusMin: number;
     breakMin: number;
     totalSes: number;
+    soundEnabled?: boolean;
+    sounds?: PomodoroSounds;
   };
   todoItems?: Array<{ id: string; text: string; done: boolean }>;
   accentColor?: string;

@@ -114,25 +114,6 @@ export function CTASection() {
             >
               {t("cta.joinNow")}
             </Box>
-            <Box
-              as="button"
-              onClick={() => navigate("/space")}
-              display="inline-block"
-              px={10}
-              py={4}
-              borderRadius="xl"
-              color="white"
-              border="2px solid"
-              borderColor="white/40"
-              fontWeight="600"
-              fontSize="0.95rem"
-              textDecoration="none"
-              transition="all 0.2s"
-              _hover={{ borderColor: "white/80", transform: "scale(1.05)" }}
-              _active={{ transform: "scale(0.95)" }}
-            >
-              {t("cta.seeDemo")}
-            </Box>
           </Flex>
         </MotionBox>
       </Box>

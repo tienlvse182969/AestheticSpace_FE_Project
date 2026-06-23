@@ -7,11 +7,11 @@ import { useAccent } from "../../context/AccentContext";
 import { useWorkspaceAutoSave } from "./useWorkspaceAutoSave";
 import { roomService }          from "../../../services/room.service";
 import { useClockSettings }    from "./useClockSettings";
-import { usePomodoroSettings } from "./usePomodoroSettings";
+import { usePomodoroSettings, DEFAULT_POMODORO_SOUNDS } from "./usePomodoroSettings";
 import { useSpaceItems }       from "./useSpaceItems";
 import { useAmbientSound }     from "./useAmbientSound";
 import { workspaceService }    from "../../../services/workspace.service";
-import { BACKGROUNDS }         from "../../components/StudySpace/constants";
+import { DEFAULT_BG } from "../../components/StudySpace/constants";
 import type { BackgroundItem } from "../../components/StudySpace/types";
 import type { LayoutConfig }   from "../../../types/workspace.types";
 import type { UserInfo }       from "../../components/StudySpace/panels/AccountPanel";
@@ -43,8 +43,9 @@ export function useStudySpace() {
   const [layoutLocked,   setLayoutLocked]   = useState(false);
 const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const [accountOpen,         setAccountOpen]         = useState(false);
-  const [currentBg,           setCurrentBg]           = useState<BackgroundItem>(BACKGROUNDS[3]);
+  const [currentBg,           setCurrentBg]           = useState<BackgroundItem>(DEFAULT_BG);
   const [roomId,              setRoomId]              = useState<string | null>(null);
+  const [roomName,            setRoomName]            = useState<string | null>(null);
   const [showFirstRoomModal,  setShowFirstRoomModal]  = useState(false);
   const [musicSource,    setMusicSource]    = useState<"youtube" | "soundcloud">("youtube");
   const [musicYtUrl,     setMusicYtUrl]     = useState("");
@@ -96,6 +97,8 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       pomodoro.setFocusMin(layout.pomodoroSettings.focusMin);
       pomodoro.setBreakMin(layout.pomodoroSettings.breakMin);
       pomodoro.setTotalSes(layout.pomodoroSettings.totalSes);
+      if (layout.pomodoroSettings.soundEnabled !== undefined) pomodoro.setSoundEnabled(layout.pomodoroSettings.soundEnabled);
+      if (layout.pomodoroSettings.sounds) pomodoro.setSounds({ ...DEFAULT_POMODORO_SOUNDS, ...layout.pomodoroSettings.sounds });
     }
     space.restoreItems({
       activeWidgets:   layout.activeWidgets,
@@ -108,10 +111,11 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   }, [clock, pomodoro, space, restoreAmbient]);
 
   /* ── On-mount workspace restore callback ── */
-  const handleRestore = useCallback(({ roomId: rid, bg, layout }: {
-    roomId: string; bg: BackgroundItem; layout: LayoutConfig;
+  const handleRestore = useCallback(({ roomId: rid, roomName: rname, bg, layout }: {
+    roomId: string; roomName?: string | null; bg: BackgroundItem; layout: LayoutConfig;
   }) => {
     setRoomId(rid);
+    setRoomName(rname ?? null);
     setCurrentBg(bg);
     applyLayout(layout);
   }, [applyLayout]);
@@ -119,6 +123,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   /* ── Room select: switch room + restore saved layout ── */
   const handleRoomSelect = useCallback(async (id: string, bg: BackgroundItem) => {
     setRoomId(id);
+    setRoomName(bg.label);
     setCurrentBg(bg);
 
     const emptyLayout: LayoutConfig = {
@@ -149,7 +154,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     const created = await roomService.createMyRoom({ name, description: null, thumbnailUrl: null, backgroundUrl: null });
     const bg: BackgroundItem = {
       id: created.id,
-      url: created.thumbnailUrl ?? BACKGROUNDS[3].url,
+      url: created.thumbnailUrl ?? DEFAULT_BG.url,
       thumb: created.thumbnailUrl ?? "",
       label: created.name,
     };
@@ -157,7 +162,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       activeEffect: null, activeWidgets: [], placedStickers: [],
       stickyNotes: [], widgetPositions: {}, todoItems: [],
     };
-    handleRestore({ roomId: created.id, bg, layout: emptyLayout });
+    handleRestore({ roomId: created.id, roomName: created.name, bg, layout: emptyLayout });
     setShowFirstRoomModal(false);
   }, [handleRestore]);
 
@@ -182,6 +187,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const { saveStatus, saveNow, isRestoring } = useWorkspaceAutoSave({
     isLoggedIn: !!user,
     roomId,
+    roomName,
     currentBg,
     activeEffect,
     activeWidgets:    space.activeWidgets,
@@ -194,6 +200,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     },
     pomodoroSettings: {
       focusMin: pomodoro.focusMin, breakMin: pomodoro.breakMin, totalSes: pomodoro.totalSes,
+      soundEnabled: pomodoro.soundEnabled, sounds: pomodoro.sounds,
     },
     todoItems: space.todoItems,
     accentColor: accent,
