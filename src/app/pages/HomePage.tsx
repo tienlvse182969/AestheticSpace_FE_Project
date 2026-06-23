@@ -11,12 +11,12 @@ export function HomePage() {
   return (
     <>
       <HeroSection />
-      <StatsBar />
+      {/* <StatsBar /> */}
       <WhyChooseUs />
       <FeaturesGrid />
-      <HowItWorks />
       <SpacePreview />
-      <TestimonialsSection />
+      {/* <TestimonialsSection /> */}
+      <HowItWorks />
       <CTASection />
     </>
   );

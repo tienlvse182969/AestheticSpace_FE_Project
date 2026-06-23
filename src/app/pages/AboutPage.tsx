@@ -1,196 +1,215 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { Sparkles, Music, Timer, StickyNote, ArrowLeft } from "lucide-react";
+import { Users } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { APP_VERSION } from "../../version";
 
 const MotionBox = motion.create(Box);
 
-const FEATURES = [
-  { icon: Timer,     label: "Pomodoro Timer",    desc: "Stay focused with customizable work & break sessions." },
-  { icon: Music,     label: "Music Player",       desc: "Play your favourite tracks to set the mood." },
-  { icon: StickyNote,label: "Todo List",          desc: "Keep track of tasks without leaving your space." },
-  { icon: Sparkles,  label: "Stickers & Themes",  desc: "Personalise your environment with aesthetic overlays." },
+const CONTRIBUTORS = [
+  { name: "Phạm Thu Hiền",    avatar: "/assets/ContributorAvatar/PhamThuHien.jpg" },
+  { name: "Nguyễn Hồng Ngọc", avatar: "/assets/ContributorAvatar/NguyenHongNgoc.jpg" },
+  { name: "Trần Hoàng Duy",   avatar: "/assets/ContributorAvatar/TranHoangDuy.jpg" },
+  { name: "Lê Văn Tiến",      avatar: "/assets/ContributorAvatar/LeVanTien.jpg" },
+  { name: "Trần Quốc Nam",    avatar: "/assets/ContributorAvatar/TranQuocNam.jpg" },
 ];
 
 export function AboutPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <Box
       minH="100vh"
       style={{
-        background: "linear-gradient(135deg, #0a0f14 0%, #0d1a1f 50%, #0a1410 100%)",
+        background: "#080e12",
         fontFamily: "'HarmonyOS Sans', sans-serif",
       }}
     >
-      {/* Back button */}
-      <Box position="fixed" top={5} left={7} zIndex={20}>
+      {/* Hero image */}
+      <Box
+        position="relative"
+        style={{
+          height: "clamp(300px, 48vh, 440px)",
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src="/assets/AboutWallpaper/dan-otis-OYFHT4X5isg-unsplash.jpg"
+          alt=""
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+        {/* Gradient overlay — bottom fade + top fade for navbar */}
         <Box
-          as="button"
-          display="flex"
-          alignItems="center"
-          gap={2}
-          onClick={() => navigate(-1)}
+          position="absolute"
           style={{
-            background: "rgba(10,15,20,0.55)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-            border: "1px solid rgba(255,255,255,0.15)",
-            borderRadius: "10px",
-            color: "rgba(255,255,255,0.78)",
-            fontSize: "0.85rem",
-            padding: "7px 14px",
-            cursor: "pointer",
-            transition: "all 0.2s",
+            inset: 0,
+            background: "linear-gradient(to bottom, rgba(8,14,18,0.72) 0%, transparent 28%), linear-gradient(to top, rgba(8,14,18,1) 0%, rgba(8,14,18,0.35) 55%, transparent 100%)",
           }}
+        />
+        {/* Logo + version — same horizontal container as content below */}
+        <MotionBox
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] } as any}
+          position="absolute"
+          style={{ bottom: 36, left: 0, right: 0 }}
         >
-          <ArrowLeft size={15} />
-          Back
-        </Box>
+          <Box style={{ maxWidth: 860, margin: "0 auto", padding: "0 clamp(24px, 6vw, 100px)" }}>
+          <Flex align="center" gap="10px" mb="8px">
+            <Text
+              style={{
+                fontSize: "clamp(2rem, 4.5vw, 3rem)",
+                color: "rgba(255,255,255,0.95)",
+                letterSpacing: "-0.01em",
+                lineHeight: 1,
+              }}
+            >
+              <span style={{ fontFamily: "'Manrope', sans-serif" }}>Aēsthetic</span>
+              <span style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}> Space</span>
+            </Text>
+            <Box
+              style={{
+                fontSize: "0.7rem",
+                color: "rgba(94,234,212,0.8)",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                letterSpacing: "0.08em",
+                background: "rgba(94,234,212,0.12)",
+                border: "1px solid rgba(94,234,212,0.25)",
+                borderRadius: "6px",
+                padding: "3px 9px",
+                lineHeight: 1.4,
+                flexShrink: 0,
+                alignSelf: "flex-end",
+                marginBottom: "4px",
+              }}
+            >
+              {APP_VERSION}
+            </Box>
+          </Flex>
+          <Text
+            style={{
+              fontSize: "0.92rem",
+              color: "rgba(255,255,255,0.48)",
+              maxWidth: 500,
+              lineHeight: 1.65,
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+            }}
+          >
+            {t("about.desc")}
+          </Text>
+          </Box>
+        </MotionBox>
       </Box>
 
       {/* Content */}
-      <Flex
-        direction="column"
-        align="center"
-        justify="center"
-        minH="100vh"
-        px={6}
-        py={24}
+      <Box
+        style={{
+          maxWidth: 860,
+          margin: "0 auto",
+          padding: "48px clamp(24px, 6vw, 100px) 80px",
+        }}
       >
-        {/* Hero */}
+        {/* Contributors */}
         <MotionBox
-          initial={{ opacity: 0, y: 24 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] } as any}
-          textAlign="center"
-          mb={14}
+          transition={{ duration: 0.45, delay: 0.15, ease: [0.4, 0, 0.2, 1] } as any}
+          mb={10}
         >
-          <Text
-            mb={3}
-            style={{
-              fontSize: "0.72rem",
-              letterSpacing: "0.18em",
-              color: "rgba(94,234,212,0.6)",
-              textTransform: "uppercase",
-            }}
-          >
-            Aesthetic Group
-          </Text>
-          <Text
-            mb={5}
-            style={{
-              fontSize: "clamp(2rem, 5vw, 3.2rem)",
-              color: "rgba(255,255,255,0.92)",
-              fontFamily: "'Tenor Sans', sans-serif",
-              letterSpacing: "-0.01em",
-              lineHeight: 1.15,
-            }}
-          >
-            Aesthetic Study Space
-          </Text>
-          <Text
-            style={{
-              fontSize: "1rem",
-              color: "rgba(255,255,255,0.45)",
-              maxWidth: 480,
-              lineHeight: 1.7,
-            }}
-          >
-            A distraction-free environment crafted to help you focus, stay inspired,
-            and make every study session feel effortless.
-          </Text>
-        </MotionBox>
-
-        {/* Feature cards */}
-        <Box
-          display="grid"
-          style={{
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: 16,
-            width: "100%",
-            maxWidth: 860,
-          }}
-        >
-          {FEATURES.map(({ icon: Icon, label, desc }, i) => (
-            <MotionBox
-              key={label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.1 + i * 0.08, ease: [0.4, 0, 0.2, 1] } as any}
-              borderRadius="16px"
-              p="20px"
+          <Flex align="center" gap={2} mb={5}>
+            <Users size={14} style={{ color: "rgba(94,234,212,0.55)" }} />
+            <Text
               style={{
-                background: "rgba(255,255,255,0.035)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(255,255,255,0.08)",
+                fontSize: "0.65rem",
+                color: "rgba(255,255,255,0.28)",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
               }}
             >
-              <Flex
-                align="center"
-                justify="center"
-                mb={3}
-                style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 10,
-                  background: "rgba(94,234,212,0.1)",
-                  border: "1px solid rgba(94,234,212,0.2)",
-                }}
-              >
-                <Icon size={17} style={{ color: "rgba(94,234,212,0.8)" }} />
+              {t("about.contributors")}
+            </Text>
+          </Flex>
+          <Flex wrap="wrap" gap="24px">
+            {CONTRIBUTORS.map(({ name, avatar }) => (
+              <Flex key={name} direction="column" align="center" gap="8px" style={{ width: 76 }}>
+                <Box
+                  style={{
+                    width: 58,
+                    height: 58,
+                    borderRadius: "50%",
+                    overflow: "hidden",
+                    border: "1.5px solid rgba(94,234,212,0.28)",
+                    flexShrink: 0,
+                  }}
+                >
+                  <img
+                    src={avatar}
+                    alt={name}
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </Box>
+                <Text
+                  style={{
+                    fontSize: "0.68rem",
+                    color: "rgba(255,255,255,0.52)",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    textAlign: "center",
+                    lineHeight: 1.35,
+                  }}
+                >
+                  {name}
+                </Text>
               </Flex>
-              <Text
-                mb={1}
-                style={{
-                  fontSize: "0.88rem",
-                  color: "rgba(255,255,255,0.82)",
-                }}
-              >
-                {label}
-              </Text>
-              <Text
-                style={{
-                  fontSize: "0.78rem",
-                  color: "rgba(255,255,255,0.38)",
-                  lineHeight: 1.6,
-                }}
-              >
-                {desc}
-              </Text>
-            </MotionBox>
-          ))}
-        </Box>
+            ))}
+          </Flex>
+        </MotionBox>
 
-        {/* CTA */}
+        {/* Divider */}
+        <Box mb={10} style={{ height: 1, background: "rgba(255,255,255,0.06)" }} />
+
+        {/* CTA + copyright */}
         <MotionBox
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.55 } as any}
-          mt={14}
+          transition={{ duration: 0.45, delay: 0.3 } as any}
         >
-          <Box
-            as="button"
-            onClick={() => navigate("/space")}
-            style={{
-              background: "linear-gradient(135deg, rgba(94,234,212,0.18), rgba(56,189,248,0.12))",
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(94,234,212,0.3)",
-              borderRadius: "12px",
-              color: "rgba(255,255,255,0.88)",
-              fontSize: "0.9rem",
-              padding: "12px 32px",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Open Study Space →
-          </Box>
+          <Flex align="center" justify="space-between" wrap="wrap" gap={4}>
+            <Box
+              as="button"
+              onClick={() => navigate("/space")}
+              style={{
+                background: "rgba(94,234,212,0.1)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                border: "1px solid rgba(94,234,212,0.25)",
+                borderRadius: "10px",
+                color: "rgba(255,255,255,0.85)",
+                fontSize: "0.88rem",
+                padding: "10px 28px",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                letterSpacing: "0.03em",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+              }}
+            >
+              Open Study Space →
+            </Box>
+            <Text
+              style={{
+                fontSize: "0.72rem",
+                color: "rgba(255,255,255,0.2)",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                letterSpacing: "0.05em",
+              }}
+            >
+              {t("about.copyright")}
+            </Text>
+          </Flex>
         </MotionBox>
-      </Flex>
+      </Box>
     </Box>
   );
 }

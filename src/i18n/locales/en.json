@@ -24,7 +24,7 @@
     "community": "Community",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "copyright": "© {{year}} Aēsthetic Group. Made with love for students everywhere."
+    "copyright": "Aēsthetic Group. Made with love for students everywhere."
   },
   "hero": {
     "description": "Customize your own personal digital working space designed around your needs and workflow. Create an environment that matches your style, whether you prefer minimal focus or immersive creativity. Work smarter, stay inspired, and build a space that truly feels like yours.",
@@ -63,9 +63,10 @@
     "title": "Set the Scene for Deep Focus",
     "subtitle": "Browse dozens of hand-curated aesthetic backgrounds — from misty forests to cozy café corners. Change your scenery, change your energy.",
     "forest": "Forest",
-    "cozyRoom": "Cozy Room",
-    "zenGarden": "Zen Garden",
-    "useScene": "Use This Scene →"
+    "cozyRoom": "Cozy Study",
+    "zenGarden": "Japanese Night",
+    "starryNight": "Starry Night",
+    "rainyWindow": "Rainy Window"
   },
   "testimonials": {
     "sectionLabel": "LOVED BY STUDENTS",
@@ -91,12 +92,12 @@
     "remaining": "REMAINING",
     "slide1title": "Pomodoro Sessions",
     "slide1desc": "Structured 25-minute focus blocks with automatic break reminders to keep you sharp.",
-    "slide2title": "Curated Soundscapes",
-    "slide2desc": "Layer café chatter, ocean waves, forest rain and lo-fi beats into your perfect audio mix.",
+    "slide2title": "Music Player & Ambient Sounds",
+    "slide2desc": "Play music from YouTube or SoundCloud while layering ambient sounds like fire, rain, and more — all at once.",
     "slide3title": "Your Space, Your Mood",
     "slide3desc": "Choose from handpicked scenes — misty mountains, cozy libraries, zen gardens and more.",
     "focusTimer": "Focus Timer",
-    "soundscapes": "Soundscapes",
+    "soundscapes": "Music & Sounds",
     "backgrounds": "Backgrounds"
   },
   "cta": {

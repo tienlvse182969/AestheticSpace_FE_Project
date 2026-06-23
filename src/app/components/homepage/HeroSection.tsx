@@ -1,8 +1,8 @@
 import { motion } from "motion/react";
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
 import { ChevronDown } from "lucide-react";
-import heroBg from "figma:asset/1cdb28c7d954d15491f2b5c0046bb5816ebd5fbf.png";
 import { useTranslation } from "react-i18next";
+import { APP_VERSION } from "../../../version";
 
 const MotionBox = motion.create(Box);
 const MotionFlex = motion.create(Flex);
@@ -27,10 +27,12 @@ export function HeroSection() {
       <Box
         position="absolute"
         inset={0}
-        bgImage={`url(${heroBg})`}
-        bgSize="cover"
-        bgPosition="center"
-        bgRepeat="no-repeat"
+        style={{
+          backgroundImage: "url(/assets/AboutWallpaper/dan-otis-OYFHT4X5isg-unsplash.jpg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+        }}
       />
       {/* Soft overlay */}
       <Box
@@ -64,13 +66,40 @@ export function HeroSection() {
               mb={4}
               whiteSpace="nowrap"
               style={{
+                fontFamily: "'Manrope', sans-serif",
                 fontSize: "clamp(3rem, 10vw, 7rem)",
-                fontWeight: 600,
-                letterSpacing: "0.02em",
+                fontWeight: 400,
               }}
             >
-              <Box as="span" display="block">AESTHETIC</Box>
-              <Box as="span" display="block">SPACE</Box>
+              <Box as="span" display="block">Aēsthetic</Box>
+              <Box as="span" display="flex" alignItems="flex-start">
+                <Box as="span">Space</Box>
+                <Box
+                  as="span"
+                  display="inline-flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  style={{
+                    marginTop: "14px",
+                    marginLeft: "12px",
+                    padding: "9px 18px",
+                    borderRadius: "100px",
+                    background: "rgba(20,20,20,0.72)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    color: "white",
+                    letterSpacing: "0.03em",
+                    lineHeight: 1,
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    flexShrink: 0,
+                  }}
+                >
+                  {APP_VERSION}
+                </Box>
+              </Box>
             </Heading>
           </MotionBox>
 

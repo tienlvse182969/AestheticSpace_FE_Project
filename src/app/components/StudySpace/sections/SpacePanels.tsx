@@ -225,6 +225,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
           <StickerPickerPanel
             key="sticker-panel"
             onPlace={src => { space.placeSticker(src); saveNow(); }}
+            onDropSticker={(src, x, y) => { space.placeStickerAt(src, x, y); saveNow(); }}
             onClose={() => setActivePanel(null)}
           />
         )}

@@ -40,6 +40,12 @@ export function useSpaceItems() {
     return id;
   };
 
+  const placeStickerAt = (src: string, x: number, y: number): string => {
+    const id = `sticker-${Date.now()}`;
+    setPlacedStickers(prev => [...prev, { id, src, x, y, size: 140 }]);
+    return id;
+  };
+
   const removeSticker = (id: string) =>
     setPlacedStickers(prev => prev.filter(s => s.id !== id));
 
@@ -92,7 +98,7 @@ export function useSpaceItems() {
 
   return {
     activeWidgets, toggleWidget, removeWidget,
-    placedStickers, placeSticker, removeSticker, updateSticker,
+    placedStickers, placeSticker, placeStickerAt, removeSticker, updateSticker,
     stickyNotes, addStickyNote, addStickyNoteAt, removeStickyNote, updateStickyNote,
     widgetPositions, setWidgetPosition,
     todoItems, setTodoItems,
