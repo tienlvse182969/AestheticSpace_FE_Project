@@ -60,6 +60,13 @@ export function useSpaceItems() {
     ]);
   };
 
+  const addStickyNoteAt = (x: number, y: number) => {
+    setStickyNotes(prev => [
+      ...prev,
+      { id: `sticky-${Date.now()}`, text: "", color: "yellow", x, y },
+    ]);
+  };
+
   const removeStickyNote = (id: string) =>
     setStickyNotes(prev => prev.filter(n => n.id !== id));
 
@@ -86,7 +93,7 @@ export function useSpaceItems() {
   return {
     activeWidgets, toggleWidget, removeWidget,
     placedStickers, placeSticker, removeSticker, updateSticker,
-    stickyNotes, addStickyNote, removeStickyNote, updateStickyNote,
+    stickyNotes, addStickyNote, addStickyNoteAt, removeStickyNote, updateStickyNote,
     widgetPositions, setWidgetPosition,
     todoItems, setTodoItems,
     restoreItems,

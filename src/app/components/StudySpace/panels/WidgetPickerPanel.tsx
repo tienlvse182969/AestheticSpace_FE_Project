@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { motion } from "motion/react";
+import { motion, useDragControls } from "motion/react";
 import { Trash2, Plus, StickyNote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
@@ -9,12 +10,16 @@ import { STICKY_COLORS } from "../widgets/StickyNote/StickyNoteWidget";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import type { WidgetId } from "../types";
 
+const WIDGET_WIDTHS: Partial<Record<WidgetId, number>> = { music: 300 };
+
 const MotionBox = motion.create(Box);
 
 interface WidgetPickerPanelProps {
   activeWidgets: Set<WidgetId>;
   onToggle: (id: WidgetId) => void;
   onAddStickyNote: () => void;
+  onDropWidget?: (id: WidgetId, x: number, y: number) => void;
+  onDropStickyNote?: (x: number, y: number) => void;
   onClose: () => void;
 }
 
@@ -185,7 +190,7 @@ const THUMBNAIL_MAP: Record<string, React.FC> = {
 
 /* ── Main component ──────────────────────────────────────────────────────── */
 
-export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, onClose }: WidgetPickerPanelProps) {
+export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, onDropWidget, onDropStickyNote, onClose }: WidgetPickerPanelProps) {
   const { t } = useTranslation();
   const sw = typeof window !== "undefined" ? window.innerWidth  : 1440;
 
@@ -199,11 +204,53 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
   const panelW = isMobile ? Math.min(sw - 32, 340) : 600;
   const panelH = isMobile ? 480 : 520;
   const { x, y, ref } = useCenteredPanel(panelW, panelH);
+  const dragControls = useDragControls();
+
+  type DraggingWidget = typeof WIDGET_DEFS[0];
+  type DraggingItem = DraggingWidget | "sticky";
+  const [draggingItem, setDraggingItem] = useState<DraggingItem | null>(null);
+  const [ghostPos, setGhostPos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (!draggingItem) return;
+    document.body.style.cursor = "grabbing";
+
+    const onMove = (e: PointerEvent) => setGhostPos({ x: e.clientX, y: e.clientY });
+
+    const onUp = (e: PointerEvent) => {
+      if (ref.current) {
+        const rect = ref.current.getBoundingClientRect();
+        const outside = e.clientX < rect.left || e.clientX > rect.right ||
+                        e.clientY < rect.top  || e.clientY > rect.bottom;
+        if (outside) {
+          if (draggingItem === "sticky") {
+            onDropStickyNote?.(Math.round(e.clientX - 108), Math.round(e.clientY - 20));
+          } else {
+            const w = WIDGET_WIDTHS[draggingItem.id] ?? 240;
+            onDropWidget?.(draggingItem.id, Math.round(e.clientX - w / 2), Math.round(e.clientY - 20));
+          }
+        }
+      }
+      setDraggingItem(null);
+      document.body.style.cursor = "";
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    return () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.body.style.cursor = "";
+    };
+  }, [draggingItem, ref, onDropWidget, onDropStickyNote]);
 
   return (
+    <>
     <MotionBox
       ref={ref as any}
       drag
+      dragControls={dragControls}
+      dragListener={false}
       dragMomentum={false}
       dragElastic={0}
       initial={{ opacity: 0, scale: 0.92 }}
@@ -228,8 +275,12 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
         flexDirection: "column",
       }}
     >
-      {/* ── Header (not scrollable) ── */}
-      <Box position="relative" style={{ padding: "20px 18px 0", flexShrink: 0 }}>
+      {/* ── Header (drag handle) ── */}
+      <Box
+        position="relative"
+        style={{ padding: "20px 18px 0", flexShrink: 0, cursor: "grab" }}
+        onPointerDown={(e) => dragControls.start(e)}
+      >
         <PanelCloseBtn onClose={onClose} />
 
         <Text mb={1} style={{
@@ -313,15 +364,24 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
                   flexDirection: "column",
                   opacity: isSoon ? 0.6 : 1,
                 }}>
-                  {/* Thumbnail area */}
-                  <div style={{
-                    width: "100%",
-                    height: "100px",
-                    overflow: "hidden",
-                    position: "relative",
-                    background: `linear-gradient(145deg, ${w.color}0d 0%, rgba(12,18,22,0.5) 100%)`,
-                    borderBottom: "1px solid rgba(255,255,255,0.06)",
-                  }}>
+                  {/* Thumbnail area — drag handle to drop onto canvas */}
+                  <div
+                    onPointerDown={(e) => {
+                      if (isSoon) return;
+                      e.preventDefault();
+                      setDraggingItem(w);
+                      setGhostPos({ x: e.clientX, y: e.clientY });
+                    }}
+                    style={{
+                      width: "100%",
+                      height: "100px",
+                      overflow: "hidden",
+                      position: "relative",
+                      background: `linear-gradient(145deg, ${w.color}0d 0%, rgba(12,18,22,0.5) 100%)`,
+                      borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      cursor: isSoon ? "default" : "grab",
+                    }}
+                  >
                     {Thumb && <Thumb />}
                     {/* Coming Soon badge */}
                     {isSoon && (
@@ -423,13 +483,21 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
               display: "flex",
               flexDirection: "column",
             }}>
-              <div style={{
-                width: "100%",
-                height: "100px",
-                overflow: "hidden",
-                background: "linear-gradient(145deg, rgba(254,224,71,0.1) 0%, rgba(12,18,22,0.5) 100%)",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-              }}>
+              <div
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  setDraggingItem("sticky");
+                  setGhostPos({ x: e.clientX, y: e.clientY });
+                }}
+                style={{
+                  width: "100%",
+                  height: "100px",
+                  overflow: "hidden",
+                  background: "linear-gradient(145deg, rgba(254,224,71,0.1) 0%, rgba(12,18,22,0.5) 100%)",
+                  borderBottom: "1px solid rgba(255,255,255,0.06)",
+                  cursor: "grab",
+                }}
+              >
                 <StickyThumbnail />
               </div>
               <div style={{ padding: "10px 11px 11px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
@@ -515,5 +583,50 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
         </Text>
       </Box>
     </MotionBox>
+
+    {/* ── Drag ghost (portal) ── */}
+    {draggingItem && typeof document !== "undefined" && createPortal(
+      <div style={{
+        position: "fixed",
+        left: ghostPos.x - 60,
+        top: ghostPos.y - 28,
+        pointerEvents: "none",
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "8px 14px",
+        borderRadius: "10px",
+        background: "rgba(12,18,22,0.88)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        border: draggingItem === "sticky" ? "1px solid rgba(254,224,71,0.4)" : `1px solid ${draggingItem.color}40`,
+        boxShadow: draggingItem === "sticky"
+          ? "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(254,224,71,0.2)"
+          : `0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px ${draggingItem.color}20`,
+        transform: "rotate(-2deg) scale(1.04)",
+      }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: draggingItem === "sticky" ? "rgba(254,240,138,0.12)" : `${draggingItem.color}1a`,
+          border: draggingItem === "sticky" ? "1px solid rgba(254,240,138,0.28)" : `1px solid ${draggingItem.color}35`,
+        }}>
+          {draggingItem === "sticky"
+            ? <StickyNote size={14} color="#fde047" />
+            : <draggingItem.icon size={14} color={draggingItem.color} />}
+        </div>
+        <span style={{
+          fontSize: "0.78rem",
+          fontFamily: "'HarmonyOS Sans', sans-serif",
+          color: "rgba(255,255,255,0.88)",
+          whiteSpace: "nowrap",
+        }}>
+          {draggingItem === "sticky" ? t("widgetPicker.stickyNotes") : draggingItem.label}
+        </span>
+      </div>,
+      document.body,
+    )}
+    </>
   );
 }

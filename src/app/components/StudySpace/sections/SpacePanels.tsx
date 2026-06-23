@@ -212,6 +212,12 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             activeWidgets={space.activeWidgets}
             onToggle={id => { space.toggleWidget(id); saveNow(); }}
             onAddStickyNote={() => { space.addStickyNote(); setActivePanel(null); saveNow(); }}
+            onDropWidget={(id, x, y) => {
+              if (!space.activeWidgets.has(id)) space.toggleWidget(id);
+              space.setWidgetPosition(id, { x, y });
+              saveNow();
+            }}
+            onDropStickyNote={(x, y) => { space.addStickyNoteAt(x, y); saveNow(); }}
             onClose={() => setActivePanel(null)}
           />
         )}

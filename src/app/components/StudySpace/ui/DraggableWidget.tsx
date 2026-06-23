@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Box, Flex } from "@chakra-ui/react";
-import { motion, useMotionValue } from "motion/react";
+import { motion, useMotionValue, useDragControls } from "motion/react";
 import { GripHorizontal, X } from "lucide-react";
 
 const MotionBox = motion.create(Box);
@@ -23,6 +23,7 @@ export function DraggableWidget({ children, initialX, initialY, onRemove, onDrag
   const [hovered, setHovered] = useState(false);
   const x = useMotionValue(initialX);
   const y = useMotionValue(initialY);
+  const dragControls = useDragControls();
 
   useEffect(() => { x.set(initialX); y.set(initialY); }, [initialX, initialY]);
 
@@ -30,6 +31,8 @@ export function DraggableWidget({ children, initialX, initialY, onRemove, onDrag
     <MotionBox
       ref={containerRef as any}
       drag={!locked}
+      dragControls={dragControls}
+      dragListener={false}
       dragMomentum={false}
       dragElastic={0}
       position="fixed"
@@ -43,27 +46,29 @@ export function DraggableWidget({ children, initialX, initialY, onRemove, onDrag
         opacity: { duration: 0.12 },
         scale: { type: "spring", stiffness: 500, damping: 24, mass: 0.9 },
       } as any}
-      style={{ x, y, width, cursor: locked ? "default" : "grab", userSelect: "none", zIndex: 10 }}
+      style={{ x, y, width, userSelect: "none", zIndex: 10 }}
       onDragStart={() => !locked && onDragStart?.()}
       onDragEnd={() => !locked && onDragEnd?.(Math.round(x.get()), Math.round(y.get()))}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Top bar: grip + extra controls + remove when unlocked; only extra controls when locked */}
+      {/* Top bar: grip (drag handle) + extra controls + remove when unlocked; only extra controls when locked */}
       <Flex
         justify={locked ? "flex-end" : "space-between"}
         align="center"
         px="6px"
         pb="4px"
         style={{ height: 20, opacity: hovered ? 1 : 0, transition: "opacity 0.2s" }}
+        onPointerDown={(e) => { if (!locked) dragControls.start(e); }}
       >
-        {!locked && <GripHorizontal size={14} color="rgba(255,255,255,0.45)" />}
+        {!locked && <GripHorizontal size={14} color="rgba(255,255,255,0.45)" style={{ cursor: "grab" }} />}
         <Flex align="center" gap="4px">
           {extraControls}
           {!locked && (
             <Box
               as="button"
               onClick={(e: React.MouseEvent) => { e.stopPropagation(); onRemove(); }}
+              onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
               display="flex"
               alignItems="center"
               justifyContent="center"
