@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -670,7 +670,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   {t("about.contributors")}
                 </Text>
               </Flex>
-              <Flex gap="28px" wrap="wrap">
+              <Flex gap="28px" wrap="wrap" align="flex-start">
                 {[
                   {
                     roleKey: "about.roleThemeCreator",
@@ -687,43 +687,48 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                       { name: "Trần Quốc Nam", avatar: "/assets/ContributorAvatar/TranQuocNam.jpg" },
                     ],
                   },
-                ].map(({ roleKey, members }) => (
-                  <Box key={roleKey}>
-                    <Text mb={2} style={{
-                      fontSize: "0.57rem",
-                      color: "rgba(94,234,212,0.55)",
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      fontFamily: "'HarmonyOS Sans', sans-serif",
-                    }}>
-                      {t(roleKey)}
-                    </Text>
-                    <Flex wrap="wrap" gap="12px">
-                      {members.map(({ name, avatar }) => (
-                        <Flex key={name} direction="column" align="center" gap="6px" style={{ width: 60 }}>
-                          <Box style={{
-                            width: 46,
-                            height: 46,
-                            borderRadius: "50%",
-                            overflow: "hidden",
-                            border: "1.5px solid rgba(94,234,212,0.3)",
-                            flexShrink: 0,
-                          }}>
-                            <img src={avatar} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                          </Box>
-                          <Text style={{
-                            fontSize: "0.6rem",
-                            color: "rgba(255,255,255,0.5)",
-                            fontFamily: "'HarmonyOS Sans', sans-serif",
-                            textAlign: "center",
-                            lineHeight: 1.3,
-                          }}>
-                            {name}
-                          </Text>
-                        </Flex>
-                      ))}
-                    </Flex>
-                  </Box>
+                ].map(({ roleKey, members }, idx, arr) => (
+                  <React.Fragment key={roleKey}>
+                    <Box>
+                      <Text mb={2} style={{
+                        fontSize: "0.57rem",
+                        color: "rgba(94,234,212,0.55)",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        fontFamily: "'HarmonyOS Sans', sans-serif",
+                      }}>
+                        {t(roleKey)}
+                      </Text>
+                      <Flex wrap="wrap" gap="12px">
+                        {members.map(({ name, avatar }) => (
+                          <Flex key={name} direction="column" align="center" gap="6px" style={{ width: 60 }}>
+                            <Box style={{
+                              width: 46,
+                              height: 46,
+                              borderRadius: "50%",
+                              overflow: "hidden",
+                              border: "1.5px solid rgba(94,234,212,0.3)",
+                              flexShrink: 0,
+                            }}>
+                              <img src={avatar} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            </Box>
+                            <Text style={{
+                              fontSize: "0.6rem",
+                              color: "rgba(255,255,255,0.5)",
+                              fontFamily: "'HarmonyOS Sans', sans-serif",
+                              textAlign: "center",
+                              lineHeight: 1.3,
+                            }}>
+                              {name}
+                            </Text>
+                          </Flex>
+                        ))}
+                      </Flex>
+                    </Box>
+                    {idx < arr.length - 1 && (
+                      <Box key={`sep-${roleKey}`} style={{ width: 1, background: "rgba(255,255,255,0.1)", alignSelf: "stretch", minHeight: 60 }} />
+                    )}
+                  </React.Fragment>
                 ))}
               </Flex>
             </Box>
