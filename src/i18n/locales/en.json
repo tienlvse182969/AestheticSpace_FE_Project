@@ -161,6 +161,7 @@
     "addSticker": "Add Sticker",
     "changeAmbient": "Change Ambient Sound",
     "changeEffect": "Change Visual Effect",
+    "changeRoom": "Change Room",
     "lockLayout": "Lock Layout",
     "unlockLayout": "Unlock Layout"
   },
@@ -603,7 +604,7 @@
     "save": "Save"
   },
   "effects": {
-    "title": "EFFECTS",
+    "title": "Effects",
     "rain": "Rain",
     "snow": "Snow",
     "active": "active",

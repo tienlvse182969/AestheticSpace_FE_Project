@@ -161,6 +161,7 @@
     "addSticker": "Thêm sticker",
     "changeAmbient": "Đổi âm thanh",
     "changeEffect": "Đổi hiệu ứng",
+    "changeRoom": "Đổi phòng",
     "lockLayout": "Khóa bố cục",
     "unlockLayout": "Mở khóa bố cục"
   },
@@ -602,7 +603,7 @@
     "save": "Lưu"
   },
   "effects": {
-    "title": "HIỆU ỨNG",
+    "title": "Hiệu ứng",
     "rain": "Mưa rơi",
     "snow": "Tuyết rơi",
     "active": "đang bật",

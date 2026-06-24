@@ -124,6 +124,7 @@ export function SpaceBackground({ ctx }: Props) {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.4 } as any}
+            onContextMenu={e => e.stopPropagation()}
             style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)", zIndex: 200 }}
           >
             <Box

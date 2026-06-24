@@ -1,5 +1,5 @@
 import * as ContextMenu from "@radix-ui/react-context-menu";
-import { Image as ImageIcon, LayoutGrid, Sticker, AudioWaveform, Wand2, Lock, Unlock } from "lucide-react";
+import { Image as ImageIcon, LayoutGrid, Sticker, AudioWaveform, Wand2, Lock, Unlock, LayoutDashboard } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { StudySpaceCtx } from "../../../hooks/studyspace/useStudySpace";
 
@@ -47,6 +47,7 @@ export function SpaceContextMenu({ ctx, children }: Props) {
   const { t } = useTranslation();
 
   const items = [
+    { id: "room",    icon: <LayoutDashboard size={15} />, label: t("contextMenu.changeRoom") },
     { id: "image",   icon: <ImageIcon size={15} />,      label: t("contextMenu.changeBackground") },
     { id: "widget",  icon: <LayoutGrid size={15} />,     label: t("contextMenu.addWidget") },
     { id: "sticker", icon: <Sticker size={15} />,        label: t("contextMenu.addSticker") },
