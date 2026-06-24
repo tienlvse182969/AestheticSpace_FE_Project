@@ -20,11 +20,8 @@ export const STICKY_COLORS: {
   { id: "sky",      label: "colors.sky",      bg: "#bae6fd", text: "#0c4a6e", border: "#7dd3fc", swatch: "#7dd3fc" },
 ];
 
-const SIZES_BASE: { id: "sm" | "md" | "lg"; labelKey: string; w: number; h: number }[] = [
-  { id: "sm", labelKey: "stickyNote.small",  w: 180, h: 110 },
-  { id: "md", labelKey: "stickyNote.medium", w: 224, h: 160 },
-  { id: "lg", labelKey: "stickyNote.large",  w: 300, h: 240 },
-];
+const DEFAULT_W = 224;
+const DEFAULT_H = 160;
 
 const PANEL_W = 170 + 10;
 const PANEL_H = 260;
@@ -40,18 +37,14 @@ interface StickyNoteWidgetProps {
 
 export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: StickyNoteWidgetProps) {
   const { t } = useTranslation();
-  const SIZES = SIZES_BASE.map(s => ({ ...s, label: t(s.labelKey) }));
   const [hovered,      setHovered]      = useState(false);
   const [focused,      setFocused]      = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const [w, setW] = useState(note.w ?? SIZES[1].w);
-  const [h, setH] = useState(note.h ?? SIZES[1].h);
-
-  const activeSize = SIZES.find(s => s.w === w && s.h === h)?.id ?? null;
-
-  const x = useMotionValue(note.x);
-  const y = useMotionValue(note.y);
+  const x   = useMotionValue(note.x);
+  const y   = useMotionValue(note.y);
+  const wMV = useMotionValue(note.w ?? DEFAULT_W);
+  const hMV = useMotionValue(note.h ?? DEFAULT_H);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,10 +74,33 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
   const c            = STICKY_COLORS.find(col => col.id === note.color) ?? STICKY_COLORS[0];
   const showControls = !locked && (hovered || focused || settingsOpen);
 
-  const applySize = (size: typeof SIZES[number]) => {
-    setW(size.w);
-    setH(size.h);
-    onUpdate({ w: size.w, h: size.h });
+  const handleResizeStart = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent.stopImmediatePropagation();
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = wMV.get();
+    const startH = hMV.get();
+    let latestW = startW;
+    let latestH = startH;
+
+    const onMove = (ev: PointerEvent) => {
+      latestW = Math.max(150, Math.min(520, Math.round(startW + ev.clientX - startX)));
+      latestH = Math.max(80,  Math.min(480, Math.round(startH + ev.clientY - startY)));
+      wMV.set(latestW);
+      hMV.set(latestH);
+    };
+
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      onUpdate({ w: latestW, h: latestH });
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
   };
 
   return (
@@ -95,7 +111,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
       dragElastic={0}
       dragListener={!locked && !focused}
       initial={{ opacity: 0, scale: 0.88 }}
-      animate={{ opacity: 1, scale: 1, width: w }}
+      animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.14, ease: [0.4, 0, 1, 1] } }}
       transition={{ type: "spring", stiffness: 500, damping: 24, mass: 0.9 }}
       whileDrag={locked ? undefined : { scale: 1.02, zIndex: 60 }}
@@ -106,7 +122,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
         left: 0,
         x,
         y,
-        width: w,
+        width: wMV,
         cursor: locked ? "default" : focused ? "default" : "grab",
         userSelect: "none",
         zIndex: 10,
@@ -157,9 +173,8 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
 
       {/* ── Note body ───────────────────────────────────────────────────── */}
       <motion.div
-        animate={{ height: h }}
-        transition={{ type: "spring", stiffness: 500, damping: 28, mass: 0.8 }}
         style={{
+          height: hMV,
           background: c.bg,
           border: `1.5px solid ${c.border}`,
           borderRadius: 12,
@@ -198,6 +213,32 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
           }}
           onPointerDown={e => e.stopPropagation()}
         />
+
+        {!locked && (
+          <div
+            onPointerDown={handleResizeStart}
+            style={{
+              position: "absolute",
+              bottom: 3,
+              right: 3,
+              width: 18,
+              height: 18,
+              cursor: "se-resize",
+              opacity: hovered || focused || settingsOpen ? 0.5 : 0,
+              transition: "opacity 0.2s",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <circle cx="8.5" cy="8.5" r="1.3" fill={c.text} />
+              <circle cx="4.5" cy="8.5" r="1.3" fill={c.text} />
+              <circle cx="8.5" cy="4.5" r="1.3" fill={c.text} />
+            </svg>
+          </div>
+        )}
 
       </motion.div>
 
@@ -246,70 +287,6 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
                   <X size={11} />
                 </Box>
               </Flex>
-
-              <div style={{ height: 1, background: "rgba(255,255,255,0.07)", marginBottom: 10 }} />
-
-              {/* Size picker */}
-              <div style={{
-                fontSize: "0.62rem",
-                color: "rgba(255,255,255,0.28)",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                marginBottom: 7,
-              }}>
-                {t("stickyNote.size")}
-              </div>
-              <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
-                {SIZES.map(size => {
-                  const isActive = activeSize === size.id;
-                  const iconW = size.id === "sm" ? 14 : size.id === "md" ? 20 : 28;
-                  const iconH = size.id === "sm" ? 10 : size.id === "md" ? 15 : 21;
-                  return (
-                    <button
-                      key={size.id}
-                      onClick={() => applySize(size)}
-                      title={size.label}
-                      style={{
-                        flex: 1,
-                        height: 40,
-                        borderRadius: 7,
-                        border: isActive
-                          ? `1.5px solid ${c.swatch}99`
-                          : "1.5px solid rgba(255,255,255,0.1)",
-                        background: isActive ? `${c.swatch}22` : "rgba(255,255,255,0.04)",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "all 0.18s",
-                      }}
-                    >
-                      <div style={{
-                        width: iconW,
-                        height: iconH,
-                        borderRadius: 3,
-                        background: isActive ? `${c.swatch}66` : "rgba(255,255,255,0.15)",
-                        transition: "all 0.18s",
-                      }} />
-                    </button>
-                  );
-                })}
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                {SIZES.map(size => (
-                  <span key={size.id} style={{
-                    flex: 1,
-                    textAlign: "center",
-                    fontSize: "0.62rem",
-                    fontFamily: "'HarmonyOS Sans', sans-serif",
-                    color: activeSize === size.id ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.28)",
-                    transition: "color 0.18s",
-                  }}>
-                    {size.label}
-                  </span>
-                ))}
-              </div>
 
               <div style={{ height: 1, background: "rgba(255,255,255,0.07)", marginBottom: 10 }} />
 
