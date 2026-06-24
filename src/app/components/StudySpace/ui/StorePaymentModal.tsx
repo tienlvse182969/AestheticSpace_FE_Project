@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Coins, CreditCard, Loader } from "lucide-react";
+import { X, Coins, CreditCard } from "lucide-react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import type { StoreItem } from "../../../../services/aestheticStore.service";
 import { paymentService } from "../../../../services/payment.service";
 
@@ -192,9 +193,7 @@ export function StorePaymentModal({
                 <Flex align="center" justify="space-between">
                   <Flex align="center" gap="12px">
                     {isPayingWithCoins ? (
-                      <Box style={{ animation: "spin 1s linear infinite", display: "flex" }}>
-                        <Loader size={20} color="#facc15" />
-                      </Box>
+                      <LoadingRing size={20} color="rgba(250,204,21,0.9)" trackColor="rgba(250,204,21,0.15)" />
                     ) : (
                       <Box
                         w="38px"
@@ -306,9 +305,7 @@ export function StorePaymentModal({
                   <Flex align="center" justify="space-between">
                     <Flex align="center" gap="12px">
                       {vnpayProcessing ? (
-                        <Box style={{ animation: "spin 1s linear infinite", display: "flex" }}>
-                          <Loader size={20} color="#818cf8" />
-                        </Box>
+                        <LoadingRing size={20} color="rgba(129,140,248,0.9)" trackColor="rgba(129,140,248,0.15)" />
                       ) : (
                         <Box
                           w="38px"
@@ -364,7 +361,6 @@ export function StorePaymentModal({
               )}
             </Flex>
 
-            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
           </Box>
         </MotionBox>
       </Box>

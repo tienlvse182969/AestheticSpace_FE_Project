@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Box, Flex, Heading, Text } from "@chakra-ui/react";
-import { Check, Sparkles, Crown, Gift, X, Loader } from "lucide-react";
+import { Check, Sparkles, Crown, Gift, X } from "lucide-react";
+import { LoadingRing } from "../components/ui/LoadingRing";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
@@ -653,11 +654,7 @@ export function PricingPage() {
                             </Text>
                           </Box>
                           {isProcessing ? (
-                            <Box
-                              style={{ animation: "spin 1s linear infinite" }}
-                            >
-                              <Loader size={18} color="#4e7c6a" />
-                            </Box>
+                            <LoadingRing size={18} color="rgba(78,124,106,0.9)" trackColor="rgba(78,124,106,0.18)" />
                           ) : (
                             <Box
                               px={3}
@@ -677,7 +674,6 @@ export function PricingPage() {
                         </Flex>
                       </Box>
                     </Flex>
-                    <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
                   </Box>
                 )}
               </Box>

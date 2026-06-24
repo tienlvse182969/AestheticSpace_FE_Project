@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, Loader, CreditCard, Monitor } from "lucide-react";
+import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor } from "lucide-react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { useAccent } from "../../../context/AccentContext";
@@ -273,7 +274,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   }}
                 >
                   {usernameStatus === "loading"
-                    ? <Loader size={13} style={{ animation: "spin 1s linear infinite" }} />
+                    ? <LoadingRing size={13} />
                     : usernameStatus === "success"
                     ? <Check size={13} />
                     : null}
@@ -323,7 +324,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   }}
                 >
                   {resetStatus === "loading"
-                    ? <Loader size={13} style={{ animation: "spin 1s linear infinite" }} />
+                    ? <LoadingRing size={13} />
                     : resetStatus === "sent"
                     ? <Check size={13} />
                     : null}
@@ -378,7 +379,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                       }}
                     >
                       <Flex align="center" gap={2}>
-                        {isLoading && <Loader size={13} style={{ color: "rgba(255,255,255,0.5)", animation: "spin 1s linear infinite", flexShrink: 0 }} />}
+                        {isLoading && <LoadingRing size={13} />}
                         <Box>
                           <Text style={{ fontSize: "1rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.2 }}>
                             {coins.toLocaleString()} <span style={{ fontSize: "0.65rem", fontWeight: 400, color: "rgba(255,255,255,0.4)" }}>{t("settings.coins")}</span>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { motion, useDragControls } from "motion/react";
 import { ShoppingBag, Sticker, Palette, AlertCircle, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -342,7 +343,7 @@ export function StickerPickerPanel({ onPlace, onDropSticker, onClose }: StickerP
         {tab === "default" && (
           loading ? (
             <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
-              <Spinner size="sm" style={{ color: "rgba(255,255,255,0.4)" }} />
+              <LoadingRing size={18} />
               <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>Loading…</Text>
             </Flex>
           ) : error ? (
@@ -376,7 +377,7 @@ export function StickerPickerPanel({ onPlace, onDropSticker, onClose }: StickerP
         {tab === "purchased" && purchasedFilter === "store" && (
           purchasedLoading ? (
             <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
-              <Spinner size="sm" style={{ color: "rgba(255,255,255,0.4)" }} />
+              <LoadingRing size={18} />
               <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>Loading…</Text>
             </Flex>
           ) : purchasedError ? (

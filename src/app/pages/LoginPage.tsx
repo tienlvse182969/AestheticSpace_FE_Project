@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
-import { Mail, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Mail, Eye, EyeOff } from "lucide-react";
+import { LoadingRing } from "../components/ui/LoadingRing";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useNavigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -188,7 +189,6 @@ export function LoginPage() {
               </Box>
             )}
 
-            <style>{`@keyframes auth-spin { to { transform: rotate(360deg); } }`}</style>
             <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
             {/* Email */}
             <Box mb={errors.identifier ? 1 : 4} position="relative">
@@ -278,7 +278,7 @@ export function LoginPage() {
               }}
             >
               {isLoading
-                ? <Loader2 size={18} style={{ animation: "auth-spin 0.75s linear infinite" }} />
+                ? <LoadingRing size={18} />
                 : t("auth.login")}
             </button>
             </form>

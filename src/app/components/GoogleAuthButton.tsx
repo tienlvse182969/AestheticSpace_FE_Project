@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Text } from "@chakra-ui/react";
-import { Loader2 } from "lucide-react";
 import googleLogo from "../../assets/google_logo_icon.png";
+import { LoadingRing } from "./ui/LoadingRing";
 
 declare global {
   interface Window {
@@ -120,7 +120,7 @@ export function GoogleAuthButton({ label, onCredential, onError }: Props) {
         }}
       >
         {loading ? (
-          <Loader2 size={18} style={{ animation: "auth-spin 0.75s linear infinite", color: "#555" }} />
+          <LoadingRing size={18} color="rgba(85,85,85,0.8)" trackColor="rgba(85,85,85,0.15)" />
         ) : (
           <>
             <img

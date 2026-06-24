@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
-import { Eye, EyeOff, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, CheckCircle } from "lucide-react";
+import { LoadingRing } from "../components/ui/LoadingRing";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -131,7 +132,6 @@ export function ResetPasswordPage() {
                   </Box>
                 )}
 
-                <style>{`@keyframes auth-spin { to { transform: rotate(360deg); } }`}</style>
                 <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                   {/* New Password */}
                   <Box mb={errors.newPassword ? 1 : 4} position="relative">
@@ -193,7 +193,7 @@ export function ResetPasswordPage() {
                     }}
                   >
                     {isLoading
-                      ? <Loader2 size={18} style={{ animation: "auth-spin 0.75s linear infinite" }} />
+                      ? <LoadingRing size={18} />
                       : t("auth.resetPassword")}
                   </button>
                 </form>

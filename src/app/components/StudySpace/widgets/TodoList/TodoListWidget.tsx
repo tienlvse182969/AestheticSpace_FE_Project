@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { ListTodo, Trash2, Plus, Loader, Pencil, Check, X } from "lucide-react";
+import { ListTodo, Trash2, Plus, Pencil, Check, X } from "lucide-react";
+import { LoadingRing } from "../../../ui/LoadingRing";
 import { useTranslation } from "react-i18next";
 import type { TodoItem } from "../../types";
 import { todoService } from "../../../../../services/todo.service";
@@ -170,7 +171,7 @@ export function TodoListWidget({ todos: propTodos, onTodosChange }: TodoListWidg
         </Text>
         <Box ml="auto" style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
           {loading
-            ? <Loader size={10} style={{ animation: "spin 1s linear infinite" }} />
+            ? <LoadingRing size={10} />
             : `${todos.filter(t => t.done).length}/${todos.length}`
           }
         </Box>
@@ -344,7 +345,6 @@ export function TodoListWidget({ todos: propTodos, onTodosChange }: TodoListWidg
       </Flex>
 
       <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
         .todo-row:hover .todo-edit-btn { color: rgba(255,255,255,0.35) !important; }
         .todo-row:hover .todo-delete-btn { color: rgba(255,255,255,0.18) !important; }

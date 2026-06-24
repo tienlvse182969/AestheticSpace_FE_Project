@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef, memo } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
-import { Search, Heart, Loader2, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Palette, ImagePlus, X, Image as ImageIcon } from "lucide-react";
+import { Search, Heart, AlertCircle, RefreshCw, ExternalLink, ShoppingBag, Palette, ImagePlus, X, Image as ImageIcon } from "lucide-react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
@@ -86,16 +87,7 @@ const PhotoCard = memo(function PhotoCard({ bg, isActive, isFav, isLoading, onSe
             zIndex: 10,
           }}
         >
-          <Box
-            style={{
-              width: 22,
-              height: 22,
-              borderRadius: "50%",
-              border: "2px solid rgba(255,255,255,0.2)",
-              borderTopColor: "rgba(255,255,255,0.9)",
-              animation: "spin 0.75s linear infinite",
-            }}
-          />
+          <LoadingRing size={22} />
           <Box
             style={{
               fontSize: "0.6rem",
@@ -106,7 +98,6 @@ const PhotoCard = memo(function PhotoCard({ bg, isActive, isFav, isLoading, onSe
           >
             Đang tải ảnh…
           </Box>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </Box>
       )}
 
@@ -752,7 +743,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
                       _hover={!loadingMore ? { background: "rgba(255,255,255,0.12)", color: "white" } : {}}
                     >
                       {loadingMore
-                        ? <><Loader2 size={12} className="animate-spin" /> {t("backgrounds.loadMore")}…</>
+                        ? <><LoadingRing size={12} /> {t("backgrounds.loadMore")}…</>
                         : t("backgrounds.loadMore")}
                     </Box>
                   </Flex>

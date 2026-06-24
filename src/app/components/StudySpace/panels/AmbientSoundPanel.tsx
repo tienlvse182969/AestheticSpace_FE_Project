@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import { Box, Flex, Text, Spinner } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Music2, AudioWaveform, Music, ShoppingBag, Waves, Palette, AlertCircle, RefreshCw } from "lucide-react";
@@ -358,7 +359,7 @@ export function AmbientSoundPanel({
   ) => {
     if (loading) return (
       <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
-        <Spinner size="sm" style={{ color: "#4ade80" }} />
+        <LoadingRing size={18} />
         <Text style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.35)", fontFamily: FONT }}>
           Loading sounds…
         </Text>

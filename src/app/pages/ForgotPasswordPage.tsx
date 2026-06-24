@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
-import { Mail, Loader2, ArrowLeft, CheckCircle } from "lucide-react";
+import { Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import { LoadingRing } from "../components/ui/LoadingRing";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -117,7 +118,6 @@ export function ForgotPasswordPage() {
                   </Box>
                 )}
 
-                <style>{`@keyframes auth-spin { to { transform: rotate(360deg); } }`}</style>
                 <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                   <Box mb={emailError ? 1 : 5} position="relative">
                     <Input
@@ -156,7 +156,7 @@ export function ForgotPasswordPage() {
                     }}
                   >
                     {isLoading
-                      ? <Loader2 size={18} style={{ animation: "auth-spin 0.75s linear infinite" }} />
+                      ? <LoadingRing size={18} />
                       : t("auth.sendResetLink")}
                   </button>
                 </form>

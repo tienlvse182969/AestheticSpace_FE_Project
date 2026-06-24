@@ -3,9 +3,10 @@ import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import {
-  LayoutDashboard, Check, Loader2, AlertCircle, RefreshCw,
+  LayoutDashboard, Check, AlertCircle, RefreshCw,
   Plus, Pencil, Trash2, X, Crown, Check as CheckIcon,
 } from "lucide-react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { roomService, type UserRoomRequest } from "../../../../services/room.service";
@@ -220,7 +221,6 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
         transition: "height 0.25s ease",
       }}
     >
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       <Box position="relative" style={{ padding: "18px 18px 14px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
         <PanelCloseBtn onClose={onClose} />
@@ -297,7 +297,7 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
         {/* Loading */}
         {loading && (
           <Flex justify="center" align="center" py={8} gap={2}>
-            <Loader2 size={16} style={{ color: "rgba(255,255,255,0.3)", animation: "spin 1s linear infinite" }} />
+            <LoadingRing size={16} />
             <Text style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
               {t("room.loading")}
             </Text>

@@ -7,6 +7,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip,
   ResponsiveContainer, Cell,
 } from "recharts";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn }   from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { pomodoroService, type PomodoroStatsDto } from "../../../../services/pomodoro.service";
@@ -145,16 +146,8 @@ export function PomodoroStatsPanel({ onClose }: Props) {
         </Flex>
 
         {loading ? (
-          /* Skeleton */
-          <Flex direction="column" gap={3}>
-            <Flex gap={3}>
-              {[1, 2].map(i => (
-                <Box key={i} flex={1} h="72px" borderRadius="10px"
-                  style={{ background: "rgba(255,255,255,0.06)", animation: `pulse 1.5s ease-in-out ${i * 0.15}s infinite` }} />
-              ))}
-            </Flex>
-            <Box h="280px" borderRadius="10px" mt={1}
-              style={{ background: "rgba(255,255,255,0.04)", animation: "pulse 1.5s ease-in-out infinite" }} />
+          <Flex h="300px" align="center" justify="center" direction="column" gap="12px">
+            <LoadingRing size={28} />
           </Flex>
         ) : (
           <>
@@ -253,9 +246,6 @@ export function PomodoroStatsPanel({ onClose }: Props) {
         )}
       </Box>
 
-      <style>{`
-        @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
-      `}</style>
     </MotionBox>
   );
 }
