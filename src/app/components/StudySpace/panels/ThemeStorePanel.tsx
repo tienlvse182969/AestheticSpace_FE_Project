@@ -208,7 +208,7 @@ function StoreCard({
               backdropFilter: "blur(6px)",
             }}
           >
-            {item.themeSource === "Official" ? "✦ Official" : "Community"}
+            {item.themeSource === "Official" ? `✦ ${t("themeStore.filterOfficial")}` : t("themeStore.filterCommunity")}
           </Box>
         )}
         {/* Trialing overlay */}
@@ -526,7 +526,7 @@ function ItemDetailView({
                   backdropFilter: "blur(6px)",
                 }}
               >
-                {item.themeSource === "Official" ? "✦ Official" : "Community"}
+                {item.themeSource === "Official" ? `✦ ${t("themeStore.filterOfficial")}` : t("themeStore.filterCommunity")}
               </Box>
             )}
             <Box
@@ -1963,7 +1963,10 @@ export function ThemeStorePanel({
   const [activeTab, setActiveTab]       = useState<TabValue>("all");
   const [searchQuery, setSearchQuery]   = useState("");
   const [sourceFilter, setSourceFilter] = useState<"all" | "Official" | "Community">("all");
-  const [wishlistIds, setWishlistIds]   = useState<Set<string>>(new Set());
+  const [wishlistIds, setWishlistIds]   = useState<Set<string>>(() => {
+    try { return new Set<string>(JSON.parse(localStorage.getItem("theme_wishlist") ?? "[]")); }
+    catch { return new Set<string>(); }
+  });
   const [selectedItem, setSelectedItem] = useState<StoreItem | null>(null);
   const [purchasing, setPurchasing]     = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
@@ -2086,6 +2089,7 @@ export function ThemeStorePanel({
       const next = new Set(prev);
       if (next.has(itemId)) next.delete(itemId);
       else next.add(itemId);
+      localStorage.setItem("theme_wishlist", JSON.stringify([...next]));
       return next;
     });
   }, []);
@@ -2643,7 +2647,7 @@ export function ThemeStorePanel({
                         transition: "all 0.15s",
                       }}
                     >
-                      {s === "all" ? "Tất cả" : s === "Official" ? "✦ Official" : "⬡ Community"}
+                      {s === "all" ? t("themeStore.filterAll") : s === "Official" ? `✦ ${t("themeStore.filterOfficial")}` : `⬡ ${t("themeStore.filterCommunity")}`}
                     </Box>
                   );
                 })}
