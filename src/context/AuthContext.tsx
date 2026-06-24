@@ -25,15 +25,13 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
-
 function toAuthUser(data: AuthData): AuthUser {
   return {
     userId: data.userId,
     name: data.username,
     email: data.email,
     role: data.role,
-    accountTier: PUBLIC_BETA ? "Premium" : data.accountTier,
+    accountTier: data.accountTier,
     avatarUrl: data.avatarUrl,
   };
 }
@@ -42,7 +40,6 @@ function loadStoredUser(): AuthUser | null {
   try {
     const raw = sessionStorage.getItem("authUser") ?? localStorage.getItem("authUser");
     const user: AuthUser | null = raw ? JSON.parse(raw) : null;
-    if (user && PUBLIC_BETA) user.accountTier = "Premium";
     return user;
   } catch {
     return null;

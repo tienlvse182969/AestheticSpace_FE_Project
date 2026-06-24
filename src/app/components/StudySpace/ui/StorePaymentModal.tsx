@@ -8,6 +8,8 @@ import { paymentService } from "../../../../services/payment.service";
 
 const MotionBox = motion.create(Box);
 
+const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
+
 interface Props {
   item: StoreItem;
   coinBalance: number;
@@ -282,6 +284,15 @@ export function StorePaymentModal({
               {/* ── VNPay ── */}
               {hasVnPayOption && (
                 <Box
+                  position="relative"
+                  style={PUBLIC_BETA ? { opacity: 0.35, filter: "blur(1.5px)", pointerEvents: "none" } : undefined}
+                >
+                {PUBLIC_BETA && (
+                  <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4 }}>
+                    Tính năng thanh toán đang phát triển
+                  </Text>
+                )}
+                <Box
                   as="button"
                   w="100%"
                   p="14px 16px"
@@ -357,6 +368,7 @@ export function StorePaymentModal({
                       </Text>
                     )}
                   </Flex>
+                </Box>
                 </Box>
               )}
             </Flex>

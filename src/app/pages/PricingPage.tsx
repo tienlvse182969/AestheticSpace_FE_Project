@@ -12,6 +12,8 @@ import { toast } from "sonner";
 const MotionBox = motion.create(Box);
 const MotionFlex = motion.create(Flex);
 
+const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
+
 const BG_IMG =
   "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZXN0aGV0aWMlMjBncmFkaWVudCUyMHB1cnBsZSUyMHBpbmt8ZW58MXx8fHwxNzQ4NzQyMjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080";
 
@@ -764,6 +766,15 @@ export function PricingPage() {
                     <Flex direction="column" gap={3}>
                       {/* VNPay */}
                       <Box
+                        position="relative"
+                        style={PUBLIC_BETA ? { opacity: 0.35, filter: "blur(1.5px)", pointerEvents: "none" } : undefined}
+                      >
+                      {PUBLIC_BETA && (
+                        <Text fontSize="xs" color="#6b7280" mb={1}>
+                          Tính năng thanh toán đang phát triển
+                        </Text>
+                      )}
+                      <Box
                         as="button"
                         w="full"
                         p={4}
@@ -821,6 +832,7 @@ export function PricingPage() {
                             </Box>
                           )}
                         </Flex>
+                      </Box>
                       </Box>
                     </Flex>
                   </Box>
