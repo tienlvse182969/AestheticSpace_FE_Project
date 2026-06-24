@@ -48,6 +48,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+
   const [hSide, setHSide] = useState<"right" | "left">("right");
   const [vSide, setVSide] = useState<"top" | "bottom">("top");
 
@@ -74,10 +75,13 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
   const c            = STICKY_COLORS.find(col => col.id === note.color) ?? STICKY_COLORS[0];
   const showControls = !locked && (hovered || focused || settingsOpen);
 
+  const [resizing, setResizing] = useState(false);
+
   const handleResizeStart = (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     e.nativeEvent.stopImmediatePropagation();
+    setResizing(true);
 
     const startX = e.clientX;
     const startY = e.clientY;
@@ -96,6 +100,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
     const onUp = () => {
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("pointerup", onUp);
+      setResizing(false);
       onUpdate({ w: latestW, h: latestH });
     };
 
@@ -114,7 +119,7 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.14, ease: [0.4, 0, 1, 1] } }}
       transition={{ type: "spring", stiffness: 500, damping: 24, mass: 0.9 }}
-      whileDrag={locked ? undefined : { scale: 1.02, zIndex: 60 }}
+      whileDrag={locked || resizing ? undefined : { scale: 1.02, zIndex: 60 }}
       onDragEnd={() => !locked && onUpdate({ x: Math.round(x.get()), y: Math.round(y.get()) })}
       style={{
         position: "fixed",
@@ -224,7 +229,8 @@ export function StickyNoteWidget({ note, onRemove, onUpdate, onSave, locked }: S
               width: 18,
               height: 18,
               cursor: "se-resize",
-              opacity: hovered || focused || settingsOpen ? 0.5 : 0,
+              opacity: focused || resizing ? 0.5 : 0,
+              pointerEvents: focused || resizing ? "auto" : "none",
               transition: "opacity 0.2s",
               display: "flex",
               alignItems: "center",
