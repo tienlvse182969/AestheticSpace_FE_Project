@@ -138,7 +138,7 @@
     "resetPasswordSuccess": "Mật khẩu đã được thay đổi! Bạn có thể đăng nhập với mật khẩu mới.",
     "resetPassword": "Đặt Lại Mật Khẩu",
     "errors": {
-      "identifierRequired": "Vui lòng nhập email hoặc tên người dùng.",
+      "identifierRequired": "Vui lòng nhập email.",
       "invalidEmail": "Email không đúng định dạng.",
       "usernameRequired": "Vui lòng nhập tên người dùng.",
       "usernameTooShort": "Tên người dùng phải có ít nhất 3 ký tự.",
@@ -367,10 +367,10 @@
     "title": "Chọn gói phù hợp",
     "titleHighlight": "với bạn",
     "subtitle": "Bắt đầu miễn phí, nâng cấp khi bạn sẵn sàng. Người dùng mới được dùng thử",
-    "subtitleBold": "gói Premium 3 ngày",
+    "subtitleBold": "gói Premium 5 ngày",
     "subtitleEnd": "hoàn toàn miễn phí.",
     "trialBanner": "Đăng ký tài khoản mới — dùng thử Premium",
-    "trialDays": "3 ngày miễn phí",
+    "trialDays": "5 ngày miễn phí",
     "trialEnd": ", không cần thẻ tín dụng",
     "freemium": {
       "currentBadge": "Gói hiện tại",
@@ -392,7 +392,7 @@
       "desc": "Mở khoá toàn bộ tiềm năng sáng tạo với kho nội dung độc quyền.",
       "priceAmount": "130.000₫",
       "priceUnit": "/ tháng",
-      "trialHighlight": "Dùng thử 3 ngày miễn phí cho tài khoản mới",
+      "trialHighlight": "Dùng thử 5 ngày miễn phí cho tài khoản mới",
       "currentPlanText": "Bạn đang sử dụng gói này",
       "currentPlanSubtext": "Tài khoản của bạn đã được kích hoạt Premium",
       "cta": "Nâng cấp Premium",
@@ -414,6 +414,16 @@
       "subtitle": "130.000₫ / tháng · Gia hạn tự động",
       "vnpayDesc": "Thẻ ATM, Visa, MasterCard, QR Code",
       "redirect": "Chuyển hướng"
+    },
+    "trial": {
+      "cta": "Dùng thử Premium 5 ngày miễn phí",
+      "loading": "Đang kích hoạt thử nghiệm...",
+      "success": "Đã kích hoạt 5 ngày dùng thử Premium!",
+      "error": "Không thể kích hoạt. Bạn có thể đã sử dụng trial trước đó.",
+      "confirmTitle": "Bắt đầu dùng thử miễn phí?",
+      "confirmSubtitle": "Bạn sẽ được trải nghiệm toàn bộ tính năng Premium trong 5 ngày — hoàn toàn miễn phí. Ưu đãi này chỉ được sử dụng một lần cho mỗi tài khoản.",
+      "confirmBtn": "Kích hoạt Trial",
+      "cancelBtn": "Hủy"
     }
   },
   "pomodoroStats": {

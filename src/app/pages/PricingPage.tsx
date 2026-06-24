@@ -7,6 +7,7 @@ import { useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import { paymentService } from "../../services/payment.service";
+import { toast } from "sonner";
 
 const MotionBox = motion.create(Box);
 const MotionFlex = motion.create(Flex);
@@ -14,13 +15,13 @@ const MotionFlex = motion.create(Flex);
 const BG_IMG =
   "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZXN0aGV0aWMlMjBncmFkaWVudCUyMHB1cnBsZSUyMHBpbmt8ZW58MXx8fHwxNzQ4NzQyMjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080";
 
-const PREMIUM_HIGHLIGHTS = [false, true, true, true, false, true, false, false];
+const PREMIUM_HIGHLIGHTS = [true, true, true, true, false, true, true, true];
 
 type PaymentMethod = "vnpay" | null;
 
 export function PricingPage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshAccountTier } = useAuth();
   const { t } = useTranslation();
 
   const freemiumFeatures = (t("pricing.freemium.features", { returnObjects: true }) as string[]);
@@ -30,6 +31,8 @@ export function PricingPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isStartingTrial, setIsStartingTrial] = useState(false);
+  const [showTrialModal, setShowTrialModal] = useState(false);
 
   const resetModal = () => {
     setShowPaymentModal(false);
@@ -51,6 +54,28 @@ export function PricingPage() {
       return;
     }
     setShowPaymentModal(true);
+  };
+
+  const handleStartTrial = () => {
+    if (!user) {
+      navigate("/signup");
+      return;
+    }
+    setShowTrialModal(true);
+  };
+
+  const handleConfirmTrial = async () => {
+    setIsStartingTrial(true);
+    try {
+      await paymentService.startTrial();
+      refreshAccountTier("Premium");
+      setShowTrialModal(false);
+      toast.success(t("pricing.trial.success"));
+    } catch {
+      toast.error(t("pricing.trial.error"));
+    } finally {
+      setIsStartingTrial(false);
+    }
   };
 
   const handleVnPay = async () => {
@@ -85,10 +110,12 @@ export function PricingPage() {
         <Box
           position="absolute"
           inset={0}
-          bgImage={`url(${BG_IMG})`}
-          bgSize="cover"
-          bgPosition="center"
-          opacity={0.18}
+          style={{
+            backgroundImage: `url(${BG_IMG})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            opacity: 0.18,
+          }}
         />
         <Box
           position="absolute"
@@ -144,56 +171,9 @@ export function PricingPage() {
               </Box>
             </Heading>
 
-            <Text
-              color="#6b7280"
-              maxW="xl"
-              mx="auto"
-              lineHeight="relaxed"
-              fontSize={{ base: "md", md: "lg" }}
-            >
-              {t("pricing.subtitle")}{" "}
-              <Box as="span" fontWeight="700" color="#1a3c34">
-                {t("pricing.subtitleBold")}
-              </Box>{" "}
-              {t("pricing.subtitleEnd")}
-            </Text>
           </MotionBox>
         </Box>
       </Box>
-
-      {/* Trial Banner */}
-      <MotionBox
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 } as any}
-        maxW="760px"
-        mx="auto"
-        px={{ base: 6, lg: 0 }}
-        mb={10}
-      >
-        <Flex
-          align="center"
-          gap={3}
-          px={6}
-          py={4}
-          borderRadius="2xl"
-          justify="center"
-          flexWrap="wrap"
-          style={{
-            background: "linear-gradient(135deg, #1a3c34 0%, #2a6b55 100%)",
-            boxShadow: "0 8px 32px rgba(26,60,52,0.25)",
-          }}
-        >
-          <Gift size={20} color="#7aab97" />
-          <Text color="white" fontWeight="700" fontSize="md" textAlign="center">
-            {t("pricing.trialBanner")}{" "}
-            <Box as="span" style={{ color: "#7aab97" }}>
-              {t("pricing.trialDays")}
-            </Box>
-            {t("pricing.trialEnd")}
-          </Text>
-        </Flex>
-      </MotionBox>
 
       {/* Pricing Cards */}
       <Box maxW="900px" mx="auto" px={{ base: 6, lg: 0 }} pb={24}>
@@ -325,8 +305,8 @@ export function PricingPage() {
             position="relative"
             overflow="hidden"
             style={{
-              background: "linear-gradient(160deg, #1a3c34 0%, #0f2420 100%)",
-              boxShadow: "0 16px 48px rgba(26,60,52,0.35)",
+              background: "linear-gradient(160deg, #2e2a0e 0%, #1e1a07 100%)",
+              boxShadow: "0 16px 48px rgba(251,191,36,0.18)",
             }}
           >
             {/* Popular / Current plan badge */}
@@ -339,15 +319,12 @@ export function PricingPage() {
               px={4}
               py={2}
               style={{
-                background:
-                  user?.accountTier === "Premium"
-                    ? "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)"
-                    : "linear-gradient(90deg, #7aab97 0%, #4e7c6a 100%)",
+                background: "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)",
                 borderBottomLeftRadius: "18px",
                 borderTopRightRadius: "24px",
                 fontSize: "0.72rem",
                 fontWeight: 700,
-                color: user?.accountTier === "Premium" ? "#1a3c34" : "white",
+                color: "#1c1a08",
                 letterSpacing: "0.06em",
               }}
             >
@@ -370,7 +347,7 @@ export function PricingPage() {
               h="220px"
               borderRadius="full"
               style={{
-                background: "rgba(122,171,151,0.07)",
+                background: "rgba(251,191,36,0.06)",
                 pointerEvents: "none",
               }}
             />
@@ -383,9 +360,9 @@ export function PricingPage() {
                 display="flex"
                 alignItems="center"
                 justifyContent="center"
-                style={{ background: "rgba(122,171,151,0.2)" }}
+                style={{ background: "rgba(251,191,36,0.15)" }}
               >
-                <Crown size={18} color="#7aab97" />
+                <Crown size={18} color="#fbbf24" />
               </Box>
               <Text fontWeight="700" fontSize="lg" color="white">
                 Premium
@@ -426,12 +403,12 @@ export function PricingPage() {
               py={2}
               borderRadius="xl"
               style={{
-                background: "rgba(122,171,151,0.15)",
-                border: "1px solid rgba(122,171,151,0.25)",
+                background: "rgba(251,191,36,0.1)",
+                border: "1px solid rgba(251,191,36,0.25)",
               }}
             >
-              <Gift size={14} color="#7aab97" />
-              <Text fontSize="xs" fontWeight="600" color="#7aab97">
+              <Gift size={14} color="#fbbf24" />
+              <Text fontSize="xs" fontWeight="600" color="#fbbf24">
                 {t("pricing.premium.trialHighlight")}
               </Text>
             </Flex>
@@ -452,13 +429,13 @@ export function PricingPage() {
                       justifyContent="center"
                       style={{
                         background: highlight
-                          ? "rgba(122,171,151,0.25)"
+                          ? "rgba(251,191,36,0.2)"
                           : "rgba(255,255,255,0.1)",
                       }}
                     >
                       <Check
                         size={11}
-                        color={highlight ? "#7aab97" : "rgba(255,255,255,0.6)"}
+                        color={highlight ? "#fbbf24" : "rgba(255,255,255,0.6)"}
                         strokeWidth={3}
                       />
                     </Box>
@@ -480,6 +457,39 @@ export function PricingPage() {
             </Flex>
 
             {/* Premium CTA — conditional on accountTier */}
+            {user && user.accountTier !== "Premium" && (
+              <Box
+                as="button"
+                w="full"
+                py={3}
+                borderRadius="xl"
+                color="rgba(255,255,255,0.85)"
+                fontWeight="700"
+                fontSize="sm"
+                cursor={isStartingTrial ? "not-allowed" : "pointer"}
+                transition="all 0.2s"
+                mb={3}
+                onClick={handleStartTrial}
+                _disabled={{ opacity: 0.7 }}
+                style={{
+                  background: "rgba(251,191,36,0.12)",
+                  border: "1.5px solid rgba(251,191,36,0.35)",
+                }}
+                _hover={isStartingTrial ? {} : { background: "rgba(251,191,36,0.2)" }}
+              >
+                {isStartingTrial ? (
+                  <Flex justify="center" align="center" gap={2}>
+                    <LoadingRing size={16} color="rgba(251,191,36,0.9)" trackColor="rgba(251,191,36,0.2)" />
+                    <Text fontSize="sm" color="rgba(255,255,255,0.8)">{t("pricing.trial.loading")}</Text>
+                  </Flex>
+                ) : (
+                  <Flex justify="center" align="center" gap={2}>
+                    <Gift size={15} color="#fbbf24" />
+                    {t("pricing.trial.cta")}
+                  </Flex>
+                )}
+              </Box>
+            )}
             {user?.accountTier === "Premium" ? (
               <Flex direction="column" gap={2}>
                 <Flex
@@ -513,16 +523,15 @@ export function PricingPage() {
                 w="full"
                 py={3}
                 borderRadius="xl"
-                color="#1a3c34"
+                color="#1c1a08"
                 fontWeight="700"
                 fontSize="sm"
                 cursor="pointer"
                 transition="all 0.2s"
                 onClick={handleUpgradeClick}
                 style={{
-                  background:
-                    "linear-gradient(90deg, #7aab97 0%, #5a9982 100%)",
-                  boxShadow: "0 4px 16px rgba(122,171,151,0.4)",
+                  background: "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)",
+                  boxShadow: "0 4px 16px rgba(251,191,36,0.35)",
                 }}
                 _hover={{ transform: "scale(1.02)" }}
                 _active={{ transform: "scale(0.98)" }}
@@ -546,6 +555,146 @@ export function PricingPage() {
           </Text>
         </MotionBox>
       </Box>
+
+      {/* Trial Confirmation Modal */}
+      <AnimatePresence>
+        {showTrialModal && (
+          <Box
+            position="fixed"
+            inset={0}
+            zIndex={200}
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            px={4}
+            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+            onClick={(e: React.MouseEvent) => {
+              if (e.target === e.currentTarget && !isStartingTrial) setShowTrialModal(false);
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 16 }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              style={{ width: "100%", maxWidth: "420px" }}
+            >
+              <Box
+                borderRadius="3xl"
+                p={8}
+                position="relative"
+                style={{
+                  background: "linear-gradient(160deg, #1c1a08 0%, #100e03 100%)",
+                  boxShadow: "0 24px 64px rgba(0,0,0,0.4)",
+                  border: "1px solid rgba(251,191,36,0.15)",
+                }}
+              >
+                {/* Close */}
+                {!isStartingTrial && (
+                  <Box
+                    as="button"
+                    position="absolute"
+                    top={5}
+                    right={5}
+                    w="32px"
+                    h="32px"
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    bg="transparent"
+                    border="none"
+                    cursor="pointer"
+                    onClick={() => setShowTrialModal(false)}
+                    style={{ color: "rgba(255,255,255,0.35)" }}
+                    _hover={{ color: "rgba(255,255,255,0.7)" }}
+                  >
+                    <X size={18} />
+                  </Box>
+                )}
+
+                {/* Icon */}
+                <Flex justify="center" mb={5}>
+                  <Flex
+                    align="center"
+                    justify="center"
+                    borderRadius="full"
+                    style={{
+                      width: 56,
+                      height: 56,
+                      background: "rgba(251,191,36,0.12)",
+                      border: "1px solid rgba(251,191,36,0.3)",
+                    }}
+                  >
+                    <Gift size={24} color="#fbbf24" />
+                  </Flex>
+                </Flex>
+
+                <Text fontWeight="800" fontSize="lg" color="white" textAlign="center" mb={2}>
+                  {t("pricing.trial.confirmTitle")}
+                </Text>
+                <Text fontSize="sm" color="rgba(255,255,255,0.5)" textAlign="center" mb={7} lineHeight="relaxed">
+                  {t("pricing.trial.confirmSubtitle")}
+                </Text>
+
+                <Flex direction="column" gap={3}>
+                  <Box
+                    as="button"
+                    w="full"
+                    py={3}
+                    borderRadius="xl"
+                    border="none"
+                    cursor={isStartingTrial ? "not-allowed" : "pointer"}
+                    transition="all 0.2s"
+                    onClick={handleConfirmTrial}
+                    style={{
+                      background: "linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%)",
+                      boxShadow: "0 4px 16px rgba(251,191,36,0.35)",
+                      color: "#1c1a08",
+                      fontWeight: 700,
+                      fontSize: "0.875rem",
+                      opacity: isStartingTrial ? 0.7 : 1,
+                    }}
+                    _hover={isStartingTrial ? {} : { filter: "brightness(1.08)" }}
+                  >
+                    {isStartingTrial ? (
+                      <Flex justify="center" align="center" gap={2}>
+                        <LoadingRing size={15} color="#1c1a08" trackColor="rgba(28,26,8,0.25)" />
+                        {t("pricing.trial.loading")}
+                      </Flex>
+                    ) : (
+                      <Flex justify="center" align="center" gap={2}>
+                        <Gift size={15} />
+                        {t("pricing.trial.confirmBtn")}
+                      </Flex>
+                    )}
+                  </Box>
+
+                  <Box
+                    as="button"
+                    w="full"
+                    py={3}
+                    borderRadius="xl"
+                    border="none"
+                    cursor={isStartingTrial ? "not-allowed" : "pointer"}
+                    transition="all 0.2s"
+                    onClick={() => !isStartingTrial && setShowTrialModal(false)}
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      color: "rgba(255,255,255,0.5)",
+                      fontWeight: 600,
+                      fontSize: "0.875rem",
+                    }}
+                    _hover={isStartingTrial ? {} : { background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.75)" }}
+                  >
+                    {t("pricing.trial.cancelBtn")}
+                  </Box>
+                </Flex>
+              </Box>
+            </motion.div>
+          </Box>
+        )}
+      </AnimatePresence>
 
       {/* Payment Modal */}
       <AnimatePresence>

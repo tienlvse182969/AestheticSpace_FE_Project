@@ -3,6 +3,7 @@ import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
+import { LoadingRing } from "@/app/components/ui/LoadingRing";
 
 const MotionBox = motion.create(Box);
 
@@ -125,7 +126,12 @@ export function FirstRoomModal({ onConfirm }: FirstRoomModalProps) {
             opacity: loading ? 0.6 : 1,
           }}
         >
-          {loading ? "…" : t("firstRoom.confirm")}
+          {loading ? (
+            <Flex align="center" justify="center" gap={2}>
+              <LoadingRing size={14} color="#7ecfb0" trackColor="rgba(126,207,176,0.2)" />
+              {t("firstRoom.confirm")}
+            </Flex>
+          ) : t("firstRoom.confirm")}
         </Box>
       </MotionBox>
     </Box>
