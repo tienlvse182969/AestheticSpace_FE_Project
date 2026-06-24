@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { Flame, RotateCcw, Play, Pause, Zap } from "lucide-react";
+import { Flame, RotateCcw, Play, Pause, Zap, PictureInPicture2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../../../context/AuthContext";
@@ -8,6 +9,14 @@ import { pomodoroService } from "../../../../../services/pomodoro.service";
 import type { PomodoroSounds } from "../../../../../types/workspace.types";
 
 const MotionBox = motion.create(Box);
+
+declare global {
+  interface Window {
+    documentPictureInPicture?: {
+      requestWindow(options?: { width?: number; height?: number }): Promise<Window & typeof globalThis>;
+    };
+  }
+}
 
 const DEFAULT_SOUNDS: PomodoroSounds = {
   startFocus: "/assets/PomodoroChime/StartPomodoroChime.mp3",
@@ -49,7 +58,10 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
   const [session,          setSession]          = useState(1);
   const [dialog,           setDialog]           = useState<Dialog>(null);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const startingRef = useRef(false); // guard against concurrent start calls
+  const startingRef     = useRef(false); // guard against concurrent start calls
+  const [pipOpen, setPipOpen]       = useState(false);
+  const pipWindowRef    = useRef<(Window & typeof globalThis) | null>(null);
+  const pipContainerRef = useRef<HTMLDivElement | null>(null);
 
   const isBreak = phase === "break";
   const total   = isBreak ? breakTotal : focusTotal;
@@ -72,6 +84,17 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
     const id = setInterval(() => setSeconds((s) => (s > 0 ? s - 1 : 0)), 1000);
     return () => clearInterval(id);
   }, [running]);
+
+  /* ── Browser tab title ── */
+  useEffect(() => {
+    if (running) {
+      const label = isBreak ? `☕ ${t("pomodoroWidget.breakPhase")}` : `⏱ ${t("pomodoroWidget.focusPhase")}`;
+      document.title = `${mins}:${secs} · ${label} — Aesthetic Space`;
+    } else {
+      document.title = "Aesthetic Space";
+    }
+    return () => { document.title = "Aesthetic Space"; };
+  }, [running, seconds, phase]);
 
   /* ── Browser notification helper ── */
   const notify = (title: string, body: string) => {
@@ -105,7 +128,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
 
   /* ── Helpers ── */
   const startFocus = async () => {
-    if (startingRef.current) return; // prevent double-click / concurrent calls
+    if (startingRef.current) return;
     startingRef.current = true;
 
     setPhase("focus");
@@ -185,22 +208,76 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
     }
   };
 
+  /* ── Document Picture-in-Picture ── */
+  const openPiP = async () => {
+    if (!window.documentPictureInPicture) return;
+    if (pipWindowRef.current) { pipWindowRef.current.close(); return; }
+    try {
+      const pip = await window.documentPictureInPicture.requestWindow({ width: 280, height: 418 });
+      [...document.styleSheets].forEach((sheet) => {
+        try {
+          const cssText = [...sheet.cssRules].map((r) => r.cssText).join("");
+          const s = pip.document.createElement("style");
+          s.textContent = cssText;
+          pip.document.head.appendChild(s);
+        } catch {
+          if (sheet.href) {
+            const l = pip.document.createElement("link");
+            l.rel = "stylesheet"; l.href = sheet.href;
+            pip.document.head.appendChild(l);
+          }
+        }
+      });
+      const rootStyle = document.documentElement.getAttribute("style") ?? "";
+      pip.document.documentElement.setAttribute("style", rootStyle);
+      pip.document.body.style.cssText =
+        "margin:0;padding:8px;background:#0a0f14;overflow:hidden;box-sizing:border-box;";
+      const container = pip.document.createElement("div");
+      pip.document.body.appendChild(container);
+      pipContainerRef.current = container as HTMLDivElement;
+      pipWindowRef.current = pip;
+      setPipOpen(true);
+      pip.addEventListener("pagehide", () => {
+        pipWindowRef.current = null;
+        pipContainerRef.current = null;
+        setPipOpen(false);
+      });
+    } catch { /* user dismissed or not supported */ }
+  };
+
+  /* ── Close PiP when timer goes idle ── */
+  useEffect(() => {
+    if (phase === "idle") pipWindowRef.current?.close();
+  }, [phase]);
+
+  /* ── Close PiP on widget unmount ── */
+  useEffect(() => () => { pipWindowRef.current?.close(); }, []);
+
   const gradId = isBreak ? "timerGradBreak" : "timerGradFocus";
 
-  return (
-    <Box
-      position="relative"
-      style={{
-        background: "rgba(var(--widget-bg-rgb), 0.78)",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        border: "1px solid rgba(var(--accent-rgb), 0.18)",
-        borderRadius: "16px",
-        padding: "20px 22px",
-        overflow: "hidden",
-        minWidth: 224,
-      }}
-    >
+  const containerStyle = {
+    background: "rgba(var(--widget-bg-rgb), 0.78)",
+    backdropFilter: "blur(18px)",
+    WebkitBackdropFilter: "blur(18px)",
+    border: "1px solid rgba(var(--accent-rgb), 0.18)",
+    borderRadius: "16px",
+    padding: "20px 22px",
+    overflow: "hidden",
+    minWidth: 224,
+  };
+
+  const renderContent = () => (
+    <>
+      {/* ── PiP toggle ── */}
+      {"documentPictureInPicture" in window && (
+        <Box as="button" position="absolute" top="10px" right="12px"
+          onClick={openPiP}
+          title={pipOpen ? "Close Picture in Picture" : "Open Picture in Picture"}
+          style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, opacity: pipOpen ? 1 : 0.45, transition: "opacity 0.2s", lineHeight: 0 }}>
+          <PictureInPicture2 size={14} color="rgba(var(--accent-light-rgb), 0.9)" />
+        </Box>
+      )}
+
       {/* ── Header ── */}
       <Flex align="center" gap={2} justify="center" mb={3}>
         <Flame size={12} color={isBreak ? "#38bdf8" : "#f97316"} />
@@ -305,7 +382,6 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
           ? t("pomodoroWidget.sessionsDone", { done: session - 1, total: totalSessions, count: session - 1 })
           : t("pomodoroWidget.noSessionsDone", { total: totalSessions })}
       </Text>
-
 
       {/* ── End-of-session dialog overlay ── */}
       <AnimatePresence>
@@ -430,6 +506,21 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
       <style>{`
         @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.8; } }
       `}</style>
-    </Box>
+    </>
+  );
+
+  return (
+    <>
+      <Box position="relative" style={containerStyle}>
+        {renderContent()}
+      </Box>
+
+      {pipOpen && pipContainerRef.current && ReactDOM.createPortal(
+        <Box position="relative" style={containerStyle}>
+          {renderContent()}
+        </Box>,
+        pipContainerRef.current
+      )}
+    </>
   );
 }
