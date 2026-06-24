@@ -26,7 +26,7 @@ export const router = createBrowserRouter([
       { path: "pricing",          Component: PricingPage },
       { path: "payment/result",   Component: PaymentResultPage },
       {
-        element: <ProtectedRoute forbiddenRole="Admin" forbiddenRedirect="/admin" allowGuest />,
+        element: <ProtectedRoute forbiddenRole="Admin" forbiddenRedirect="/admin" />,
         children: [
           { path: "space", Component: StudySpacePage },
         ],

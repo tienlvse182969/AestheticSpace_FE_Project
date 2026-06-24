@@ -3,8 +3,9 @@ import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Palette, Image as ImageIcon, Music, Sparkles,
-  Play, Pause, Loader2, CheckCircle, Upload, X, Plus, Coins,
+  Play, Pause, CheckCircle, Upload, X, Plus, Coins,
 } from "lucide-react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import {
@@ -758,7 +759,7 @@ export function CreateThemePanel({ onClose, initialTheme }: Props) {
             }}
           >
             {isSubmitting ? (
-              <><Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />{uploadLabel ?? "Đang gửi…"}</>
+              <><LoadingRing size={14} />{uploadLabel ?? "Đang gửi…"}</>
             ) : submitSuccess ? (
               <><CheckCircle size={14} />{isEditing ? "Đã cập nhật!" : "Đã gửi duyệt!"}</>
             ) : (
@@ -787,7 +788,6 @@ export function CreateThemePanel({ onClose, initialTheme }: Props) {
       </Box>
 
       <style>{`
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .theme-desc::placeholder { color: rgba(255,255,255,0.18); }
         .theme-desc:focus { border-color: rgba(255,255,255,0.24) !important; }
         .theme-desc::-webkit-scrollbar { display: none; }

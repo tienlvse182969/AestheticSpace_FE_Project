@@ -6,12 +6,13 @@ import { AuthProvider } from "../context/AuthContext";
 export function Root() {
   const location = useLocation();
   const isFullscreen = ["/login", "/signup", "/forgot-password", "/reset-password", "/space", "/admin"].includes(location.pathname);
+  const noFooter = isFullscreen || location.pathname === "/about";
 
   return (
     <AuthProvider>
       {!isFullscreen && <Navbar />}
       <Outlet />
-      {!isFullscreen && <Footer />}
+      {!noFooter && <Footer />}
     </AuthProvider>
   );
 }

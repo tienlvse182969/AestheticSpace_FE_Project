@@ -138,7 +138,7 @@
     "resetPasswordSuccess": "Password changed! You can now log in with your new password.",
     "resetPassword": "Reset Password",
     "errors": {
-      "identifierRequired": "Please enter your email or username.",
+      "identifierRequired": "Please enter your email.",
       "invalidEmail": "That doesn't look like a valid email.",
       "usernameRequired": "Username is required.",
       "usernameTooShort": "Username must be at least 3 characters.",
@@ -161,6 +161,7 @@
     "addSticker": "Add Sticker",
     "changeAmbient": "Change Ambient Sound",
     "changeEffect": "Change Visual Effect",
+    "changeRoom": "Change Room",
     "lockLayout": "Lock Layout",
     "unlockLayout": "Unlock Layout"
   },
@@ -244,7 +245,9 @@
     "tabDefault": "Default",
     "tabPurchased": "Purchased",
     "noPurchased": "No purchased sounds yet",
-    "noPurchasedHint": "Visit the store to find ambient sounds"
+    "noPurchasedHint": "Visit the store to find ambient sounds",
+    "loading": "Loading sounds…",
+    "retry": "Retry"
   },
   "backgrounds": {
     "title": "BACKGROUNDS",
@@ -343,13 +346,18 @@
     "tabDefault": "Default",
     "tabPurchased": "Purchased",
     "noPurchased": "No purchased stickers yet",
-    "noPurchasedHint": "Visit the store to find stickers"
+    "noPurchasedHint": "Visit the store to find stickers",
+    "loading": "Loading…",
+    "noStickers": "No stickers found",
+    "retry": "Retry"
   },
   "about": {
     "label": "About",
     "appName": "Aēsthetic Space",
     "desc": "A distraction-free environment crafted to help you focus, stay inspired, and make every study session feel effortless.",
     "contributors": "CONTRIBUTORS",
+    "roleThemeCreator": "Official Theme Creator",
+    "roleDeveloper": "Developer",
     "copyright": "© AESTHETIC GROUP",
     "version": "Version Dev",
     "openSpace": "Open Study Space →"
@@ -359,10 +367,10 @@
     "title": "Choose the plan",
     "titleHighlight": "that fits you",
     "subtitle": "Start free, upgrade when you're ready. New users get a",
-    "subtitleBold": "3-day Premium trial",
+    "subtitleBold": "5-day Premium trial",
     "subtitleEnd": "completely free.",
     "trialBanner": "Sign up now — try Premium free for",
-    "trialDays": "3 days",
+    "trialDays": "5 days",
     "trialEnd": ", no credit card required",
     "freemium": {
       "currentBadge": "Current plan",
@@ -384,7 +392,7 @@
       "desc": "Unlock your full creative potential with exclusive content.",
       "priceAmount": "130.000₫",
       "priceUnit": "/ month",
-      "trialHighlight": "3-day free trial for new accounts",
+      "trialHighlight": "5-day free trial for new accounts",
       "currentPlanText": "You are on this plan",
       "currentPlanSubtext": "Your account has Premium activated",
       "cta": "Upgrade to Premium",
@@ -406,6 +414,16 @@
       "subtitle": "130.000₫ / month · Auto-renews",
       "vnpayDesc": "ATM, Visa, MasterCard, QR Code",
       "redirect": "Redirect"
+    },
+    "trial": {
+      "cta": "Start 5-day free trial",
+      "loading": "Activating trial...",
+      "success": "Your 5-day Premium trial has been activated!",
+      "error": "Unable to start trial. You may have already used it.",
+      "confirmTitle": "Start your free trial?",
+      "confirmSubtitle": "You'll get full Premium access for 5 days — completely free. This offer can only be used once per account.",
+      "confirmBtn": "Activate Trial",
+      "cancelBtn": "Cancel"
     }
   },
   "pomodoroStats": {
@@ -513,7 +531,7 @@
   "colors": {
     "vanilla": "Vanilla",
     "mint": "Mint",
-    "blossom": "Blossom",
+    "blossom": "Rose",
     "lavender": "Lavender",
     "sky": "Sky"
   },
@@ -601,7 +619,7 @@
     "save": "Save"
   },
   "effects": {
-    "title": "EFFECTS",
+    "title": "Effects",
     "rain": "Rain",
     "snow": "Snow",
     "active": "active",
@@ -774,7 +792,8 @@
       "cancel": "Cancel",
       "delete": "Delete",
       "deleteConfirm": "Delete this asset?",
-      "deleteNote": "This action cannot be undone."
+      "deleteNote": "This action cannot be undone.",
+      "detailTitle": "Asset Detail"
     }
   }
 }

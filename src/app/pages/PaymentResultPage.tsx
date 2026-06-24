@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Box, Flex, Text } from "@chakra-ui/react";
-import { Crown, XCircle, Loader } from "lucide-react";
+import { Crown, XCircle } from "lucide-react";
+import { LoadingRing } from "../components/ui/LoadingRing";
 import { useNavigate, useSearchParams } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 import { paymentService } from "../../services/payment.service";
@@ -78,20 +79,13 @@ export function PaymentResultPage() {
       >
         {status === "loading" && (
           <Flex direction="column" align="center" gap={5}>
-            <Box
-              style={{
-                animation: "spin 1s linear infinite",
-              }}
-            >
-              <Loader size={48} color="#4e7c6a" />
-            </Box>
+            <LoadingRing size={48} color="rgba(78,124,106,0.9)" trackColor="rgba(78,124,106,0.18)" />
             <Text fontSize="lg" fontWeight="600" color="#1a3c34">
               Đang xác nhận thanh toán của bạn...
             </Text>
             <Text fontSize="sm" color="#6b7280">
               Vui lòng không đóng trang này
             </Text>
-            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
           </Flex>
         )}
 

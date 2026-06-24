@@ -5,9 +5,10 @@ import {
   ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
   Sticker, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
   Crown, Search, X, Heart, Package, Play, Pause, PlusCircle,
-  Loader2, Trash2, AlertCircle, Pencil, CheckCircle, Music,
+  Trash2, AlertCircle, Pencil, CheckCircle, Music,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { PremiumGateModal } from "../ui/PremiumGateModal";
 import { StorePaymentModal } from "../ui/StorePaymentModal";
@@ -207,7 +208,7 @@ function StoreCard({
               backdropFilter: "blur(6px)",
             }}
           >
-            {item.themeSource === "Official" ? "✦ Official" : "Community"}
+            {item.themeSource === "Official" ? `✦ ${t("themeStore.filterOfficial")}` : t("themeStore.filterCommunity")}
           </Box>
         )}
         {/* Trialing overlay */}
@@ -525,7 +526,7 @@ function ItemDetailView({
                   backdropFilter: "blur(6px)",
                 }}
               >
-                {item.themeSource === "Official" ? "✦ Official" : "Community"}
+                {item.themeSource === "Official" ? `✦ ${t("themeStore.filterOfficial")}` : t("themeStore.filterCommunity")}
               </Box>
             )}
             <Box
@@ -1541,7 +1542,7 @@ function MyThemeCard({
               _hover={{ background: "rgba(248,113,113,0.15) !important", color: "rgba(248,113,113,0.8) !important" }}
               title="Rút lại theme"
             >
-              {withdrawing ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Trash2 size={12} />}
+              {withdrawing ? <LoadingRing size={12} /> : <Trash2 size={12} />}
             </Box>
           </Flex>
         )}
@@ -1923,7 +1924,7 @@ function MyThemeDetailView({
                   }}
                   _hover={!withdrawing ? { background: "rgba(248,113,113,0.15) !important" } as any : undefined}>
                   {withdrawing
-                    ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} />
+                    ? <LoadingRing size={12} />
                     : <Trash2 size={12} />}
                   {withdrawing ? "Đang rút…" : "Rút lại"}
                 </Box>
@@ -1962,7 +1963,10 @@ export function ThemeStorePanel({
   const [activeTab, setActiveTab]       = useState<TabValue>("all");
   const [searchQuery, setSearchQuery]   = useState("");
   const [sourceFilter, setSourceFilter] = useState<"all" | "Official" | "Community">("all");
-  const [wishlistIds, setWishlistIds]   = useState<Set<string>>(new Set());
+  const [wishlistIds, setWishlistIds]   = useState<Set<string>>(() => {
+    try { return new Set<string>(JSON.parse(localStorage.getItem("theme_wishlist") ?? "[]")); }
+    catch { return new Set<string>(); }
+  });
   const [selectedItem, setSelectedItem] = useState<StoreItem | null>(null);
   const [purchasing, setPurchasing]     = useState(false);
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
@@ -2085,6 +2089,7 @@ export function ThemeStorePanel({
       const next = new Set(prev);
       if (next.has(itemId)) next.delete(itemId);
       else next.add(itemId);
+      localStorage.setItem("theme_wishlist", JSON.stringify([...next]));
       return next;
     });
   }, []);
@@ -2543,7 +2548,7 @@ export function ThemeStorePanel({
                 {/* My themes list */}
                 {myThemesLoading ? (
                   <Flex h="100px" align="center" justify="center" gap="8px">
-                    <Loader2 size={14} color="rgba(255,255,255,0.25)" style={{ animation: "spin 1s linear infinite" }} />
+                    <LoadingRing size={14} />
                     <Text style={{ fontSize: "0.75rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.28)" }}>
                       Đang tải…
                     </Text>
@@ -2642,7 +2647,7 @@ export function ThemeStorePanel({
                         transition: "all 0.15s",
                       }}
                     >
-                      {s === "all" ? "Tất cả" : s === "Official" ? "✦ Official" : "⬡ Community"}
+                      {s === "all" ? t("themeStore.filterAll") : s === "Official" ? `✦ ${t("themeStore.filterOfficial")}` : `⬡ ${t("themeStore.filterCommunity")}`}
                     </Box>
                   );
                 })}
@@ -2651,7 +2656,8 @@ export function ThemeStorePanel({
 
             {activeTab !== "my-themes" && (
               loading ? (
-                <Flex h="200px" align="center" justify="center">
+                <Flex h="200px" align="center" justify="center" direction="column" gap="12px">
+                  <LoadingRing size={28} />
                   <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.3)", letterSpacing: "0.04em" }}>
                     {t("themeStore.loading")}
                   </Text>

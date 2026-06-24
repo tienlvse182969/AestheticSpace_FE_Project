@@ -3,9 +3,10 @@ import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import {
-  LayoutDashboard, Check, Loader2, AlertCircle, RefreshCw,
+  Layers, Check, AlertCircle, RefreshCw,
   Plus, Pencil, Trash2, X, Crown, Check as CheckIcon,
 } from "lucide-react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { roomService, type UserRoomRequest } from "../../../../services/room.service";
@@ -220,7 +221,6 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
         transition: "height 0.25s ease",
       }}
     >
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
 
       <Box position="relative" style={{ padding: "18px 18px 14px", display: "flex", flexDirection: "column", flex: 1, minHeight: 0, overflow: "hidden" }}>
         <PanelCloseBtn onClose={onClose} />
@@ -228,7 +228,7 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
         {/* Header */}
         <Flex align="center" justify="space-between" mb={3} pr="36px">
           <Flex align="center" gap={2}>
-            <LayoutDashboard size={15} style={{ color: "rgba(255,255,255,0.5)" }} />
+            <Layers size={15} style={{ color: "rgba(255,255,255,0.5)" }} />
             <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
               {t("space.rooms").toUpperCase()}
             </Text>
@@ -297,7 +297,7 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
         {/* Loading */}
         {loading && (
           <Flex justify="center" align="center" py={8} gap={2}>
-            <Loader2 size={16} style={{ color: "rgba(255,255,255,0.3)", animation: "spin 1s linear infinite" }} />
+            <LoadingRing size={16} />
             <Text style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
               {t("room.loading")}
             </Text>
@@ -407,14 +407,16 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
                           title={t("room.editTitle")}>
                           <Pencil size={13} />
                         </Box>
-                        <Box as="button"
-                          onClick={e => { e.stopPropagation(); setDeleteId(room.id); }}
-                          display="flex" alignItems="center" justifyContent="center"
-                          w="28px" h="28px" borderRadius="8px" border="none" cursor="pointer"
-                          style={{ background: "rgba(248,113,113,0.25)", color: "#f87171" }}
-                          title={t("room.deleteTitle")}>
-                          <Trash2 size={13} />
-                        </Box>
+                        {rooms.length > 1 && (
+                          <Box as="button"
+                            onClick={e => { e.stopPropagation(); setDeleteId(room.id); }}
+                            display="flex" alignItems="center" justifyContent="center"
+                            w="28px" h="28px" borderRadius="8px" border="none" cursor="pointer"
+                            style={{ background: "rgba(248,113,113,0.25)", color: "#f87171" }}
+                            title={t("room.deleteTitle")}>
+                            <Trash2 size={13} />
+                          </Box>
+                        )}
                       </MotionBox>
                     )}
                   </AnimatePresence>
@@ -441,8 +443,9 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
                           </Box>
                           <Box as="button" onClick={e => { e.stopPropagation(); handleDelete(); }}
                             px={2} py="4px" borderRadius="6px" border="none" cursor="pointer"
+                            display="flex" alignItems="center" gap="5px"
                             style={{ background: "rgba(248,113,113,0.3)", color: "#f87171", fontSize: "0.65rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: deleteLoading ? 0.6 : 1 }}>
-                            {deleteLoading ? "…" : t("room.delete")}
+                            {deleteLoading ? <LoadingRing size={11} /> : t("room.delete")}
                           </Box>
                         </Flex>
                       </MotionBox>
@@ -518,12 +521,13 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
                 </Box>
                 <Box as="button" onClick={handleSave}
                   px={4} py="6px" borderRadius="8px" border="none" cursor="pointer"
+                  display="flex" alignItems="center" gap="6px"
                   style={{
                     background: "rgba(78,124,106,0.25)", border: "1px solid rgba(78,124,106,0.4)",
                     color: "#7ecfb0", fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600,
                     opacity: formLoading ? 0.6 : 1,
                   }}>
-                  {formLoading ? "…" : t("room.save")}
+                  {formLoading ? <><LoadingRing size={12} />{t("room.save")}</> : t("room.save")}
                 </Box>
               </Flex>
             </MotionBox>

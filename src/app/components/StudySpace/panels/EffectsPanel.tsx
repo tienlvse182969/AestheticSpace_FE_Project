@@ -123,7 +123,7 @@ export function EffectsPanel({ activeEffect, onSelect, onClose }: EffectsPanelPr
         {/* Header */}
         <Flex align="center" gap={2} mb={4}>
           <Wand2 size={15} style={{ color: "rgba(255,255,255,0.5)" }} />
-          <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+          <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif", textTransform: "uppercase" }}>
             {t("effects.title")}
           </Text>
         </Flex>

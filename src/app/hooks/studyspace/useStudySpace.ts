@@ -121,6 +121,8 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   }, [applyLayout]);
 
   /* ── Room select: switch room + restore saved layout ── */
+  const saveNowRef = useRef<() => void>(() => {});
+
   const handleRoomSelect = useCallback(async (id: string, bg: BackgroundItem) => {
     setRoomId(id);
     setRoomName(bg.label);
@@ -138,11 +140,12 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     if (!user) { applyLayout(emptyLayout); return; }
     try {
       const config = await workspaceService.getByRoomId(id);
-      if (!config?.jsonConfig) { applyLayout(emptyLayout); return; }
+      if (!config?.jsonConfig) { applyLayout(emptyLayout); saveNowRef.current(); return; }
       const layout: LayoutConfig = JSON.parse(config.jsonConfig);
       if (layout.currentBg) setCurrentBg(layout.currentBg);
       applyLayout(layout);
     } catch { applyLayout(emptyLayout); }
+    saveNowRef.current();
   }, [user, applyLayout]);
 
   /* ── First-room creation flow ── */
@@ -210,6 +213,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     onNewUser: handleNewUser,
     onRestore: handleRestore,
   });
+  saveNowRef.current = saveNow;
 
   /* ── Auto-save when accent changes (skip first render) ── */
   const isFirstAccentRender = useRef(true);

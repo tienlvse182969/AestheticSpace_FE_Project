@@ -1,8 +1,9 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, Loader, CreditCard, Monitor } from "lucide-react";
+import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor } from "lucide-react";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { useAccent } from "../../../context/AccentContext";
@@ -273,7 +274,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   }}
                 >
                   {usernameStatus === "loading"
-                    ? <Loader size={13} style={{ animation: "spin 1s linear infinite" }} />
+                    ? <LoadingRing size={13} />
                     : usernameStatus === "success"
                     ? <Check size={13} />
                     : null}
@@ -323,7 +324,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   }}
                 >
                   {resetStatus === "loading"
-                    ? <Loader size={13} style={{ animation: "spin 1s linear infinite" }} />
+                    ? <LoadingRing size={13} />
                     : resetStatus === "sent"
                     ? <Check size={13} />
                     : null}
@@ -378,7 +379,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                       }}
                     >
                       <Flex align="center" gap={2}>
-                        {isLoading && <Loader size={13} style={{ color: "rgba(255,255,255,0.5)", animation: "spin 1s linear infinite", flexShrink: 0 }} />}
+                        {isLoading && <LoadingRing size={13} />}
                         <Box>
                           <Text style={{ fontSize: "1rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.2 }}>
                             {coins.toLocaleString()} <span style={{ fontSize: "0.65rem", fontWeight: 400, color: "rgba(255,255,255,0.4)" }}>{t("settings.coins")}</span>
@@ -670,35 +671,65 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   {t("about.contributors")}
                 </Text>
               </Flex>
-              <Flex wrap="wrap" gap="12px">
+              <Flex gap="28px" wrap="wrap" align="flex-start">
                 {[
-                  { name: "Phạm Thu Hiền",    avatar: "/assets/ContributorAvatar/PhamThuHien.jpg" },
-                  { name: "Nguyễn Hồng Ngọc", avatar: "/assets/ContributorAvatar/NguyenHongNgoc.jpg" },
-                  { name: "Trần Hoàng Duy",   avatar: "/assets/ContributorAvatar/TranHoangDuy.jpg" },
-                  { name: "Lê Văn Tiến",      avatar: "/assets/ContributorAvatar/LeVanTien.jpg" },
-                  { name: "Trần Quốc Nam",    avatar: "/assets/ContributorAvatar/TranQuocNam.jpg" },
-                ].map(({ name, avatar }) => (
-                  <Flex key={name} direction="column" align="center" gap="6px" style={{ width: 60 }}>
-                    <Box style={{
-                      width: 46,
-                      height: 46,
-                      borderRadius: "50%",
-                      overflow: "hidden",
-                      border: "1.5px solid rgba(94,234,212,0.3)",
-                      flexShrink: 0,
-                    }}>
-                      <img src={avatar} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  {
+                    roleKey: "about.roleThemeCreator",
+                    members: [
+                      { name: "Phạm Thu Hiền",    avatar: "/assets/ContributorAvatar/PhamThuHien.jpg" },
+                      { name: "Nguyễn Hồng Ngọc", avatar: "/assets/ContributorAvatar/NguyenHongNgoc.jpg" },
+                      { name: "Trần Hoàng Duy",   avatar: "/assets/ContributorAvatar/TranHoangDuy.jpg" },
+                    ],
+                  },
+                  {
+                    roleKey: "about.roleDeveloper",
+                    members: [
+                      { name: "Lê Văn Tiến",  avatar: "/assets/ContributorAvatar/LeVanTien.jpg" },
+                      { name: "Trần Quốc Nam", avatar: "/assets/ContributorAvatar/TranQuocNam.jpg" },
+                    ],
+                  },
+                ].map(({ roleKey, members }, idx, arr) => (
+                  <React.Fragment key={roleKey}>
+                    <Box>
+                      <Text mb={2} style={{
+                        fontSize: "0.57rem",
+                        color: "rgba(94,234,212,0.55)",
+                        letterSpacing: "0.1em",
+                        textTransform: "uppercase",
+                        fontFamily: "'HarmonyOS Sans', sans-serif",
+                      }}>
+                        {t(roleKey)}
+                      </Text>
+                      <Flex wrap="wrap" gap="12px">
+                        {members.map(({ name, avatar }) => (
+                          <Flex key={name} direction="column" align="center" gap="6px" style={{ width: 60 }}>
+                            <Box style={{
+                              width: 46,
+                              height: 46,
+                              borderRadius: "50%",
+                              overflow: "hidden",
+                              border: "1.5px solid rgba(94,234,212,0.3)",
+                              flexShrink: 0,
+                            }}>
+                              <img src={avatar} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            </Box>
+                            <Text style={{
+                              fontSize: "0.6rem",
+                              color: "rgba(255,255,255,0.5)",
+                              fontFamily: "'HarmonyOS Sans', sans-serif",
+                              textAlign: "center",
+                              lineHeight: 1.3,
+                            }}>
+                              {name}
+                            </Text>
+                          </Flex>
+                        ))}
+                      </Flex>
                     </Box>
-                    <Text style={{
-                      fontSize: "0.6rem",
-                      color: "rgba(255,255,255,0.5)",
-                      fontFamily: "'HarmonyOS Sans', sans-serif",
-                      textAlign: "center",
-                      lineHeight: 1.3,
-                    }}>
-                      {name}
-                    </Text>
-                  </Flex>
+                    {idx < arr.length - 1 && (
+                      <Box key={`sep-${roleKey}`} style={{ width: 1, background: "rgba(255,255,255,0.1)", alignSelf: "stretch", minHeight: 60 }} />
+                    )}
+                  </React.Fragment>
                 ))}
               </Flex>
             </Box>

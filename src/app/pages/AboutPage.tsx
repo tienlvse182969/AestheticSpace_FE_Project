@@ -1,3 +1,4 @@
+import React from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { useNavigate } from "react-router";
 import { motion } from "motion/react";
@@ -7,12 +8,15 @@ import { APP_VERSION } from "../../version";
 
 const MotionBox = motion.create(Box);
 
-const CONTRIBUTORS = [
+const THEME_CREATORS = [
   { name: "Phạm Thu Hiền",    avatar: "/assets/ContributorAvatar/PhamThuHien.jpg" },
   { name: "Nguyễn Hồng Ngọc", avatar: "/assets/ContributorAvatar/NguyenHongNgoc.jpg" },
   { name: "Trần Hoàng Duy",   avatar: "/assets/ContributorAvatar/TranHoangDuy.jpg" },
-  { name: "Lê Văn Tiến",      avatar: "/assets/ContributorAvatar/LeVanTien.jpg" },
-  { name: "Trần Quốc Nam",    avatar: "/assets/ContributorAvatar/TranQuocNam.jpg" },
+];
+
+const DEVELOPERS = [
+  { name: "Lê Văn Tiến",  avatar: "/assets/ContributorAvatar/LeVanTien.jpg" },
+  { name: "Trần Quốc Nam", avatar: "/assets/ContributorAvatar/TranQuocNam.jpg" },
 ];
 
 export function AboutPage() {
@@ -132,37 +136,63 @@ export function AboutPage() {
               {t("about.contributors")}
             </Text>
           </Flex>
-          <Flex wrap="wrap" gap="24px">
-            {CONTRIBUTORS.map(({ name, avatar }) => (
-              <Flex key={name} direction="column" align="center" gap="8px" style={{ width: 76 }}>
-                <Box
-                  style={{
-                    width: 58,
-                    height: 58,
-                    borderRadius: "50%",
-                    overflow: "hidden",
-                    border: "1.5px solid rgba(94,234,212,0.28)",
-                    flexShrink: 0,
-                  }}
-                >
-                  <img
-                    src={avatar}
-                    alt={name}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  />
+          <Flex gap="48px" wrap="wrap" align="flex-start">
+            {[
+              { roleKey: "about.roleThemeCreator", members: THEME_CREATORS },
+              { roleKey: "about.roleDeveloper",    members: DEVELOPERS },
+            ].map(({ roleKey, members }, idx, arr) => (
+              <React.Fragment key={roleKey}>
+                <Box>
+                  <Text
+                    mb={3}
+                    style={{
+                      fontSize: "0.6rem",
+                      color: "rgba(94,234,212,0.55)",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                    }}
+                  >
+                    {t(roleKey)}
+                  </Text>
+                  <Flex wrap="wrap" gap="24px">
+                    {members.map(({ name, avatar }) => (
+                      <Flex key={name} direction="column" align="center" gap="8px" style={{ width: 76 }}>
+                        <Box
+                          style={{
+                            width: 58,
+                            height: 58,
+                            borderRadius: "50%",
+                            overflow: "hidden",
+                            border: "1.5px solid rgba(94,234,212,0.28)",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <img
+                            src={avatar}
+                            alt={name}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        </Box>
+                        <Text
+                          style={{
+                            fontSize: "0.68rem",
+                            color: "rgba(255,255,255,0.52)",
+                            fontFamily: "'HarmonyOS Sans', sans-serif",
+                            textAlign: "center",
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {name}
+                        </Text>
+                      </Flex>
+                    ))}
+                  </Flex>
                 </Box>
-                <Text
-                  style={{
-                    fontSize: "0.68rem",
-                    color: "rgba(255,255,255,0.52)",
-                    fontFamily: "'HarmonyOS Sans', sans-serif",
-                    textAlign: "center",
-                    lineHeight: 1.35,
-                  }}
-                >
-                  {name}
-                </Text>
-              </Flex>
+                {idx < arr.length - 1 && (
+                  <Box key={`sep-${roleKey}`} style={{ width: 1, background: "rgba(255,255,255,0.1)", alignSelf: "stretch", minHeight: 80 }} />
+                )}
+              </React.Fragment>
             ))}
           </Flex>
         </MotionBox>
@@ -177,26 +207,6 @@ export function AboutPage() {
           transition={{ duration: 0.45, delay: 0.3 } as any}
         >
           <Flex align="center" justify="space-between" wrap="wrap" gap={4}>
-            <Box
-              as="button"
-              onClick={() => navigate("/space")}
-              style={{
-                background: "rgba(94,234,212,0.1)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                border: "1px solid rgba(94,234,212,0.25)",
-                borderRadius: "10px",
-                color: "rgba(255,255,255,0.85)",
-                fontSize: "0.88rem",
-                padding: "10px 28px",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                letterSpacing: "0.03em",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-              }}
-            >
-              {t("about.openSpace")}
-            </Box>
             <Text
               style={{
                 fontSize: "0.72rem",

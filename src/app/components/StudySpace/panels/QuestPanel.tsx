@@ -3,6 +3,7 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { Trophy, Coins } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { questService, type Quest, type QuestCategory } from "../../../../services/quest.service";
@@ -388,7 +389,8 @@ export function QuestPanel({
         style={{ overflowY: "auto" }}
       >
         {loading ? (
-          <Flex h="100%" align="center" justify="center">
+          <Flex h="100%" align="center" justify="center" direction="column" gap="12px">
+            <LoadingRing size={28} />
             <Text style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.8rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
               {t("quest.loading")}
             </Text>

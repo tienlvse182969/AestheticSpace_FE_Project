@@ -27,4 +27,8 @@ export const paymentService = {
   upgradeSubscription: async (transactionCode: string): Promise<void> => {
     await api.post("/subscription/upgrade", { transactionCode });
   },
+
+  startTrial: async (): Promise<void> => {
+    await api.post("/subscription/trial");
+  },
 };

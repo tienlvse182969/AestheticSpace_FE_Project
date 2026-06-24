@@ -14,6 +14,35 @@ function formatTime(sec: number): string {
 
 type LoopMode = "none" | "all" | "one";
 
+/* ─────────────────── marquee helper ─────────────────── */
+function MarqueeText({ text, style }: { text: string; style?: React.CSSProperties }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const textRef      = useRef<HTMLSpanElement>(null);
+  const [offset, setOffset] = useState(0);
+
+  useEffect(() => {
+    const check = () => {
+      if (!containerRef.current || !textRef.current) return;
+      const diff = textRef.current.scrollWidth - containerRef.current.clientWidth;
+      setOffset(diff > 2 ? diff : 0);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [text]);
+
+  const spanStyle: React.CSSProperties & Record<string, unknown> = offset > 0
+    ? { display: "inline-block", animation: "marquee-text 14s ease-in-out infinite", "--marquee-offset": `-${offset}px` }
+    : { display: "inline-block" };
+
+  return (
+    <div ref={containerRef} style={{ overflow: "hidden", whiteSpace: "nowrap", ...style }}>
+      <span ref={textRef} style={spanStyle}>{text}</span>
+    </div>
+  );
+}
+
 /* ─────────────────────────── component ─────────────────────────── */
 
 interface MusicPlayerProps {
@@ -461,6 +490,11 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
         .vinyl-disc.playing {
           animation-play-state: running;
         }
+        @keyframes marquee-text {
+          0%, 12%   { transform: translateX(0); }
+          60%, 72%  { transform: translateX(var(--marquee-offset)); }
+          88%, 100% { transform: translateX(0); }
+        }
       `}</style>
 
       {/* hidden YouTube container — always in DOM */}
@@ -660,21 +694,15 @@ export function MusicPlayerWidget({ initialSource, initialYtUrl, initialScUrl, o
 
             {/* right: track info */}
             <Box style={{ flex: 1, minWidth: 0 }}>
-              <Text style={{
+              <MarqueeText text={trackName} style={{
                 color: "rgba(255,255,255,0.9)", fontSize: "0.84rem",
                 fontFamily: "'HarmonyOS Sans', sans-serif",
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                 marginBottom: "5px",
-              }}>
-                {trackName}
-              </Text>
-              <Text style={{
+              }} />
+              <MarqueeText text={!playerReady ? "Loading…" : artistName || "—"} style={{
                 color: "rgba(255,255,255,0.38)", fontSize: "0.7rem",
                 fontFamily: "'HarmonyOS Sans', sans-serif",
-                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-              }}>
-                {!playerReady ? "Loading…" : artistName || "—"}
-              </Text>
+              }} />
             </Box>
           </Flex>
         </>
