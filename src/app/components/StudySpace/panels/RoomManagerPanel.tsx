@@ -3,7 +3,7 @@ import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import {
-  LayoutDashboard, Check, AlertCircle, RefreshCw,
+  Layers, Check, AlertCircle, RefreshCw,
   Plus, Pencil, Trash2, X, Crown, Check as CheckIcon,
 } from "lucide-react";
 import { LoadingRing } from "../../ui/LoadingRing";
@@ -228,7 +228,7 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
         {/* Header */}
         <Flex align="center" justify="space-between" mb={3} pr="36px">
           <Flex align="center" gap={2}>
-            <LayoutDashboard size={15} style={{ color: "rgba(255,255,255,0.5)" }} />
+            <Layers size={15} style={{ color: "rgba(255,255,255,0.5)" }} />
             <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
               {t("space.rooms").toUpperCase()}
             </Text>
