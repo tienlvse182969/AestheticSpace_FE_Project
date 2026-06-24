@@ -243,6 +243,7 @@ export function AmbientSoundPanel({
         id: s.id, name: s.name ?? "",
         url: s.url, colorHint: s.category,
         defaultVolume: s.defaultVolume ?? 50,
+        previewUrl: s.previewUrl ?? null,
       })));
       result.forEach(s => onInitVolume(s.id, s.defaultVolume ?? 50));
     } catch {

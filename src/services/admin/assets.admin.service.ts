@@ -10,6 +10,7 @@ export interface AssetDto {
   category: string | null;
   defaultVolume: number;
   isPremium: boolean;
+  previewUrl?: string | null;
 }
 
 export interface AssetFormData {
@@ -20,6 +21,7 @@ export interface AssetFormData {
   category: string;
   defaultVolume: number;
   isPremium: boolean;
+  previewUrl: string;
 }
 
 export const adminAssetsService = {

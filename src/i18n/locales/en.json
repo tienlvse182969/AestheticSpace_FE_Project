@@ -792,7 +792,8 @@
       "cancel": "Cancel",
       "delete": "Delete",
       "deleteConfirm": "Delete this asset?",
-      "deleteNote": "This action cannot be undone."
+      "deleteNote": "This action cannot be undone.",
+      "detailTitle": "Asset Detail"
     }
   }
 }

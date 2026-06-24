@@ -791,7 +791,8 @@
       "cancel": "Huỷ",
       "delete": "Xoá",
       "deleteConfirm": "Xoá tài nguyên này?",
-      "deleteNote": "Hành động này không thể hoàn tác."
+      "deleteNote": "Hành động này không thể hoàn tác.",
+      "detailTitle": "Chi tiết tài nguyên"
     }
   }
 }

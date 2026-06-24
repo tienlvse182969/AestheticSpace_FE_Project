@@ -19,29 +19,47 @@ import { useAdminTheme } from "./AdminThemeContext";
 
 const MotionBox = motion.create(Box);
 
-const TYPE_OPTIONS = ["Audio", "Image", "Video", "Sticker", "Effect"];
+function ModalBackdrop({ onClose, loading }: { onClose: () => void; loading: boolean }) {
+  return (
+    <MotionBox position="fixed" inset={0} zIndex={300}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 } as any}
+      onClick={() => !loading && onClose()}
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }} />
+  );
+}
+
+function ModalCenter({ children, zIndex = 310 }: { children: React.ReactNode; zIndex?: number }) {
+  return (
+    <Box position="fixed" inset={0} display="flex" alignItems="center" justifyContent="center"
+      zIndex={zIndex} style={{ pointerEvents: "none" }}>
+      <Box style={{ pointerEvents: "auto" }}>{children}</Box>
+    </Box>
+  );
+}
+
+const TYPE_OPTIONS = ["Audio", "Sticker"];
+const TYPE_LABELS: Record<string, string> = {
+  Audio:   "Ambient Sound",
+  Sticker: "Sticker",
+};
 
 const TYPE_STYLE: Record<string, { color: string; bg: string; border: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
   Audio:   { color: "#a78bfa", bg: "rgba(167,139,250,0.12)", border: "rgba(167,139,250,0.3)", icon: Music },
-  Image:   { color: "#60a5fa", bg: "rgba(96,165,250,0.12)",  border: "rgba(96,165,250,0.3)",  icon: Image },
   Sticker: { color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.3)",  icon: Image },
-  Effect:  { color: "#34d399", bg: "rgba(52,211,153,0.12)",  border: "rgba(52,211,153,0.3)",  icon: Layers },
-  Video:   { color: "#f472b6", bg: "rgba(244,114,182,0.12)", border: "rgba(244,114,182,0.3)", icon: Layers },
 };
 const DEFAULT_TYPE_STYLE = { color: "#94a3b8", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)", icon: Layers };
 
 const ACCEPT_BY_TYPE: Record<string, string> = {
   Audio:   "audio/*",
-  Image:   "image/*",
   Sticker: "image/*",
-  Video:   "video/*",
-  Effect:  "image/*,video/*",
 };
 
 const DEFAULT_FORM: AssetFormData = {
   name: "", description: "", url: "",
   type: "Audio", category: "",
   defaultVolume: 50, isPremium: false,
+  previewUrl: "",
 };
 
 const COL_FLEX = [2.5, 1.2, 1.3, 0.9, 0.9, 0.7];
@@ -49,8 +67,34 @@ const COL_FLEX = [2.5, 1.2, 1.3, 0.9, 0.9, 0.7];
 export function AssetsSection() {
   const { c, isDark } = useAdminTheme();
   const { t } = useTranslation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef      = useRef<HTMLInputElement>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
+  const closeBtnSt: React.CSSProperties = {
+    background: isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)",
+    color: c.textMuted,
+    width: 28, height: 28, borderRadius: "7px",
+    border: "none", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+  };
+  const modalBoxSt: React.CSSProperties = {
+    background: c.panelBg,
+    backdropFilter: "blur(20px)",
+    border: `1px solid ${c.panelBorder}`,
+    boxShadow: c.panelShadow,
+    borderRadius: "16px",
+    padding: 24,
+  };
+  const cancelBtnSt: React.CSSProperties = {
+    background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
+    color: c.textMuted,
+    fontSize: "0.82rem",
+    fontFamily: "'HarmonyOS Sans', sans-serif",
+    border: `1px solid ${c.cardBorder}`,
+    borderRadius: "8px",
+    cursor: "pointer",
+    padding: "8px 16px",
+  };
   const modalBg = isDark ? "rgba(14,20,28,0.97)" : "rgba(238,243,248,0.97)";
 
   /* ── list state ── */
@@ -69,9 +113,10 @@ export function AssetsSection() {
   const [formError,     setFormError]     = useState<string | null>(null);
 
   /* ── upload state ── */
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
-  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
-  const [isDragOver,    setIsDragOver]    = useState(false);
+  const [uploadProgress,        setUploadProgress]        = useState<number | null>(null);
+  const [uploadedFileName,      setUploadedFileName]      = useState<string | null>(null);
+  const [isDragOver,            setIsDragOver]            = useState(false);
+  const [previewUploadProgress, setPreviewUploadProgress] = useState<number | null>(null);
 
   /* ── row state ── */
   const [viewAsset,     setViewAsset]     = useState<AssetDto | null>(null);
@@ -115,12 +160,17 @@ export function AssetsSection() {
     setUploadedFileName(null);
   };
 
+  const resetPreviewUpload = () => {
+    setPreviewUploadProgress(null);
+  };
+
   /* ── open form ── */
   const openCreate = () => {
     setEditTarget(null);
     setForm(DEFAULT_FORM);
     setFormError(null);
     resetUpload();
+    resetPreviewUpload();
     setShowForm(true);
   };
 
@@ -134,9 +184,11 @@ export function AssetsSection() {
       category:      a.category      ?? "",
       defaultVolume: a.defaultVolume,
       isPremium:     a.isPremium,
+      previewUrl:    a.previewUrl    ?? "",
     });
     setFormError(null);
     resetUpload();
+    resetPreviewUpload();
     setShowForm(true);
     setOpenMenu(null);
   };
@@ -175,6 +227,24 @@ export function AssetsSection() {
     setIsDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (file) handleFileSelected(file);
+  };
+
+  const handleThumbnailSelected = async (file: File) => {
+    setPreviewUploadProgress(0);
+    setFormError(null);
+    try {
+      const result = await uploadToCloudinary(file, "aesthetic-space/thumbnails", (pct) => setPreviewUploadProgress(pct));
+      setForm(f => ({ ...f, previewUrl: result.secure_url }));
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : t("admin.assets.uploadError"));
+      resetPreviewUpload();
+    }
+  };
+
+  const onThumbnailInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleThumbnailSelected(file);
+    e.target.value = "";
   };
 
   /* ── save ── */
@@ -216,8 +286,10 @@ export function AssetsSection() {
   /* ── derived ── */
   const premiumCount = assets.filter(a => a.isPremium).length;
   const freeCount    = assets.filter(a => !a.isPremium).length;
-  const isUploading  = uploadProgress !== null && uploadProgress < 100;
-  const isUploaded   = uploadProgress === 100;
+  const isUploading        = uploadProgress !== null && uploadProgress < 100;
+  const isUploaded         = uploadProgress === 100;
+  const isPreviewUploading = previewUploadProgress !== null && previewUploadProgress < 100;
+  const isPreviewUploaded  = previewUploadProgress === 100;
 
   const inputStyle = {
     background: c.cardBg, border: `1px solid ${c.cardBorder}`,
@@ -276,7 +348,7 @@ export function AssetsSection() {
                       fontSize: "0.8rem",
                     }}
                     _hover={{ background: "rgba(255,255,255,0.06)" } as any}>
-                    {tp || t("admin.assets.filterAll")}
+                    {tp ? (TYPE_LABELS[tp] ?? tp) : t("admin.assets.filterAll")}
                   </Box>
                 ))}
               </MotionBox>
@@ -361,16 +433,36 @@ export function AssetsSection() {
                 onMouseEnter={() => setHoveredRow(a.id)}
                 onMouseLeave={() => setHoveredRow(null)}>
 
-                {/* Name + URL */}
+                {/* Name + thumbnail */}
                 <Box style={{ flex: COL_FLEX[0], minWidth: 0, paddingRight: 12 }}>
-                  <Text style={{ fontSize: "0.82rem", color: c.cardText, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {a.name ?? "—"}
-                  </Text>
-                  {a.url && (
-                    <Text style={{ fontSize: "0.68rem", color: c.cardTextMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {a.url}
-                    </Text>
-                  )}
+                  <Flex align="center" gap={2}>
+                    {(() => {
+                      const thumbSrc = a.previewUrl || (a.type === "Sticker" ? a.url : null);
+                      const isSticker = a.type === "Sticker";
+                      return thumbSrc ? (
+                        <Box w="36px" h="36px" borderRadius="6px" overflow="hidden" flexShrink={0}
+                          style={{
+                            border: `1px solid ${c.cardBorder}`,
+                            background: isSticker
+                              ? "repeating-conic-gradient(rgba(128,128,128,0.15) 0% 25%, transparent 0% 50%) 0 0 / 10px 10px"
+                              : undefined,
+                          }}>
+                          <Box as="img" {...{ src: thumbSrc, alt: "" }}
+                            style={{ width: "100%", height: "100%", objectFit: isSticker ? "contain" as const : "cover" as const }} />
+                        </Box>
+                      ) : null;
+                    })()}
+                    <Box minWidth={0}>
+                      <Text style={{ fontSize: "0.82rem", color: c.cardText, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {a.name ?? "—"}
+                      </Text>
+                      {a.url && (
+                        <Text style={{ fontSize: "0.68rem", color: c.cardTextMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {a.url}
+                        </Text>
+                      )}
+                    </Box>
+                  </Flex>
                 </Box>
 
                 {/* Type */}
@@ -378,7 +470,7 @@ export function AssetsSection() {
                   <Box display="inline-flex" alignItems="center" gap="4px" borderRadius="full" px={2} py="1px"
                     style={{ background: ts.bg, border: `1px solid ${ts.border}` }}>
                     <TypeIcon size={10} style={{ color: ts.color }} />
-                    <Text style={{ fontSize: "0.63rem", color: ts.color }}>{a.type ?? "—"}</Text>
+                    <Text style={{ fontSize: "0.63rem", color: ts.color }}>{TYPE_LABELS[a.type ?? ""] ?? a.type ?? "—"}</Text>
                   </Box>
                 </Box>
 
@@ -469,7 +561,7 @@ export function AssetsSection() {
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             transition={{ duration: 0.15 } as any}
             style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
-            onClick={() => !formLoading && !isUploading && setShowForm(false)}>
+            onClick={() => !formLoading && !isUploading && !isPreviewUploading && setShowForm(false)}>
             <MotionBox
               initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
@@ -486,7 +578,7 @@ export function AssetsSection() {
                   <Text style={{ fontSize: "1rem", color: c.cardText, fontWeight: 600 }}>
                     {editTarget ? t("admin.assets.editAsset") : t("admin.assets.createNew")}
                   </Text>
-                  <Box as="button" onClick={() => !formLoading && !isUploading && setShowForm(false)}
+                  <Box as="button" onClick={() => !formLoading && !isUploading && !isPreviewUploading && setShowForm(false)}
                     style={{ background: "transparent", border: "none", cursor: "pointer", color: c.textMuted, display: "flex" }}>
                     <X size={18} />
                   </Box>
@@ -569,24 +661,6 @@ export function AssetsSection() {
                     </Box>
                   </Box>
 
-                  {/* URL (auto-filled, still editable) */}
-                  <Box>
-                    <Flex justify="space-between" mb="5px">
-                      <Text style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
-                        {t("admin.assets.fieldUrl")} *
-                      </Text>
-                      {isUploaded && (
-                        <Text style={{ fontSize: "0.65rem", color: "#4ade80" }}>
-                          ✓ {t("admin.assets.autoFilled")}
-                        </Text>
-                      )}
-                    </Flex>
-                    <Input value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
-                      placeholder="https://res.cloudinary.com/..."
-                      style={inputStyle}
-                      _placeholder={{ color: c.textSub } as any}
-                      _focus={{ borderColor: "rgba(78,124,106,0.6)" } as any} />
-                  </Box>
 
                   {/* Name */}
                   <Box>
@@ -625,7 +699,7 @@ export function AssetsSection() {
                           borderRadius: 8, color: c.cardText, fontSize: "0.85rem", padding: "0 12px", outline: "none",
                         }}>
                         {TYPE_OPTIONS.map(tp => (
-                          <option key={tp} value={tp}>{tp}</option>
+                          <option key={tp} value={tp} style={{ color: "#111", background: "#fff" }}>{TYPE_LABELS[tp]}</option>
                         ))}
                       </Box>
                     </Box>
@@ -654,29 +728,74 @@ export function AssetsSection() {
                         </Text>
                         <Text style={{ fontSize: "0.7rem", color: c.cardText }}>{form.defaultVolume}</Text>
                       </Flex>
-                      <Box as="input" type="range" min={0} max={100} value={form.defaultVolume}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, defaultVolume: Number(e.target.value) }))}
+                      <input type="range" min={0} max={100} value={form.defaultVolume}
+                        onChange={(e) => setForm(f => ({ ...f, defaultVolume: Number(e.target.value) }))}
                         style={{ width: "100%", accentColor: "#4e7c6a" }} />
                     </Box>
                   )}
 
-                  {/* isPremium toggle */}
-                  <Flex align="center" gap={3}>
-                    <Box as="button"
-                      onClick={() => setForm(f => ({ ...f, isPremium: !f.isPremium }))}
-                      w="36px" h="20px" borderRadius="full" border="none" cursor="pointer"
-                      style={{
-                        background: form.isPremium ? "rgba(251,191,36,0.4)" : c.cardBorder,
-                        border: form.isPremium ? "1px solid rgba(251,191,36,0.55)" : `1px solid ${c.cardBorder}`,
-                        position: "relative", transition: "all 0.2s", flexShrink: 0,
-                      }}>
-                      <Box position="absolute" w="14px" h="14px" borderRadius="full" top="2px"
-                        style={{ left: form.isPremium ? "18px" : "2px", background: form.isPremium ? "#fbbf24" : c.textDim, transition: "left 0.2s" }} />
+                  {/* Thumbnail (only for Ambient Sound) */}
+                  {form.type === "Audio" && (
+                    <Box>
+                      <Text mb="6px" style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
+                        THUMBNAIL IMAGE
+                      </Text>
+
+                      <input
+                        ref={thumbnailInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={onThumbnailInputChange}
+                      />
+
+                      <Box borderRadius="10px"
+                        style={{
+                          border: `2px dashed ${isPreviewUploading ? "#4e7c6a" : isPreviewUploaded || form.previewUrl ? "rgba(74,222,128,0.4)" : c.cardBorder}`,
+                          background: isPreviewUploaded || form.previewUrl ? "rgba(74,222,128,0.05)" : c.cardBg,
+                          transition: "all 0.2s",
+                          cursor: isPreviewUploading ? "default" : "pointer",
+                          padding: "16px",
+                          textAlign: "center",
+                        }}
+                        onClick={() => !isPreviewUploading && thumbnailInputRef.current?.click()}>
+                        {isPreviewUploading ? (
+                          <Flex direction="column" align="center" gap={2}>
+                            <Spinner size="sm" style={{ color: "#4e7c6a" }} />
+                            <Text style={{ fontSize: "0.75rem", color: c.cardTextMuted }}>
+                              {previewUploadProgress}%
+                            </Text>
+                            <Box w="100%" h="3px" borderRadius="full" style={{ background: c.cardBorder }}>
+                              <Box h="3px" borderRadius="full"
+                                style={{ background: "#4e7c6a", width: `${previewUploadProgress}%`, transition: "width 0.2s" }} />
+                            </Box>
+                          </Flex>
+                        ) : form.previewUrl ? (
+                          <Flex direction="column" align="center" gap={2}>
+                            <Box w="80px" h="80px" borderRadius="8px" overflow="hidden" mx="auto"
+                              style={{ border: `1px solid ${c.cardBorder}` }}>
+                              <Box as="img" {...{ src: form.previewUrl, alt: "thumbnail" }}
+                                style={{ width: "100%", height: "100%", objectFit: "cover" as const }} />
+                            </Box>
+                            <Text style={{ fontSize: "0.68rem", color: c.cardTextMuted }}>
+                              Click to replace
+                            </Text>
+                          </Flex>
+                        ) : (
+                          <Flex direction="column" align="center" gap="6px">
+                            <FileImage size={20} style={{ color: "#60a5fa", opacity: 0.7 }} />
+                            <Text style={{ fontSize: "0.78rem", color: c.cardText }}>
+                              Add thumbnail image
+                            </Text>
+                            <Text style={{ fontSize: "0.68rem", color: c.cardTextMuted }}>
+                              JPG, PNG, WebP
+                            </Text>
+                          </Flex>
+                        )}
+                      </Box>
                     </Box>
-                    <Text style={{ fontSize: "0.82rem", color: c.cardText }}>
-                      {t("admin.assets.fieldPremium")}
-                    </Text>
-                  </Flex>
+                  )}
+
                 </Flex>
 
                 {formError && (
@@ -693,11 +812,11 @@ export function AssetsSection() {
                   </Box>
                   <Box as="button" onClick={handleSave}
                     px={5} py="8px" borderRadius="9px" border="none"
-                    cursor={formLoading || isUploading || !form.name.trim() || !form.url.trim() ? "not-allowed" : "pointer"}
+                    cursor={formLoading || isUploading || isPreviewUploading || !form.name.trim() || !form.url.trim() ? "not-allowed" : "pointer"}
                     style={{
                       background: "rgba(78,124,106,0.22)", border: "1px solid rgba(78,124,106,0.4)",
                       color: "#4e7c6a", fontSize: "0.83rem", fontWeight: 600,
-                      opacity: formLoading || isUploading || !form.name.trim() || !form.url.trim() ? 0.45 : 1,
+                      opacity: formLoading || isUploading || isPreviewUploading || !form.name.trim() || !form.url.trim() ? 0.45 : 1,
                     }}
                     _hover={{ background: "rgba(78,124,106,0.32)" } as any}>
                     {formLoading ? <Spinner size="xs" /> : t("admin.assets.save")}
@@ -752,99 +871,129 @@ export function AssetsSection() {
       {/* ── Detail Modal ── */}
       <AnimatePresence>
         {viewAsset && (
-          <MotionBox position="fixed" inset={0} zIndex={200}
-            display="flex" alignItems="center" justifyContent="center" px={4}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 } as any}
-            style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
-            onClick={() => setViewAsset(null)}>
-            <MotionBox initial={{ scale: 0.96, y: 14 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.96, y: 14 }}
-              transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] } as any}
-              style={{ width: "100%", maxWidth: 460, background: modalBg, border: `1px solid ${c.cardBorder}`, borderRadius: 16, boxShadow: "0 24px 80px rgba(0,0,0,0.7)" }}
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-              <Box p={6}>
-                <Flex align="flex-start" justify="space-between" mb={5} gap={3}>
-                  <Box minW={0}>
-                    <Text style={{ fontSize: "1.05rem", color: c.cardText, fontWeight: 700 }}>{viewAsset.name ?? "—"}</Text>
-                    {viewAsset.type && (
-                      <Box mt="5px" display="inline-flex" alignItems="center" gap="4px" borderRadius="full" px={2} py="1px"
-                        style={{ background: getTypeStyle(viewAsset.type).bg, border: `1px solid ${getTypeStyle(viewAsset.type).border}` }}>
-                        <Text style={{ fontSize: "0.68rem", color: getTypeStyle(viewAsset.type).color }}>{viewAsset.type}</Text>
+          <>
+            <ModalBackdrop onClose={() => setViewAsset(null)} loading={false} />
+            <ModalCenter zIndex={310}>
+              <MotionBox
+                style={{ width: "640px", maxHeight: "88vh", overflowY: "auto" }}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] } as any}>
+                <Box style={modalBoxSt}>
+                  {/* Header */}
+                  <Flex align="center" justify="space-between" mb={4}>
+                    <Text style={{ fontSize: "0.9rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      {t("admin.assets.detailTitle")}
+                    </Text>
+                    <Box as="button" onClick={() => setViewAsset(null)} style={closeBtnSt}>
+                      <X size={13} />
+                    </Box>
+                  </Flex>
+
+                  {/* Hero — image/sticker */}
+                  {viewAsset.url && (viewAsset.type === "Image" || viewAsset.type === "Sticker") && (
+                    <Box mb={4} borderRadius="10px" overflow="hidden" h="180px"
+                      style={{
+                        border: `1px solid ${c.cardBorder}`,
+                        background: viewAsset.type === "Sticker"
+                          ? "repeating-conic-gradient(rgba(128,128,128,0.12) 0% 25%, transparent 0% 50%) 0 0 / 16px 16px"
+                          : isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+                      }}>
+                      <Box as="img" {...{ src: viewAsset.url, alt: viewAsset.name ?? "" }}
+                        style={{ width: "100%", height: "100%", objectFit: viewAsset.type === "Sticker" ? "contain" as const : "cover" as const, padding: viewAsset.type === "Sticker" ? "12px" : undefined }} />
+                    </Box>
+                  )}
+
+                  {/* Hero — audio player */}
+                  {viewAsset.url && viewAsset.type === "Audio" && (
+                    <Box mb={4} px={3} py="11px" borderRadius="10px"
+                      style={{ background: isDark ? "rgba(167,139,250,0.06)" : "rgba(167,139,250,0.05)", border: "1px solid rgba(167,139,250,0.2)" }}>
+                      <Text mb={2} style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        AUDIO PREVIEW
+                      </Text>
+                      <audio controls src={viewAsset.url} style={{ width: "100%", height: 36 }} />
+                    </Box>
+                  )}
+
+                  {/* Name + badges */}
+                  <Flex align="center" gap={2} mb="4px" flexWrap="wrap">
+                    <Text style={{ fontSize: "1.05rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      {viewAsset.name ?? "—"}
+                    </Text>
+                    {viewAsset.type && (() => {
+                      const ts = getTypeStyle(viewAsset.type);
+                      return (
+                        <Box px="7px" py="1px" borderRadius="full"
+                          style={{ background: ts.bg, border: `1px solid ${ts.border}` }}>
+                          <Text style={{ fontSize: "0.6rem", color: ts.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{TYPE_LABELS[viewAsset.type] ?? viewAsset.type}</Text>
+                        </Box>
+                      );
+                    })()}
+                    <Box px="7px" py="1px" borderRadius="full"
+                      style={{
+                        background: viewAsset.isPremium ? "rgba(251,191,36,0.1)" : "rgba(74,222,128,0.1)",
+                        border: viewAsset.isPremium ? "1px solid rgba(251,191,36,0.25)" : "1px solid rgba(74,222,128,0.2)",
+                      }}>
+                      <Text style={{ fontSize: "0.6rem", color: viewAsset.isPremium ? "#fbbf24" : "#4ade80", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        {viewAsset.isPremium ? t("admin.assets.premium") : t("admin.assets.free")}
+                      </Text>
+                    </Box>
+                  </Flex>
+
+                  {/* Description */}
+                  {viewAsset.description && (
+                    <Text mb={3} style={{ fontSize: "0.8rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.55 }}>
+                      {viewAsset.description}
+                    </Text>
+                  )}
+
+                  {/* Meta row */}
+                  <Flex gap={6} mb={4} flexWrap="wrap">
+                    <Box>
+                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>
+                        {t("admin.assets.fieldCategory").toUpperCase()}
+                      </Text>
+                      <Text style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        {viewAsset.category ?? "—"}
+                      </Text>
+                    </Box>
+                    {viewAsset.type === "Audio" && (
+                      <Box>
+                        <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>
+                          {t("admin.assets.fieldVolume").toUpperCase()}
+                        </Text>
+                        <Text style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                          {viewAsset.defaultVolume}
+                        </Text>
                       </Box>
                     )}
-                  </Box>
-                  <Flex align="center" gap={2} flexShrink={0}>
+                    <Box>
+                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>URL</Text>
+                      <Text style={{ fontSize: "0.75rem", color: c.textMuted, fontFamily: "monospace", wordBreak: "break-all", maxWidth: 340 }}>
+                        {viewAsset.url ?? "—"}
+                      </Text>
+                    </Box>
+                  </Flex>
+
+                  {/* Actions */}
+                  <Box mb={3} h="1px" style={{ background: c.border }} />
+                  <Flex gap={2}>
                     <Box as="button" onClick={() => { setViewAsset(null); openEdit(viewAsset); }}
-                      display="flex" alignItems="center" gap="5px"
-                      px={3} py="6px" borderRadius="8px" border="none" cursor="pointer"
-                      style={{ background: "rgba(78,124,106,0.15)", border: "1px solid rgba(78,124,106,0.35)", color: "#4e7c6a", fontSize: "0.78rem" }}
-                      _hover={{ background: "rgba(78,124,106,0.25)" } as any}>
-                      <Pencil size={12} />
+                      display="flex" alignItems="center" justifyContent="center" gap={2} flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
+                      style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", outline: `1px solid ${c.cardBorder}`, color: c.textMuted, fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      <Pencil size={14} />
                       {t("admin.assets.actionEdit")}
                     </Box>
-                    <Box as="button" onClick={() => setViewAsset(null)}
-                      style={{ background: "transparent", border: "none", cursor: "pointer", color: c.textMuted, display: "flex" }}>
-                      <X size={18} />
+                    <Box as="button" onClick={() => { setViewAsset(null); setDeleteId(viewAsset.id); }}
+                      display="flex" alignItems="center" justifyContent="center" gap={2} flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
+                      style={{ background: "rgba(248,113,113,0.08)", outline: "1px solid rgba(248,113,113,0.25)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      <Trash2 size={14} />
+                      {t("admin.assets.actionDelete")}
                     </Box>
                   </Flex>
-                </Flex>
-
-                {/* Preview */}
-                {viewAsset.url && viewAsset.type === "Audio" && (
-                  <Box mb={4}>
-                    <audio controls src={viewAsset.url} style={{ width: "100%", height: 36 }} />
-                  </Box>
-                )}
-                {viewAsset.url && (viewAsset.type === "Image" || viewAsset.type === "Sticker") && (
-                  <Box mb={4} borderRadius="8px" overflow="hidden"
-                    style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, maxHeight: 160, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <img src={viewAsset.url} alt={viewAsset.name ?? ""} style={{ maxHeight: 160, maxWidth: "100%", objectFit: "contain" }} />
-                  </Box>
-                )}
-
-                {viewAsset.description && (
-                  <Box mb={4} px={3} py="10px" borderRadius="8px"
-                    style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
-                    <Text style={{ fontSize: "0.82rem", color: c.cardTextSub, lineHeight: 1.6 }}>{viewAsset.description}</Text>
-                  </Box>
-                )}
-
-                <Box mb={3} px={3} py="10px" borderRadius="8px"
-                  style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, wordBreak: "break-all" }}>
-                  <Text style={{ fontSize: "0.62rem", color: c.cardTextMuted, letterSpacing: "0.08em", marginBottom: 4 }}>URL</Text>
-                  <Text style={{ fontSize: "0.75rem", color: c.cardText, fontFamily: "monospace" }}>{viewAsset.url ?? "—"}</Text>
                 </Box>
-
-                <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                  {[
-                    { label: t("admin.assets.fieldCategory"), value: viewAsset.category ?? "—" },
-                    { label: t("admin.assets.fieldVolume"),   value: String(viewAsset.defaultVolume) },
-                  ].map(item => (
-                    <Box key={item.label} px={3} py="10px" borderRadius="8px"
-                      style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
-                      <Text style={{ fontSize: "0.62rem", color: c.cardTextMuted, letterSpacing: "0.08em", marginBottom: 4 }}>
-                        {item.label.toUpperCase()}
-                      </Text>
-                      <Text style={{ fontSize: "0.85rem", color: c.cardText, fontWeight: 600 }}>{item.value}</Text>
-                    </Box>
-                  ))}
-                </Box>
-
-                <Flex mt={3} justify="flex-end">
-                  <Flex align="center" gap="6px" borderRadius="full" px={3} py="4px"
-                    style={{
-                      background: viewAsset.isPremium ? "rgba(251,191,36,0.1)" : "rgba(74,222,128,0.1)",
-                      border: viewAsset.isPremium ? "1px solid rgba(251,191,36,0.25)" : "1px solid rgba(74,222,128,0.2)",
-                    }}>
-                    <Box w="6px" h="6px" borderRadius="full" style={{ background: viewAsset.isPremium ? "#fbbf24" : "#4ade80" }} />
-                    <Text style={{ fontSize: "0.72rem", color: viewAsset.isPremium ? "#fbbf24" : "#4ade80" }}>
-                      {viewAsset.isPremium ? t("admin.assets.premium") : t("admin.assets.free")}
-                    </Text>
-                  </Flex>
-                </Flex>
-              </Box>
-            </MotionBox>
-          </MotionBox>
+              </MotionBox>
+            </ModalCenter>
+          </>
         )}
       </AnimatePresence>
     </Box>
