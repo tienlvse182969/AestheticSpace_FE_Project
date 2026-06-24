@@ -361,7 +361,7 @@ export function AmbientSoundPanel({
       <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
         <LoadingRing size={18} />
         <Text style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.35)", fontFamily: FONT }}>
-          Loading sounds…
+          {t("ambient.loading")}
         </Text>
       </Flex>
     );
@@ -377,7 +377,7 @@ export function AmbientSoundPanel({
             borderRadius: 7, padding: "5px 14px", cursor: "pointer",
             fontSize: "0.76rem", color: "rgba(255,255,255,0.6)", fontFamily: FONT,
           }}>
-          <RefreshCw size={12} /> Retry
+          <RefreshCw size={12} /> {t("ambient.retry")}
         </Box>
       </Flex>
     );

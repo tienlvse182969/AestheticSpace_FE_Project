@@ -245,7 +245,9 @@
     "tabDefault": "Default",
     "tabPurchased": "Purchased",
     "noPurchased": "No purchased sounds yet",
-    "noPurchasedHint": "Visit the store to find ambient sounds"
+    "noPurchasedHint": "Visit the store to find ambient sounds",
+    "loading": "Loading sounds…",
+    "retry": "Retry"
   },
   "backgrounds": {
     "title": "BACKGROUNDS",
@@ -344,7 +346,10 @@
     "tabDefault": "Default",
     "tabPurchased": "Purchased",
     "noPurchased": "No purchased stickers yet",
-    "noPurchasedHint": "Visit the store to find stickers"
+    "noPurchasedHint": "Visit the store to find stickers",
+    "loading": "Loading…",
+    "noStickers": "No stickers found",
+    "retry": "Retry"
   },
   "about": {
     "label": "About",

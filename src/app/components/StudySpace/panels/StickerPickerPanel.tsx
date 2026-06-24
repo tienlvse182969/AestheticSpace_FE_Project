@@ -344,19 +344,19 @@ export function StickerPickerPanel({ onPlace, onDropSticker, onClose }: StickerP
           loading ? (
             <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
               <LoadingRing size={18} />
-              <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>Loading…</Text>
+              <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>{t("stickerPicker.loading")}</Text>
             </Flex>
           ) : error ? (
             <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
               <Text style={{ fontSize: "0.78rem", color: "rgba(248,113,113,0.75)", fontFamily: FONT }}>{error}</Text>
               <Box as="button" onClick={fetchStickers}
                 style={{ background: "transparent", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "5px 14px", cursor: "pointer", fontSize: "0.75rem", color: "rgba(255,255,255,0.5)", fontFamily: FONT }}>
-                Retry
+                {t("stickerPicker.retry")}
               </Box>
             </Flex>
           ) : stickers.length === 0 ? (
             <Flex align="center" justify="center" style={{ height: "100%" }}>
-              <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.28)", fontFamily: FONT }}>No stickers found</Text>
+              <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.28)", fontFamily: FONT }}>{t("stickerPicker.noStickers")}</Text>
             </Flex>
           ) : (
             <Box display="grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
@@ -378,7 +378,7 @@ export function StickerPickerPanel({ onPlace, onDropSticker, onClose }: StickerP
           purchasedLoading ? (
             <Flex align="center" justify="center" style={{ height: "100%" }} gap={3}>
               <LoadingRing size={18} />
-              <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>Loading…</Text>
+              <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)", fontFamily: FONT }}>{t("stickerPicker.loading")}</Text>
             </Flex>
           ) : purchasedError ? (
             <Flex direction="column" align="center" justify="center" style={{ height: "100%" }} gap={3}>
@@ -387,7 +387,7 @@ export function StickerPickerPanel({ onPlace, onDropSticker, onClose }: StickerP
               <Box as="button" onClick={fetchPurchased}
                 display="flex" alignItems="center" gap={2}
                 style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.16)", borderRadius: 7, color: "rgba(255,255,255,0.6)", fontSize: "0.76rem", padding: "5px 14px", cursor: "pointer", fontFamily: FONT }}>
-                <RefreshCw size={12} /> Retry
+                <RefreshCw size={12} /> {t("stickerPicker.retry")}
               </Box>
             </Flex>
           ) : purchased.length === 0 ? (
