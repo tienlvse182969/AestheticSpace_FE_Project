@@ -1,24 +1,25 @@
 import api from "./api";
 import type { ApiResponse } from "../types/api.types";
 
-interface CreateVnPayRequest {
+interface CreatePayOsRequest {
   amountVnd: number;
-  returnUrl: string | null;
   description: string | null;
-  purpose: string;
+  purpose: string | null;
+  returnUrl: string | null;
+  cancelUrl: string | null;
   storeItemId?: string | null;
   coinsAmount?: number | null;
 }
 
-export interface CreateVnPayResponse {
+export interface CreatePayOsResponse {
   transactionCode: string;
-  paymentUrl: string;
+  checkoutUrl: string;
 }
 
 export const paymentService = {
-  createVnPayPayment: async (payload: CreateVnPayRequest): Promise<CreateVnPayResponse> => {
-    const { data } = await api.post<ApiResponse<CreateVnPayResponse>>(
-      "/payment/vnpay/create",
+  createPayOsPayment: async (payload: CreatePayOsRequest): Promise<CreatePayOsResponse> => {
+    const { data } = await api.post<ApiResponse<CreatePayOsResponse>>(
+      "/payment/payos/create",
       payload
     );
     return data.data;

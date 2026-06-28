@@ -408,11 +408,11 @@
         "Hệ thống điểm xu & nhiệm vụ hằng ngày"
       ]
     },
-    "footer": "Thanh toán qua VNPay · Huỷ bất cứ lúc nào · Không tính phí ẩn",
+    "footer": "Thanh toán qua PayOS · Huỷ bất cứ lúc nào · Không tính phí ẩn",
     "modal": {
       "title": "Chọn phương thức thanh toán",
       "subtitle": "130.000₫ / tháng · Gia hạn tự động",
-      "vnpayDesc": "Thẻ ATM, Visa, MasterCard, QR Code",
+      "payosDesc": "Thẻ ATM, Visa, MasterCard, QR Code",
       "redirect": "Chuyển hướng"
     },
     "trial": {
@@ -561,8 +561,8 @@
     "resetPasswordSend": "Gửi email đặt lại",
     "resetPasswordSent": "Đã gửi! Kiểm tra hộp thư của bạn.",
     "resetPasswordError": "Không thể gửi email. Vui lòng thử lại.",
-    "topUpCoins": "Nạp xu bằng VNPAY",
-    "topUpCoinsDesc": "Chọn gói xu bên dưới để thanh toán qua VNPAY.",
+    "topUpCoins": "Nạp xu",
+    "topUpCoinsDesc": "Chọn gói xu bên dưới để thanh toán.",
     "topUpError": "Không thể xử lý thanh toán. Vui lòng thử lại.",
     "coins": "xu",
     "vnd": "đ",

@@ -408,11 +408,11 @@
         "Coin & daily mission system"
       ]
     },
-    "footer": "Pay via VNPay · Cancel anytime · No hidden fees",
+    "footer": "Pay via PayOS · Cancel anytime · No hidden fees",
     "modal": {
       "title": "Choose payment method",
       "subtitle": "130.000₫ / month · Auto-renews",
-      "vnpayDesc": "ATM, Visa, MasterCard, QR Code",
+      "payosDesc": "ATM, Visa, MasterCard, QR Code",
       "redirect": "Redirect"
     },
     "trial": {
@@ -562,8 +562,8 @@
     "resetPasswordSend": "Send reset email",
     "resetPasswordSent": "Sent! Check your inbox.",
     "resetPasswordError": "Failed to send email. Please try again.",
-    "topUpCoins": "Top Up Coins via VNPAY",
-    "topUpCoinsDesc": "Select a coin pack below to pay via VNPAY.",
+    "topUpCoins": "Top Up Coins",
+    "topUpCoinsDesc": "Select a coin pack below to pay.",
     "topUpError": "Failed to process payment. Please try again.",
     "coins": "coins",
     "vnd": "₫",

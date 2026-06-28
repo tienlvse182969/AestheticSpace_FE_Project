@@ -19,18 +19,17 @@ export function PaymentResultPage() {
   const [coinsReceived, setCoinsReceived] = useState<number | null>(null);
 
   useEffect(() => {
-    const transactionCode = sessionStorage.getItem("vnpay_transaction_code");
-    const purpose = sessionStorage.getItem("vnpay_purpose");
-    const coinsAmount = sessionStorage.getItem("vnpay_coins_amount");
-    sessionStorage.removeItem("vnpay_transaction_code");
-    sessionStorage.removeItem("vnpay_purpose");
-    sessionStorage.removeItem("vnpay_store_item_name");
-    sessionStorage.removeItem("vnpay_coins_amount");
+    const transactionCode = sessionStorage.getItem("payos_transaction_code");
+    const purpose = sessionStorage.getItem("payos_purpose");
+    const coinsAmount = sessionStorage.getItem("payos_coins_amount");
+    sessionStorage.removeItem("payos_transaction_code");
+    sessionStorage.removeItem("payos_purpose");
+    sessionStorage.removeItem("payos_store_item_name");
+    sessionStorage.removeItem("payos_coins_amount");
     if (coinsAmount) setCoinsReceived(Number(coinsAmount));
 
     const statusParam = searchParams.get("status");
-    const vnpResponseCode = searchParams.get("vnp_ResponseCode");
-    const isSuccess = statusParam === "success" || vnpResponseCode === "00";
+    const isSuccess = statusParam === "PAID" || statusParam === "success";
 
     if (!isSuccess) {
       setStatus("error");
@@ -38,7 +37,7 @@ export function PaymentResultPage() {
     }
 
     // BuyCoins và StoreItem: backend webhook đã xử lý, chỉ cần hiện success
-    if (purpose === "BuyCoins" || purpose === "StoreItem") {
+    if (purpose === "BuyCoins" || purpose === "StoreItem" || purpose === "Payment") {
       setStatus("success");
       return;
     }
@@ -177,25 +176,6 @@ export function PaymentResultPage() {
                 <br />
                 Chúng tôi sẽ kiểm tra và cập nhật tài khoản cho bạn.
               </Text>
-            </Box>
-
-            <Box
-              as="button"
-              px={10}
-              py={3}
-              borderRadius="xl"
-              border="2px solid"
-              borderColor="#4e7c6a"
-              color="#4e7c6a"
-              fontWeight="600"
-              fontSize="sm"
-              bg="transparent"
-              cursor="pointer"
-              transition="all 0.2s"
-              onClick={() => navigate("/pricing", { replace: true })}
-              _hover={{ bg: "#4e7c6a", color: "white" }}
-            >
-              Quay lại bảng giá
             </Box>
           </Flex>
         )}
