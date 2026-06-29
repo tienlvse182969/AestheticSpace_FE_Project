@@ -408,11 +408,11 @@
         "Coin & daily mission system"
       ]
     },
-    "footer": "Pay via VNPay · Cancel anytime · No hidden fees",
+    "footer": "Pay via PayOS · Cancel anytime · No hidden fees",
     "modal": {
       "title": "Choose payment method",
       "subtitle": "130.000₫ / month · Auto-renews",
-      "vnpayDesc": "ATM, Visa, MasterCard, QR Code",
+      "payosDesc": "ATM, Visa, MasterCard, QR Code",
       "redirect": "Redirect"
     },
     "trial": {
@@ -498,7 +498,19 @@
     "focusEndTitle": "Focus session complete!",
     "focusEndBody": "Great work! Time to take a break.",
     "breakEndTitle": "Break time's up!",
-    "breakEndBody": "Ready for the next focus session?"
+    "breakEndBody": "Ready for the next focus session?",
+    "focusDoneMotivation0": "Excellent! You just powered through a full focus session!",
+    "focusDoneMotivation1": "Amazing! Your brain is firing on all cylinders!",
+    "focusDoneMotivation2": "Every session is a step forward — real progress happening here!",
+    "focusDoneMotivation3": "Consistency is your superpower — and you're using it brilliantly!",
+    "focusDoneMotivation4": "You just invested in your future. Be proud of that!",
+    "focusDoneMotivation5": "Your dedication is creating real, lasting change!",
+    "breakDoneMotivation0": "Recharged and ready! Let's get back to crushing it!",
+    "breakDoneMotivation1": "Break's done — refreshed mind, elevated performance!",
+    "breakDoneMotivation2": "Fresh mind, ready to conquer the next session!",
+    "breakDoneMotivation3": "Rest restores, focus conquers — let's go!",
+    "breakDoneMotivation4": "Rest well, work well — you're absolutely nailing this!",
+    "breakDoneMotivation5": "Every good break leads to an even better session!"
   },
   "clockSettings": {
     "title": "Clock Settings",
@@ -562,8 +574,8 @@
     "resetPasswordSend": "Send reset email",
     "resetPasswordSent": "Sent! Check your inbox.",
     "resetPasswordError": "Failed to send email. Please try again.",
-    "topUpCoins": "Top Up Coins via VNPAY",
-    "topUpCoinsDesc": "Select a coin pack below to pay via VNPAY.",
+    "topUpCoins": "Top Up Coins",
+    "topUpCoinsDesc": "Select a coin pack below to pay.",
     "topUpError": "Failed to process payment. Please try again.",
     "coins": "coins",
     "vnd": "₫",
@@ -622,6 +634,15 @@
     "title": "Effects",
     "rain": "Rain",
     "snow": "Snow",
+    "fog": "Fog",
+    "stars": "Stars",
+    "fireflies": "Fireflies",
+    "autumn_leaves": "Autumn Leaves",
+    "cherry_blossom": "Cherry Blossom",
+    "lightning": "Lightning",
+    "bubbles": "Bubbles",
+    "meteor_shower": "Meteor Shower",
+    "confetti": "Confetti",
     "active": "active",
     "noEffect": "No effect — pick one above",
     "clearEffect": "Clear effect"

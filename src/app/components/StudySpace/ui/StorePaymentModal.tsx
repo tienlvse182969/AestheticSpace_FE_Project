@@ -8,7 +8,6 @@ import { paymentService } from "../../../../services/payment.service";
 
 const MotionBox = motion.create(Box);
 
-const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
 
 interface Props {
   item: StoreItem;
@@ -27,33 +26,40 @@ export function StorePaymentModal({
   isPayingWithCoins,
   purchaseError,
 }: Props) {
-  const [vnpayProcessing, setVnpayProcessing] = useState(false);
+  const [payosProcessing, setPayosProcessing] = useState(false);
 
   const price = item.coinPrice ?? 0;
   const canAffordWithCoins = coinBalance >= price;
-  const hasVnPayOption =
+  const hasPayOsOption =
     item.realMoneyPriceVnd != null && item.realMoneyPriceVnd > 0;
-  const isAnyProcessing = isPayingWithCoins || vnpayProcessing;
+  const isAnyProcessing = isPayingWithCoins || payosProcessing;
 
-  const handleVnPay = async () => {
+  const handlePayOs = async () => {
     if (!item.realMoneyPriceVnd) return;
-    setVnpayProcessing(true);
+    setPayosProcessing(true);
     try {
-      const { transactionCode, paymentUrl } =
-        await paymentService.createVnPayPayment({
-          amountVnd: item.realMoneyPriceVnd,
-          returnUrl: `${window.location.origin}/payment/result`,
-          description: `Mua ${item.name}`,
-          purpose: "StoreItem",
-          storeItemId: item.id,
-          coinsAmount: 0,
-        });
-      sessionStorage.setItem("vnpay_transaction_code", transactionCode);
-      sessionStorage.setItem("vnpay_purpose", "StoreItem");
-      sessionStorage.setItem("vnpay_store_item_name", item.name);
-      window.location.href = paymentUrl;
-    } catch {
-      setVnpayProcessing(false);
+      const result = await paymentService.createPayOsPayment({
+        amountVnd: item.realMoneyPriceVnd,
+        returnUrl: `${window.location.origin}/payment/result`,
+        cancelUrl: `${window.location.origin}/payment/result?status=cancelled`,
+        description: `Mua ${item.name}`,
+        purpose: "BuyAsset",
+        storeItemId: item.id,
+      });
+      console.log("[PayOS] create response:", result);
+      const checkoutUrl = result?.checkoutUrl;
+      if (!checkoutUrl) {
+        console.error("[PayOS] checkoutUrl is missing in response", result);
+        setPayosProcessing(false);
+        return;
+      }
+      sessionStorage.setItem("payos_transaction_code", result.transactionCode);
+      sessionStorage.setItem("payos_purpose", "BuyAsset");
+      sessionStorage.setItem("payos_store_item_name", item.name);
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      console.error("[PayOS] createPayOsPayment error:", err);
+      setPayosProcessing(false);
     }
   };
 
@@ -281,17 +287,8 @@ export function StorePaymentModal({
                 </Flex>
               </Box>
 
-              {/* ── VNPay ── */}
-              {hasVnPayOption && (
-                <Box
-                  position="relative"
-                  style={PUBLIC_BETA ? { opacity: 0.35, filter: "blur(1.5px)", pointerEvents: "none" } : undefined}
-                >
-                {PUBLIC_BETA && (
-                  <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4 }}>
-                    Tính năng thanh toán đang phát triển
-                  </Text>
-                )}
+              {/* ── PayOS ── */}
+              {hasPayOsOption && (
                 <Box
                   as="button"
                   w="100%"
@@ -300,11 +297,11 @@ export function StorePaymentModal({
                   border="none"
                   cursor={isAnyProcessing ? "not-allowed" : "pointer"}
                   textAlign="left"
-                  onClick={() => !isAnyProcessing && handleVnPay()}
+                  onClick={() => !isAnyProcessing && handlePayOs()}
                   style={{
                     background: "rgba(99,102,241,0.05)",
                     border: "1px solid rgba(99,102,241,0.18)",
-                    opacity: vnpayProcessing ? 0.65 : 1,
+                    opacity: payosProcessing ? 0.65 : 1,
                     transition: "all 0.18s",
                   }}
                   _hover={
@@ -315,7 +312,7 @@ export function StorePaymentModal({
                 >
                   <Flex align="center" justify="space-between">
                     <Flex align="center" gap="12px">
-                      {vnpayProcessing ? (
+                      {payosProcessing ? (
                         <LoadingRing size={20} color="rgba(129,140,248,0.9)" trackColor="rgba(129,140,248,0.15)" />
                       ) : (
                         <Box
@@ -341,7 +338,7 @@ export function StorePaymentModal({
                             marginBottom: "3px",
                           }}
                         >
-                          VNPay
+                          PayOS
                         </Text>
                         <Text
                           style={{
@@ -350,11 +347,11 @@ export function StorePaymentModal({
                             color: "rgba(255,255,255,0.33)",
                           }}
                         >
-                          {vnpayProcessing ? "Đang chuyển hướng..." : "Thẻ ATM, Visa, MasterCard, QR Code"}
+                          {payosProcessing ? "Đang chuyển hướng..." : "Thẻ ATM, Visa, MasterCard, QR Code"}
                         </Text>
                       </Box>
                     </Flex>
-                    {!vnpayProcessing && (
+                    {!payosProcessing && (
                       <Text
                         flexShrink={0}
                         style={{
@@ -368,7 +365,6 @@ export function StorePaymentModal({
                       </Text>
                     )}
                   </Flex>
-                </Box>
                 </Box>
               )}
             </Flex>

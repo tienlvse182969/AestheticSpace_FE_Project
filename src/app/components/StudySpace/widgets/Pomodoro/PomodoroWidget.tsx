@@ -57,6 +57,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
   const [running,          setRunning]          = useState(false);
   const [session,          setSession]          = useState(1);
   const [dialog,           setDialog]           = useState<Dialog>(null);
+  const [motivationIdx,    setMotivationIdx]    = useState(0);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const startingRef     = useRef(false); // guard against concurrent start calls
   const [pipOpen, setPipOpen]       = useState(false);
@@ -245,6 +246,13 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
     } catch { /* user dismissed or not supported */ }
   };
 
+  /* ── Pick a random motivation quote when a result dialog opens ── */
+  useEffect(() => {
+    if (dialog === "break-prompt" || dialog === "next-prompt") {
+      setMotivationIdx(Math.floor(Math.random() * 6));
+    }
+  }, [dialog]);
+
   /* ── Close PiP when timer goes idle ── */
   useEffect(() => {
     if (phase === "idle") pipWindowRef.current?.close();
@@ -334,9 +342,9 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
 
       {/* ── Controls ── */}
       <Flex align="center" justify="center" gap={3} mt={4}>
-        <Box as="button" onClick={handleResetClick}
+        <Box as="button" onClick={isBreak ? undefined : handleResetClick}
           borderRadius="full" display="flex" alignItems="center" justifyContent="center"
-          style={{ width: 38, height: 38, background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.3)", cursor: "pointer" }}>
+          style={{ width: 38, height: 38, background: "rgba(var(--accent-rgb), 0.1)", border: "1px solid rgba(var(--accent-rgb), 0.3)", cursor: isBreak ? "default" : "pointer", opacity: isBreak ? 0.35 : 1, transition: "opacity 0.2s" }}>
           <RotateCcw size={14} color="rgba(var(--accent-light-rgb), 0.85)" />
         </Box>
         <Box as="button" onClick={togglePlay}
@@ -448,8 +456,11 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
 
             {dialog === "break-prompt" && (
               <>
-                <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
+                <Text textAlign="center" mb={2} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
                   {t("pomodoroWidget.focusDoneTitle")}
+                </Text>
+                <Text textAlign="center" mb={3} style={{ fontSize: "0.78rem", background: "linear-gradient(90deg,#4ade80,#38bdf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500, fontStyle: "italic", lineHeight: 1.4 }}>
+                  {t(`pomodoroWidget.focusDoneMotivation${motivationIdx}`)}
                 </Text>
                 <Text textAlign="center" mb={5} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.5 }}>
                   {t("pomodoroWidget.breakPromptDesc", { minutes: breakMinutes })}
@@ -469,8 +480,11 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
 
             {dialog === "next-prompt" && (
               <>
-                <Text textAlign="center" mb={1} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
+                <Text textAlign="center" mb={2} style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.92)", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
                   {session > totalSessions ? t("pomodoroWidget.allDoneTitle") : t("pomodoroWidget.readyNextTitle")}
+                </Text>
+                <Text textAlign="center" mb={3} style={{ fontSize: "0.78rem", background: "linear-gradient(90deg,#38bdf8,#818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500, fontStyle: "italic", lineHeight: 1.4 }}>
+                  {t(`pomodoroWidget.breakDoneMotivation${motivationIdx}`)}
                 </Text>
                 <Text textAlign="center" mb={5} style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.5 }}>
                   {session > totalSessions

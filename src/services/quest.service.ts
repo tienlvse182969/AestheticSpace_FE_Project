@@ -22,6 +22,7 @@ export type QuestStatus = "active" | "claimable" | "claimed";
 
 export interface Quest {
   id: string;
+  triggerKey: string | null;
   title: string;
   description: string;
   category: QuestCategory;
@@ -81,6 +82,7 @@ function mapStatus(isCompleted: boolean, isClaimed: boolean): QuestStatus {
 function mapMissionToQuest(m: MissionWithProgressDto): Quest {
   return {
     id: m.id,
+    triggerKey: m.triggerKey,
     title: m.name ?? "",
     description: m.description ?? "",
     category: mapFrequencyToCategory(m.frequency),

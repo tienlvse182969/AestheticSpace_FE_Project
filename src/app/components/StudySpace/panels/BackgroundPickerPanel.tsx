@@ -439,7 +439,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
 
   const TABS = [
     { id: "discover",  label: t("backgrounds.discover") },
-    { id: "favorites", label: favorites.length > 0 ? t("backgrounds.favoritesCount", { count: favorites.length }) : t("backgrounds.favorites") },
+    // { id: "favorites", label: favorites.length > 0 ? t("backgrounds.favoritesCount", { count: favorites.length }) : t("backgrounds.favorites") },
     { id: "purchased", label: t("backgrounds.purchased") },
     { id: "upload",    label: t("backgrounds.upload") },
   ] as const;
@@ -471,7 +471,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
 
   const TAB_ICONS: Record<TabId, React.ReactNode> = {
     discover:  <Search size={13} />,
-    favorites: <Heart size={13} />,
+    // favorites: <Heart size={13} />,
     purchased: <ShoppingBag size={13} />,
     upload:    <ImagePlus size={13} />,
   };
@@ -779,7 +779,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
         )}
 
         {/* ── FAVORITES TAB ── */}
-        {tab === "favorites" && (
+        {/* {tab === "favorites" && (
           favorites.length === 0 ? (
             <Flex align="center" justify="center" h="180px" direction="column" gap={2}>
               <Heart size={22} color="rgba(255,255,255,0.18)" />
@@ -803,7 +803,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
               {favorites.map(bg => <PhotoCard key={bg.id} {...makeCardProps(bg)} />)}
             </Box>
           )
-        )}
+        )} */}
 
         {/* ── UPLOAD TAB ── */}
         {tab === "upload" && (

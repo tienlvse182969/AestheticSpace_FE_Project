@@ -19,7 +19,7 @@ const BG_IMG =
 
 const PREMIUM_HIGHLIGHTS = [true, true, true, true, false, true, true, true];
 
-type PaymentMethod = "vnpay" | null;
+type PaymentMethod = "payos" | null;
 
 export function PricingPage() {
   const navigate = useNavigate();
@@ -80,20 +80,21 @@ export function PricingPage() {
     }
   };
 
-  const handleVnPay = async () => {
+  const handlePayOs = async () => {
     setIsProcessing(true);
     try {
-      const { transactionCode, paymentUrl } =
-        await paymentService.createVnPayPayment({
+      const { transactionCode, checkoutUrl } =
+        await paymentService.createPayOsPayment({
           amountVnd: 100000,
-          returnUrl: "string",
-          description: "string",
+          returnUrl: `${window.location.origin}/payment/result`,
+          cancelUrl: `${window.location.origin}/payment/result?status=cancelled`,
+          description: "Nâng cấp Premium",
           purpose: "Subscription",
           storeItemId: null,
           coinsAmount: 0,
         });
-      sessionStorage.setItem("vnpay_transaction_code", transactionCode);
-      window.location.href = paymentUrl;
+      sessionStorage.setItem("payos_transaction_code", transactionCode);
+      window.location.href = checkoutUrl;
     } catch {
       setIsProcessing(false);
     }
@@ -764,7 +765,7 @@ export function PricingPage() {
                     </Text>
 
                     <Flex direction="column" gap={3}>
-                      {/* VNPay */}
+                      {/* PayOS */}
                       <Box
                         position="relative"
                         style={PUBLIC_BETA ? { opacity: 0.35, filter: "blur(1.5px)", pointerEvents: "none" } : undefined}
@@ -788,7 +789,7 @@ export function PricingPage() {
                         bg="white"
                         cursor={isProcessing ? "not-allowed" : "pointer"}
                         transition="all 0.2s"
-                        onClick={() => !isProcessing && handleVnPay()}
+                        onClick={() => !isProcessing && handlePayOs()}
                         _hover={
                           isProcessing
                             ? {}
@@ -807,10 +808,10 @@ export function PricingPage() {
                               color="#1a3c34"
                               mb="2px"
                             >
-                              VNPay
+                              PayOS
                             </Text>
                             <Text fontSize="xs" color="#6b7280">
-                              {t("pricing.modal.vnpayDesc")}
+                              {t("pricing.modal.payosDesc")}
                             </Text>
                           </Box>
                           {isProcessing ? (

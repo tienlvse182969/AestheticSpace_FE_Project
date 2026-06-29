@@ -4,6 +4,15 @@ import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { RainEffect } from "../effects/RainEffect";
 import { SnowEffect } from "../effects/SnowEffect";
+import { FogEffect } from "../effects/FogEffect";
+import { StarsEffect } from "../effects/StarsEffect";
+import { FirefliesEffect } from "../effects/FirefliesEffect";
+import { AutumnLeavesEffect } from "../effects/AutumnLeavesEffect";
+import { CherryBlossomEffect } from "../effects/CherryBlossomEffect";
+import { LightningEffect } from "../effects/LightningEffect";
+import { BubblesEffect } from "../effects/BubblesEffect";
+import { MeteorShowerEffect } from "../effects/MeteorShowerEffect";
+import { ConfettiEffect } from "../effects/ConfettiEffect";
 import type { StudySpaceCtx } from "../../../hooks/studyspace/useStudySpace";
 
 const MotionBox = motion.create(Box);
@@ -154,8 +163,17 @@ export function SpaceBackground({ ctx }: Props) {
       </AnimatePresence>
 
       {/* Effect overlays */}
-      {activeEffect === "rain" && <RainEffect />}
-      {activeEffect === "snow" && <SnowEffect />}
+      {activeEffect === "rain"           && <RainEffect />}
+      {activeEffect === "snow"           && <SnowEffect />}
+      {activeEffect === "fog"            && <FogEffect />}
+      {activeEffect === "stars"          && <StarsEffect />}
+      {activeEffect === "fireflies"      && <FirefliesEffect />}
+      {activeEffect === "autumn-leaves"  && <AutumnLeavesEffect />}
+      {activeEffect === "cherry-blossom" && <CherryBlossomEffect />}
+      {activeEffect === "lightning"      && <LightningEffect />}
+      {activeEffect === "bubbles"        && <BubblesEffect />}
+      {activeEffect === "meteor-shower"  && <MeteorShowerEffect />}
+      {activeEffect === "confetti"       && <ConfettiEffect />}
     </>
   );
 }

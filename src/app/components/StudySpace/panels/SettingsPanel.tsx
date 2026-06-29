@@ -118,18 +118,19 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
     setTopUpLoading(coins);
     setTopUpError(false);
     try {
-      const { transactionCode, paymentUrl } = await paymentService.createVnPayPayment({
+      const { transactionCode, checkoutUrl } = await paymentService.createPayOsPayment({
         amountVnd: amountVnd,
         coinsAmount: coins,
         purpose: "BuyCoins",
-        returnUrl: "string",
+        returnUrl: `${window.location.origin}/payment/result`,
+        cancelUrl: `${window.location.origin}/payment/result?status=cancelled`,
         description: null,
-        storeItemId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        storeItemId: null,
       });
-      sessionStorage.setItem("vnpay_transaction_code", transactionCode);
-      sessionStorage.setItem("vnpay_purpose", "BuyCoins");
-      sessionStorage.setItem("vnpay_coins_amount", String(coins));
-      window.location.href = paymentUrl;
+      sessionStorage.setItem("payos_transaction_code", transactionCode);
+      sessionStorage.setItem("payos_purpose", "BuyCoins");
+      sessionStorage.setItem("payos_coins_amount", String(coins));
+      window.location.href = checkoutUrl;
     } catch {
       setTopUpError(true);
       setTopUpLoading(null);
@@ -340,7 +341,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
               )}
             </Box>
 
-            {/* Top up coins via VNPAY — premium only */}
+            {/* Top up coins via PAYOS — premium only */}
             {user?.accountTier?.toLowerCase() === "premium" && <Box
               position="relative"
               style={PUBLIC_BETA ? { opacity: 0.35, filter: "blur(1.5px)", pointerEvents: "none" } : undefined}

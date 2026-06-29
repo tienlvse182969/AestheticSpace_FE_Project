@@ -73,7 +73,6 @@ const TABS: { value: TabValue; key: string }[] = [
   { value: "Sticker",      key: "themeStore.tabStickers" },
   { value: "AmbientSound", key: "themeStore.tabSounds" },
   { value: "purchased",    key: "themeStore.tabPurchased" },
-  { value: "wishlist",     key: "themeStore.tabWishlist" },
 ];
 
 function typeColor(category: StoreCategory): string {
@@ -2289,12 +2288,12 @@ export function ThemeStorePanel({
           <Text px="8px" mb="4px" style={{ fontSize: "0.58rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.22)", letterSpacing: "0.1em" }}>
             {t("themeStore.sidebarLibrary")}
           </Text>
-          {(["purchased", "wishlist"] as const).map((val) => {
+          {(["purchased"] as const).map((val) => {
             const tab = TABS.find((tb) => tb.value === val)!;
             const active = activeTab === val;
             const isPurchased = val === "purchased";
             const activeColor = isPurchased ? "rgba(74,222,128,0.85)" : "rgba(251,113,133,0.9)";
-            const count = val === "wishlist" ? wishlistIds.size : undefined;
+            const count = undefined;
             return (
               <Box
                 key={val}
