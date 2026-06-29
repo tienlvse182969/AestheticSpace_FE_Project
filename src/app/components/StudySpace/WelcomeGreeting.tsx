@@ -22,6 +22,23 @@ export function WelcomeGreeting() {
   const [visible, setVisible] = useState(false);
   const [barWidth, setBarWidth] = useState("100%");
   const dismissTimer = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevUserIdRef = useRef<string | null>(null);
+
+  // Preload audio when user is available
+  useEffect(() => {
+    if (!user) {
+      // User logged out — clear their session key so banner shows on next login
+      if (prevUserIdRef.current) {
+        sessionStorage.removeItem(SESSION_KEY_PREFIX + prevUserIdRef.current);
+      }
+      prevUserIdRef.current = null;
+      return;
+    }
+    prevUserIdRef.current = user.userId;
+    audioRef.current = new Audio("/assets/BannerSound/BannerSound.mp3");
+    audioRef.current.load();
+  }, [user?.userId]);
 
   useEffect(() => {
     if (!user || greeting.isLoading) return;
@@ -31,6 +48,7 @@ export function WelcomeGreeting() {
 
     sessionStorage.setItem(key, "1");
     setVisible(true);
+    audioRef.current?.play().catch(() => {});
 
     // Start the progress bar shrink via CSS transition
     requestAnimationFrame(() => {

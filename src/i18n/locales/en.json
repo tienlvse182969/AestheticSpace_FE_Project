@@ -498,7 +498,19 @@
     "focusEndTitle": "Focus session complete!",
     "focusEndBody": "Great work! Time to take a break.",
     "breakEndTitle": "Break time's up!",
-    "breakEndBody": "Ready for the next focus session?"
+    "breakEndBody": "Ready for the next focus session?",
+    "focusDoneMotivation0": "Excellent! You just powered through a full focus session!",
+    "focusDoneMotivation1": "Amazing! Your brain is firing on all cylinders!",
+    "focusDoneMotivation2": "Every session is a step forward — real progress happening here!",
+    "focusDoneMotivation3": "Consistency is your superpower — and you're using it brilliantly!",
+    "focusDoneMotivation4": "You just invested in your future. Be proud of that!",
+    "focusDoneMotivation5": "Your dedication is creating real, lasting change!",
+    "breakDoneMotivation0": "Recharged and ready! Let's get back to crushing it!",
+    "breakDoneMotivation1": "Break's done — refreshed mind, elevated performance!",
+    "breakDoneMotivation2": "Fresh mind, ready to conquer the next session!",
+    "breakDoneMotivation3": "Rest restores, focus conquers — let's go!",
+    "breakDoneMotivation4": "Rest well, work well — you're absolutely nailing this!",
+    "breakDoneMotivation5": "Every good break leads to an even better session!"
   },
   "clockSettings": {
     "title": "Clock Settings",

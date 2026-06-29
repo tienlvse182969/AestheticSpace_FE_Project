@@ -497,7 +497,19 @@
     "focusEndTitle": "Hoàn thành phiên tập trung!",
     "focusEndBody": "Làm tốt lắm! Đến giờ nghỉ rồi.",
     "breakEndTitle": "Hết giờ nghỉ!",
-    "breakEndBody": "Sẵn sàng cho phiên tập trung tiếp theo chưa?"
+    "breakEndBody": "Sẵn sàng cho phiên tập trung tiếp theo chưa?",
+    "focusDoneMotivation0": "Xuất sắc! Bạn vừa chinh phục xong một phiên tập trung đỉnh cao!",
+    "focusDoneMotivation1": "Tuyệt vời! Não bộ của bạn đang hoạt động hết công suất đấy!",
+    "focusDoneMotivation2": "Mỗi phiên tập trung là một bước tiến — bạn đang tiến bộ thấy rõ!",
+    "focusDoneMotivation3": "Kiên trì là siêu năng lực — và bạn đang dùng nó rất giỏi!",
+    "focusDoneMotivation4": "Bạn vừa đầu tư trọn vẹn cho tương lai của mình. Thật đáng tự hào!",
+    "focusDoneMotivation5": "Sự chăm chỉ của bạn đang tạo ra những thay đổi thực sự!",
+    "breakDoneMotivation0": "Đã nạp đầy năng lượng rồi! Hãy tiếp tục bứt phá nhé!",
+    "breakDoneMotivation1": "Giải lao xong rồi — tinh thần sảng khoái, năng suất tăng cao!",
+    "breakDoneMotivation2": "Tâm trí tươi mới, sẵn sàng chinh phục thêm!",
+    "breakDoneMotivation3": "Cơ thể nghỉ ngơi, tâm trí tươi mới — đây là lúc hiệu quả nhất!",
+    "breakDoneMotivation4": "Nghỉ đúng cách, tập trung đúng lúc — bạn đang làm rất tốt!",
+    "breakDoneMotivation5": "Mỗi lần nghỉ đúng cách là một lần tập trung tốt hơn!"
   },
   "clockSettings": {
     "title": "Cài đặt đồng hồ",
