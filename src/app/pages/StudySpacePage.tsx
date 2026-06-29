@@ -8,6 +8,7 @@ import { SpaceWidgets }      from "../components/StudySpace/sections/SpaceWidget
 import { SpaceToolbar }      from "../components/StudySpace/sections/SpaceToolbar";
 import { SpaceContextMenu }  from "../components/StudySpace/ui/SpaceContextMenu";
 import { FirstRoomModal }    from "../components/StudySpace/ui/FirstRoomModal";
+import { WelcomeGreeting }  from "../components/StudySpace/WelcomeGreeting";
 
 export function StudySpacePage() {
   const ctx = useStudySpace();
@@ -35,6 +36,7 @@ export function StudySpacePage() {
         {ctx.showFirstRoomModal && (
           <FirstRoomModal onConfirm={ctx.handleFirstRoomCreate} />
         )}
+        <WelcomeGreeting />
       </Box>
     </SpaceContextMenu>
   );
