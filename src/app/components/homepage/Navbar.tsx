@@ -1,10 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text, Link } from "@chakra-ui/react";
-import { Menu, X, Settings, LogOut, Layers, Crown } from "lucide-react";
+import { Menu, X, Settings, LogOut, Layers, Crown, Globe, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../context/AuthContext";
+import { FLAG_VN, FLAG_GB } from "../ui/FlagIcons";
+
+const LANGUAGES = [
+  { code: "en", label: "English",     flag: FLAG_GB },
+  { code: "vi", label: "Tiếng Việt",  flag: FLAG_VN },
+];
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -104,9 +110,12 @@ export function Navbar() {
   const [isInHero,   setIsInHero]     = useState(true);
   const [mobileOpen, setMobileOpen]   = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [langOpen, setLangOpen]       = useState(false);
 
   const avatarBtnRef  = useRef<HTMLDivElement>(null);
   const dropdownRef   = useRef<HTMLDivElement>(null);
+  const langBtnRef      = useRef<HTMLDivElement>(null);
+  const langDropdownRef = useRef<HTMLDivElement>(null);
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -155,6 +164,20 @@ export function Navbar() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [accountOpen]);
+
+  // Close language dropdown on outside click
+  useEffect(() => {
+    if (!langOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        langDropdownRef.current?.contains(e.target as Node) ||
+        langBtnRef.current?.contains(e.target as Node)
+      ) return;
+      setLangOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [langOpen]);
 
   const onHero = isInHero;
 
@@ -220,20 +243,68 @@ export function Navbar() {
           ))}
 
           {/* Language switcher */}
-          <Flex align="center" gap={1} borderRadius="lg" overflow="hidden"
-            style={{ border: `1px solid ${onHero ? "rgba(255,255,255,0.35)" : "rgba(78,124,106,0.4)"}` }}>
-            {["en", "vi"].map((lang) => (
-              <Box as="button" key={lang} onClick={() => changeLang(lang)}
-                px={2} py={1} fontSize="xs" fontWeight="600" border="none" cursor="pointer" transition="all 0.2s"
-                style={{
-                  background: i18n.language === lang ? (onHero ? "rgba(255,255,255,0.25)" : "#4e7c6a") : "transparent",
-                  color: i18n.language === lang ? "white" : (onHero ? "rgba(255,255,255,0.65)" : "#4e7c6a"),
-                  letterSpacing: "0.05em",
-                }}>
-                {lang.toUpperCase()}
-              </Box>
-            ))}
-          </Flex>
+          <Box position="relative">
+            <Flex
+              ref={langBtnRef as any}
+              as="button"
+              align="center" justify="center"
+              onClick={() => setLangOpen(v => !v)}
+              w="36px" h="36px" borderRadius="full" cursor="pointer" transition="all 0.2s"
+              style={{ border: `1px solid ${onHero ? "rgba(255,255,255,0.35)" : "rgba(78,124,106,0.4)"}` }}
+              _hover={{ bg: onHero ? "rgba(255,255,255,0.1)" : "rgba(78,124,106,0.08)" }}
+              aria-label="Change language"
+            >
+              <Globe size={17} color={onHero ? "white" : "#4e7c6a"} />
+            </Flex>
+
+            <AnimatePresence>
+              {langOpen && (
+                <motion.div
+                  ref={langDropdownRef}
+                  initial={{ opacity: 0, scale: 0.94, y: -8 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.94, y: -8 }}
+                  transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 10px)",
+                    right: 0,
+                    zIndex: 200,
+                    background: "rgba(12,18,22,0.92)",
+                    backdropFilter: "blur(20px)",
+                    WebkitBackdropFilter: "blur(20px)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: "14px",
+                    padding: "6px",
+                    minWidth: "170px",
+                    boxShadow: "0 16px 48px rgba(0,0,0,0.55)",
+                    transformOrigin: "top right",
+                  }}
+                >
+                  {LANGUAGES.map(({ code, label, flag }) => (
+                    <Box as="button" key={code}
+                      onClick={() => { changeLang(code); setLangOpen(false); }}
+                      style={{
+                        ...menuItemBase,
+                        justifyContent: "space-between",
+                        color: i18n.language === code ? "white" : "rgba(255,255,255,0.78)",
+                      }}
+                      onMouseEnter={e => Object.assign((e.currentTarget as HTMLElement).style, { background: "rgba(255,255,255,0.08)", color: "white" })}
+                      onMouseLeave={e => Object.assign((e.currentTarget as HTMLElement).style, { background: "transparent", color: i18n.language === code ? "white" : "rgba(255,255,255,0.78)" })}
+                    >
+                      <Flex align="center" gap="8px">
+                        <Box style={{ borderRadius: 3, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.5)", flexShrink: 0 }}>
+                          {flag}
+                        </Box>
+                        {label}
+                      </Flex>
+                      {i18n.language === code && <Check size={14} style={{ opacity: 0.8, flexShrink: 0 }} />}
+                    </Box>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Box>
 
           {/* User avatar + name OR Login button */}
           {user ? (
@@ -385,15 +456,22 @@ export function Navbar() {
               </Link>
             ))}
 
-            <Flex align="center" gap={2}>
-              {["en", "vi"].map((lang) => (
-                <Box as="button" key={lang} onClick={() => changeLang(lang)}
-                  px={3} py={1} borderRadius="md" fontSize="xs" fontWeight="600" border="1px solid"
-                  borderColor={i18n.language === lang ? "#4e7c6a" : "rgba(78,124,106,0.3)"}
-                  bg={i18n.language === lang ? "#4e7c6a" : "transparent"}
-                  color={i18n.language === lang ? "white" : "#4e7c6a"}
+            <Flex direction="column" gap={1}>
+              {LANGUAGES.map(({ code, label, flag }) => (
+                <Box as="button" key={code} onClick={() => changeLang(code)}
+                  display="flex" alignItems="center" justifyContent="space-between"
+                  px={3} py={2} borderRadius="md" fontSize="sm" border="1px solid"
+                  borderColor={i18n.language === code ? "#4e7c6a" : "rgba(78,124,106,0.3)"}
+                  bg={i18n.language === code ? "rgba(78,124,106,0.08)" : "transparent"}
+                  color="#1a3c34"
                   cursor="pointer" transition="all 0.2s">
-                  {lang.toUpperCase()}
+                  <Flex align="center" gap="8px">
+                    <Box style={{ borderRadius: 3, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.25)", flexShrink: 0 }}>
+                      {flag}
+                    </Box>
+                    {label}
+                  </Flex>
+                  {i18n.language === code && <Check size={14} color="#4e7c6a" style={{ flexShrink: 0 }} />}
                 </Box>
               ))}
             </Flex>
