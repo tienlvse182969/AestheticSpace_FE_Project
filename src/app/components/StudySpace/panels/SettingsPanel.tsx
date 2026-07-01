@@ -655,14 +655,17 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   </Text>
                   <Box style={{
                     fontSize: "0.62rem",
-                    color: "rgba(94,234,212,0.8)",
+                    color: "white",
                     fontFamily: "'HarmonyOS Sans', sans-serif",
-                    letterSpacing: "0.08em",
-                    background: "rgba(94,234,212,0.12)",
-                    border: "1px solid rgba(94,234,212,0.25)",
-                    borderRadius: "5px",
-                    padding: "2px 7px",
-                    lineHeight: 1.4,
+                    fontWeight: 600,
+                    letterSpacing: "0.03em",
+                    background: "rgba(20,20,20,0.72)",
+                    backdropFilter: "blur(8px)",
+                    WebkitBackdropFilter: "blur(8px)",
+                    border: "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: "100px",
+                    padding: "3px 10px",
+                    lineHeight: 1,
                   }}>
                     {APP_VERSION}
                   </Box>
