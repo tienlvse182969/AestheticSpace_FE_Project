@@ -135,7 +135,7 @@ export function HowItWorks() {
         </Box>
 
         {/* CTA */}
-        <MotionBox
+        {/* <MotionBox
           textAlign="center"
           mt={16}
           initial={{ opacity: 0, y: 20 }}
@@ -163,7 +163,7 @@ export function HowItWorks() {
           >
             {t("howItWorks.cta")}
           </Box>
-        </MotionBox>
+        </MotionBox> */}
       </Box>
     </Box>
   );
