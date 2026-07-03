@@ -8,6 +8,7 @@ import { paymentService } from "../../../../services/payment.service";
 
 const MotionBox = motion.create(Box);
 
+const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
 
 interface Props {
   item: StoreItem;
@@ -289,6 +290,23 @@ export function StorePaymentModal({
 
               {/* ── PayOS ── */}
               {hasPayOsOption && (
+                <Box>
+                {PUBLIC_BETA && (
+                  <Text
+                    style={{
+                      fontSize: "0.68rem",
+                      color: "rgba(255,255,255,0.4)",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      marginBottom: 6,
+                    }}
+                  >
+                    Tính năng này đang được bảo trì
+                  </Text>
+                )}
+                <Box
+                  position="relative"
+                  style={PUBLIC_BETA ? { opacity: 0.35, filter: "blur(1.5px)", pointerEvents: "none" } : undefined}
+                >
                 <Box
                   as="button"
                   w="100%"
@@ -365,6 +383,8 @@ export function StorePaymentModal({
                       </Text>
                     )}
                   </Flex>
+                </Box>
+                </Box>
                 </Box>
               )}
             </Flex>
