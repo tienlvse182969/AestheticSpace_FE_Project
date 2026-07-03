@@ -16,8 +16,6 @@ import { paymentService } from "../../../../services/payment.service";
 
 const MotionBox = motion.create(Box);
 
-const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
-
 const ACCENT_PRESETS = [
   { hex: "#4e7c6a", label: "Sage"   },
   { hex: "#3b82f6", label: "Blue"   },
@@ -344,13 +342,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
             {/* Top up coins via PAYOS — premium only */}
             {user?.accountTier?.toLowerCase() === "premium" && <Box
               position="relative"
-              style={PUBLIC_BETA ? { opacity: 0.35, filter: "blur(1.5px)", pointerEvents: "none" } : undefined}
             >
-            {PUBLIC_BETA && (
-              <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 6 }}>
-                Tính năng thanh toán đang phát triển
-              </Text>
-            )}
             <Box p="14px" borderRadius="12px"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
