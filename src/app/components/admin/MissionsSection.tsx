@@ -15,11 +15,11 @@ import { useAdminTheme } from "./AdminThemeContext";
 
 const MotionBox = motion.create(Box);
 
-const FREQ_OPTIONS = ["daily", "weekly", "one_time"];
+const FREQ_OPTIONS = ["daily", "weekly", "once"];
 const FREQ_STYLE: Record<string, { color: string; bg: string; border: string }> = {
-  daily:    { color: "#60a5fa", bg: "rgba(96,165,250,0.12)",  border: "rgba(96,165,250,0.3)"  },
-  weekly:   { color: "#a78bfa", bg: "rgba(167,139,250,0.12)", border: "rgba(167,139,250,0.3)" },
-  one_time: { color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.3)"  },
+  daily:  { color: "#60a5fa", bg: "rgba(96,165,250,0.12)",  border: "rgba(96,165,250,0.3)"  },
+  weekly: { color: "#a78bfa", bg: "rgba(167,139,250,0.12)", border: "rgba(167,139,250,0.3)" },
+  once:   { color: "#fbbf24", bg: "rgba(251,191,36,0.12)",  border: "rgba(251,191,36,0.3)"  },
 };
 const DEFAULT_FREQ_STYLE = { color: "#94a3b8", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)" };
 
@@ -41,7 +41,7 @@ export function MissionsSection() {
   const getFreqLabel = (freq: string | null) => {
     if (freq === "daily")    return t("admin.missions.freqDaily");
     if (freq === "weekly")   return t("admin.missions.freqWeekly");
-    if (freq === "one_time") return t("admin.missions.freqOneTime");
+    if (freq === "once")     return t("admin.missions.freqOneTime");
     return freq ?? "—";
   };
 

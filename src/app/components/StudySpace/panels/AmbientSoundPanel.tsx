@@ -54,6 +54,95 @@ function parseFirstPreviewUrl(raw: string | null | undefined): string | null {
   return raw;
 }
 
+/* ── Dominant-color extraction from preview images ───────────────────────── */
+const accentColorCache = new Map<string, string>();
+
+function toHex(v: number): string {
+  return Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
+}
+
+function lightenColor(hex: string, amount: number): string {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) return hex;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `#${toHex(r + (255 - r) * amount)}${toHex(g + (255 - g) * amount)}${toHex(b + (255 - b) * amount)}`;
+}
+
+function extractAccentColor(url: string): Promise<string | null> {
+  const cached = accentColorCache.get(url);
+  if (cached) return Promise.resolve(cached);
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const size = 16;
+        const canvas = document.createElement("canvas");
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(null);
+        ctx.drawImage(img, 0, 0, size, size);
+        const { data } = ctx.getImageData(0, 0, size, size);
+
+        let r = 0, g = 0, b = 0, vividCount = 0;
+        let ar = 0, ag = 0, ab = 0, allCount = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          if (data[i + 3] < 128) continue;
+          const rr = data[i], gg = data[i + 1], bb = data[i + 2];
+          ar += rr; ag += gg; ab += bb; allCount++;
+
+          const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb);
+          const isNearWhite = max > 235 && min > 200;
+          const isNearBlack = max < 25;
+          if (isNearWhite || isNearBlack) continue;
+          r += rr; g += gg; b += bb; vividCount++;
+        }
+
+        if (vividCount > 0) {
+          const hex = `#${toHex(r / vividCount)}${toHex(g / vividCount)}${toHex(b / vividCount)}`;
+          accentColorCache.set(url, hex);
+          return resolve(hex);
+        }
+        if (allCount > 0) {
+          const hex = `#${toHex(ar / allCount)}${toHex(ag / allCount)}${toHex(ab / allCount)}`;
+          accentColorCache.set(url, hex);
+          return resolve(hex);
+        }
+        resolve(null);
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+function usePreviewAccentColor(previewUrl: string | null | undefined, fallback: string): string {
+  const [accent, setAccent] = useState<string>(
+    () => (previewUrl && accentColorCache.get(previewUrl)) || fallback
+  );
+
+  useEffect(() => {
+    if (!previewUrl) { setAccent(fallback); return; }
+    const cached = accentColorCache.get(previewUrl);
+    if (cached) { setAccent(cached); return; }
+
+    setAccent(fallback);
+    let cancelled = false;
+    extractAccentColor(previewUrl).then((resolved) => {
+      if (!cancelled && resolved) setAccent(resolved);
+    });
+    return () => { cancelled = true; };
+  }, [previewUrl, fallback]);
+
+  return accent;
+}
+
 /* ── Sound entry ──────────────────────────────────────────────────────────── */
 interface SoundEntry {
   id: string;
@@ -99,6 +188,9 @@ function SoundCard({
   onToggle: () => void; onVolume: (v: number) => void;
   previewUrl?: string | null;
 }) {
+  const accentColor = usePreviewAccentColor(previewUrl, color);
+  const sliderColor = lightenColor(accentColor, 0.25);
+
   return (
     <Box
       as="button"
@@ -108,10 +200,12 @@ function SoundCard({
       borderRadius="12px"
       style={{
         height: 165, cursor: "pointer",
-        border: `2px solid ${isOn ? color : "transparent"}`,
-        boxShadow: isOn ? `0 0 18px ${color}55` : "none",
+        border: "none",
+        boxShadow: isOn
+          ? `inset 0 0 0 2px ${accentColor}, 0 0 18px ${accentColor}55`
+          : "inset 0 0 0 2px transparent",
         outline: "none",
-        transition: "border-color 0.2s, box-shadow 0.2s, transform 0.15s",
+        transition: "box-shadow 0.2s, transform 0.15s",
         display: "block", width: "100%", padding: 0,
         background: previewUrl
           ? `center/cover no-repeat url(${previewUrl})`
@@ -139,6 +233,21 @@ function SoundCard({
         }} />
       )}
 
+      {/* Dim overlay for inactive cards */}
+      {!isOn && (
+        <Box position="absolute" inset={0} style={{
+          background: "rgba(0,0,0,0.35)",
+          pointerEvents: "none",
+        }} />
+      )}
+
+      {/* Bottom gradient scrim so name/volume stay readable over any background */}
+      <Box position="absolute" bottom={0} left={0} right={0} style={{
+        height: 82,
+        background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0) 100%)",
+        pointerEvents: "none",
+      }} />
+
       <Box position="absolute" top="10px" right="10px"
         style={{ opacity: isOn ? 0.6 : 0.2, transition: "opacity 0.2s", zIndex: 1 }}>
         <Music size={18} style={{ color }} />
@@ -154,6 +263,7 @@ function SoundCard({
               exit={{ opacity: 0, y: 4 }}
               transition={{ duration: 0.16 } as any}>
               <input
+                className="ambient-volume-slider"
                 type="range" min={0} max={100} value={volume}
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}
@@ -161,9 +271,10 @@ function SoundCard({
                 style={{
                   width: "100%", height: 3, borderRadius: 4,
                   appearance: "none", WebkitAppearance: "none",
-                  background: `linear-gradient(to right, ${color} ${volume}%, rgba(255,255,255,0.22) ${volume}%)`,
+                  background: `linear-gradient(to right, ${sliderColor} ${volume}%, rgba(255,255,255,0.22) ${volume}%)`,
                   outline: "none", cursor: "pointer", display: "block",
-                }}
+                  ["--thumb-color" as string]: sliderColor,
+                } as React.CSSProperties}
               />
             </MotionBox>
           )}
@@ -514,6 +625,26 @@ export function AmbientSoundPanel({
   };
 
   return (
+    <>
+    <style>{`
+      .ambient-volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 11px; height: 11px;
+        border-radius: 50%;
+        background: var(--thumb-color);
+        box-shadow: 0 0 4px var(--thumb-color);
+        cursor: pointer;
+      }
+      .ambient-volume-slider::-moz-range-thumb {
+        width: 11px; height: 11px;
+        border-radius: 50%;
+        border: none;
+        background: var(--thumb-color);
+        box-shadow: 0 0 4px var(--thumb-color);
+        cursor: pointer;
+      }
+    `}</style>
     <MotionBox
       ref={ref as any}
       drag dragMomentum={false} dragElastic={0}
@@ -625,5 +756,6 @@ export function AmbientSoundPanel({
         </Box>
       </Box>
     </MotionBox>
+    </>
   );
 }
