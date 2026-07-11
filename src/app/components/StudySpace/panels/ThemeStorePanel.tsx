@@ -29,6 +29,9 @@ import {
 
 const MotionBox = motion.create(Box);
 
+const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
+const MY_THEMES_MAINTENANCE_MSG = "Tính năng đang trong quá trình phát triển và bảo trì";
+
 const PANEL_W = 740;
 const PANEL_H = 680;
 
@@ -2353,53 +2356,73 @@ export function ThemeStorePanel({
           {(() => {
             const active = activeTab === "my-themes";
             return (
-              <Box
-                as="button"
-                w="100%"
-                textAlign="left"
-                display="flex"
-                alignItems="center"
-                gap="8px"
-                px="8px"
-                py="6px"
-                borderRadius="7px"
-                border="none"
-                cursor="pointer"
-                onClick={() => setActiveTab("my-themes")}
-                style={{
-                  background: active ? "rgba(78,124,106,0.18)" : "transparent",
-                  color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
-                  fontSize: "0.76rem",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  fontWeight: active ? 600 : 400,
-                  transition: "all 0.15s",
-                }}
-                _hover={{ background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.8)" } as any}
-              >
-                <Box flexShrink={0} style={{ color: active ? "rgba(78,124,106,0.9)" : "rgba(255,255,255,0.28)", display: "flex" }}>
-                  <PlusCircle size={14} />
-                </Box>
-                <Box flex={1}>Của tôi</Box>
+              <Box position="relative" title={PUBLIC_BETA ? MY_THEMES_MAINTENANCE_MSG : undefined}>
                 <Box
-                  flexShrink={0}
-                  px="4px"
-                  py="1px"
-                  borderRadius="3px"
+                  as="button"
+                  w="100%"
+                  textAlign="left"
+                  display="flex"
+                  alignItems="center"
+                  gap="8px"
+                  px="8px"
+                  py="6px"
+                  borderRadius="7px"
+                  border="none"
+                  cursor={PUBLIC_BETA ? "not-allowed" : "pointer"}
+                  onClick={() => !PUBLIC_BETA && setActiveTab("my-themes")}
                   style={{
-                    background: "rgba(78,124,106,0.2)",
-                    border: "1px solid rgba(78,124,106,0.38)",
-                  }}
-                >
-                  <Text style={{
-                    fontSize: "0.5rem",
+                    background: active ? "rgba(78,124,106,0.18)" : "transparent",
+                    color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
+                    fontSize: "0.76rem",
                     fontFamily: "'HarmonyOS Sans', sans-serif",
-                    fontWeight: 700,
-                    color: "rgba(78,124,106,0.9)",
-                    letterSpacing: "0.07em",
-                  }}>
-                    BETA
-                  </Text>
+                    fontWeight: active ? 600 : 400,
+                    transition: "all 0.15s",
+                    filter: PUBLIC_BETA ? "blur(2.5px)" : "none",
+                    opacity: PUBLIC_BETA ? 0.55 : 1,
+                    userSelect: PUBLIC_BETA ? "none" : "auto",
+                  }}
+                  _hover={!PUBLIC_BETA ? { background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.8)" } as any : {}}
+                >
+                  <Box flexShrink={0} style={{ color: active ? "rgba(78,124,106,0.9)" : "rgba(255,255,255,0.28)", display: "flex" }}>
+                    <PlusCircle size={14} />
+                  </Box>
+                  <Box flex={1}>Của tôi</Box>
+                  <Box
+                    flexShrink={0}
+                    px="4px"
+                    py="1px"
+                    borderRadius="3px"
+                    style={{
+                      background: "rgba(78,124,106,0.2)",
+                      border: "1px solid rgba(78,124,106,0.38)",
+                    }}
+                  >
+                    <Text style={{
+                      fontSize: "0.5rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 700,
+                      color: "rgba(78,124,106,0.9)",
+                      letterSpacing: "0.07em",
+                    }}>
+                      BETA
+                    </Text>
+                  </Box>
                 </Box>
+                {PUBLIC_BETA && (
+                  <Text
+                    mt="3px"
+                    px="8px"
+                    style={{
+                      fontSize: "0.56rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 600,
+                      color: "rgba(251,191,36,0.75)",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {MY_THEMES_MAINTENANCE_MSG}
+                  </Text>
+                )}
               </Box>
             );
           })()}
