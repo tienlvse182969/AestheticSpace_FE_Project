@@ -6,6 +6,7 @@ import type { StoreItem } from "../../../../services/aestheticStore.service";
 
 const MotionBox = motion.create(Box);
 
+const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
 
 interface Props {
   item: StoreItem;
