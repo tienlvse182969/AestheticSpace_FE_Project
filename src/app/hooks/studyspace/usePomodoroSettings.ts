@@ -16,6 +16,7 @@ export function usePomodoroSettings() {
   const [totalSes,      setTotalSes]      = useState(4);
   const [soundEnabled,  setSoundEnabled]  = useState(true);
   const [sounds,        setSounds]        = useState<PomodoroSounds>(DEFAULT_POMODORO_SOUNDS);
+  const [volume,        setVolume]        = useState(100);
   const containerRef                      = useRef<HTMLDivElement>(null);
 
   return {
@@ -25,6 +26,7 @@ export function usePomodoroSettings() {
     totalSes, setTotalSes,
     soundEnabled, setSoundEnabled,
     sounds, setSounds,
+    volume, setVolume,
     containerRef,
   };
 }

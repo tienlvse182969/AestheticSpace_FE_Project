@@ -2,19 +2,20 @@ import React, { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor, Volume2, VolumeX } from "lucide-react";
+import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor, Volume2, VolumeX, Play, Upload } from "lucide-react";
 import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { useAccent } from "../../../context/AccentContext";
 import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
-import { useNotificationBanners } from "../../../context/NotificationBannerContext";
+import { useNotificationBanners, BANNER_SOUND_OPTIONS } from "../../../context/NotificationBannerContext";
 import { useAuth } from "../../../../context/AuthContext";
 import { AvatarCircle } from "./AccountPanel";
 import { FLAG_VN, FLAG_GB } from "../../ui/FlagIcons";
 import { APP_VERSION } from "../../../../version";
 import { authService } from "../../../../services/auth.service";
 import { paymentService } from "../../../../services/payment.service";
+import type { PomodoroSounds } from "../../../../types/workspace.types";
 
 const MotionBox = motion.create(Box);
 
@@ -29,7 +30,7 @@ const ACCENT_PRESETS = [
 ];
 const PRESET_HEXES = ACCENT_PRESETS.map(p => p.hex);
 
-type NavKey = "display" | "language" | "notifications" | "sounds" | "about" | "account";
+export type NavKey = "display" | "language" | "notifications" | "sounds" | "about" | "account";
 
 const NAV_ITEMS: {
   key: NavKey;
@@ -77,15 +78,199 @@ function Toggle({ on, onChange, disabled, accentColor }: {
   );
 }
 
-export function SettingsPanel({ onClose }: { onClose: () => void }) {
+/* ── Shared volume slider (banner + Pomodoro use the exact same markup) ── */
+function VolumeSlider({
+  value, onChange, onRelease, accentColor, mutedLabel,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  onRelease: () => void;
+  accentColor: string;
+  mutedLabel: string;
+}) {
+  return (
+    <Flex align="center" gap="12px">
+      {value > 0
+        ? <Volume2 size={14} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+        : <VolumeX size={14} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+      }
+      <input
+        className="settings-volume-slider"
+        type="range" min={0} max={100} value={value}
+        onPointerDown={(e) => e.stopPropagation()}
+        onChange={(e) => onChange(Number(e.target.value))}
+        onMouseUp={onRelease}
+        onTouchEnd={onRelease}
+        onKeyUp={onRelease}
+        style={{
+          flex: 1, height: 3, borderRadius: 4,
+          appearance: "none", WebkitAppearance: "none",
+          background: `linear-gradient(to right, ${accentColor} ${value}%, rgba(255,255,255,0.15) ${value}%)`,
+          outline: "none", cursor: "pointer",
+          ["--thumb-color" as string]: accentColor,
+        } as React.CSSProperties}
+      />
+      <Text style={{
+        fontSize: "0.72rem", color: "rgba(255,255,255,0.4)",
+        fontFamily: "'HarmonyOS Sans', sans-serif", minWidth: 34, textAlign: "right", flexShrink: 0, whiteSpace: "nowrap",
+      }}>
+        {value === 0 ? mutedLabel : `${value}%`}
+      </Text>
+    </Flex>
+  );
+}
+
+/* ── Pomodoro chime options (moved in from the widget's own settings panel) ── */
+const POMODORO_SOUND_OPTIONS = [
+  { label: "Start Focus",  value: "/assets/PomodoroChime/StartPomodoroChime.mp3"  },
+  { label: "Start Break",  value: "/assets/PomodoroChime/StartBreakTimeChime.mp3" },
+  { label: "Pause",        value: "/assets/PomodoroChime/PauseChime.mp3"           },
+  { label: "Reset",        value: "/assets/PomodoroChime/ResetPomodoroChime.mp3"  },
+  { label: "Success",      value: "/assets/PomodoroChime/SuccessChime.mp3"        },
+  { label: "None",         value: ""                                               },
+];
+
+function PomodoroSoundRow({
+  label, value, volume, onChange,
+}: {
+  label: string;
+  value: string;
+  volume: number;
+  onChange: (v: string) => void;
+}) {
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const safeValue = value ?? "";
+  const isCustom = safeValue.startsWith("data:");
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { if (reader.result) onChange(reader.result as string); };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
+  const previewSound = () => {
+    if (!safeValue) return;
+    const audio = new Audio(safeValue);
+    audio.volume = volume / 100;
+    audio.play().catch(() => {});
+  };
+
+  return (
+    <Flex align="center" gap="6px" py="6px">
+      <Text style={{
+        fontSize: "0.72rem", color: "rgba(255,255,255,0.5)",
+        fontFamily: "'HarmonyOS Sans', sans-serif",
+        flexShrink: 0, width: 84,
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>
+        {label}
+      </Text>
+
+      <select
+        value={isCustom ? "__custom__" : safeValue}
+        onChange={(e) => { if (e.target.value !== "__custom__") onChange(e.target.value); }}
+        onPointerDown={(e) => e.stopPropagation()}
+        style={{
+          flex: 1, minWidth: 0,
+          background: "rgba(20,28,34,0.9)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          borderRadius: 7, color: "#e0f5ee",
+          fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+          padding: "5px 6px", cursor: "pointer", outline: "none",
+        }}
+      >
+        {isCustom && (
+          <option value="__custom__" disabled style={{ background: "#0c1216" }}>
+            Custom
+          </option>
+        )}
+        {POMODORO_SOUND_OPTIONS.map(opt => (
+          <option key={opt.value} value={opt.value} style={{ background: "#0c1216" }}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+
+      <Box
+        as="button"
+        onClick={() => fileInputRef.current?.click()}
+        onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+        display="flex" alignItems="center" justifyContent="center"
+        w="26px" h="26px" borderRadius="6px"
+        style={{
+          flexShrink: 0,
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          cursor: "pointer",
+        }}
+        title="Upload audio file"
+      >
+        <Upload size={11} color="rgba(255,255,255,0.5)" />
+      </Box>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        style={{ display: "none" }}
+        onChange={handleUpload}
+      />
+
+      <Box
+        as="button"
+        onClick={previewSound}
+        onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+        display="flex" alignItems="center" justifyContent="center"
+        w="26px" h="26px" borderRadius="6px"
+        style={{
+          flexShrink: 0,
+          background: "rgba(255,255,255,0.06)",
+          border: "1px solid rgba(255,255,255,0.1)",
+          cursor: safeValue ? "pointer" : "default",
+          opacity: safeValue ? 1 : 0.3,
+          transition: "opacity 0.15s",
+        }}
+        title="Preview"
+      >
+        <Play size={11} color="rgba(255,255,255,0.5)" fill="rgba(255,255,255,0.5)" />
+      </Box>
+    </Flex>
+  );
+}
+
+interface SettingsPanelProps {
+  onClose: () => void;
+  initialNav?: NavKey;
+  pomodoroSoundEnabled: boolean;
+  pomodoroSounds: PomodoroSounds;
+  pomodoroVolume: number;
+  onPomodoroSoundEnabled: (v: boolean) => void;
+  onPomodoroSounds: (v: PomodoroSounds) => void;
+  onPomodoroVolume: (v: number) => void;
+}
+
+export function SettingsPanel({
+  onClose, initialNav,
+  pomodoroSoundEnabled, pomodoroSounds, pomodoroVolume,
+  onPomodoroSoundEnabled, onPomodoroSounds, onPomodoroVolume,
+}: SettingsPanelProps) {
   const { t, i18n } = useTranslation();
   const { x, y, ref } = useCenteredPanel(760, 540);
   const { accent, setAccent } = useAccent();
   const { position: toolbarPos, setPosition: setToolbarPos } = useToolbarPosition();
-  const { bannerVolume, setBannerVolume, previewBannerSound } = useNotificationBanners();
+  const { bannerVolume, setBannerVolume, bannerSound, setBannerSound, previewBannerSound } = useNotificationBanners();
   const { user, updateUsername } = useAuth();
   const isCustomAccent = !PRESET_HEXES.includes(accent);
-  const [activeNav, setActiveNav] = useState<NavKey>("display");
+  const [activeNav, setActiveNav] = useState<NavKey>(initialNav ?? "display");
+
+  const previewPomodoroVolume = () => {
+    if (!pomodoroSounds.startFocus) return;
+    const audio = new Audio(pomodoroSounds.startFocus);
+    audio.volume = pomodoroVolume / 100;
+    audio.play().catch(() => {});
+  };
 
   const [newUsername, setNewUsername] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -604,15 +789,11 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
 
       case "sounds":
         return (
-          <Box px="14px" py="12px" borderRadius="10px"
-            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
-          >
-            <Flex align="center" gap={3} mb="12px">
-              {bannerVolume > 0
-                ? <Volume2 size={15} style={{ color: "rgba(255,255,255,0.4)" }} />
-                : <VolumeX size={15} style={{ color: "rgba(255,255,255,0.4)" }} />
-              }
-              <Box flex={1} minW={0}>
+          <Box style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            <Box px="14px" py="12px" borderRadius="10px"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              <Box mb="12px">
                 <Text style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.82)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                   {t("settings.bannerSound")}
                 </Text>
@@ -620,53 +801,112 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
                   {t("settings.bannerSoundDesc")}
                 </Text>
               </Box>
-              <Box
-                as="button"
-                onClick={previewBannerSound}
-                onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
-                disabled={bannerVolume === 0}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: 8,
-                  background: "rgba(255,255,255,0.06)",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  color: bannerVolume === 0 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.7)",
-                  fontSize: "0.74rem",
-                  fontFamily: "'HarmonyOS Sans', sans-serif",
-                  cursor: bannerVolume === 0 ? "not-allowed" : "pointer",
-                  flexShrink: 0,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {t("settings.testSound")}
-              </Box>
-            </Flex>
 
-            <Flex align="center" gap="12px">
-              {bannerVolume > 0
-                ? <Volume2 size={14} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
-                : <VolumeX size={14} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
-              }
-              <input
-                className="settings-volume-slider"
-                type="range" min={0} max={100} value={bannerVolume}
-                onPointerDown={(e) => e.stopPropagation()}
-                onChange={(e) => setBannerVolume(Number(e.target.value))}
-                style={{
-                  flex: 1, height: 3, borderRadius: 4,
-                  appearance: "none", WebkitAppearance: "none",
-                  background: `linear-gradient(to right, ${accent} ${bannerVolume}%, rgba(255,255,255,0.15) ${bannerVolume}%)`,
-                  outline: "none", cursor: "pointer",
-                  ["--thumb-color" as string]: accent,
-                } as React.CSSProperties}
+              <VolumeSlider
+                value={bannerVolume}
+                onChange={setBannerVolume}
+                onRelease={previewBannerSound}
+                accentColor={accent}
+                mutedLabel={t("settings.bannerSoundMuted")}
               />
-              <Text style={{
-                fontSize: "0.72rem", color: "rgba(255,255,255,0.4)",
-                fontFamily: "'HarmonyOS Sans', sans-serif", minWidth: 34, textAlign: "right", flexShrink: 0, whiteSpace: "nowrap",
-              }}>
-                {bannerVolume === 0 ? t("settings.bannerSoundMuted") : `${bannerVolume}%`}
-              </Text>
-            </Flex>
+
+              <Box mt="12px" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 10 }}>
+                <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.06em", marginBottom: 8 }}>
+                  {t("settings.bannerSoundChoice").toUpperCase()}
+                </Text>
+                <Flex gap="8px" wrap="wrap">
+                  {BANNER_SOUND_OPTIONS.map((opt) => {
+                    const isOn = bannerSound === opt.value;
+                    return (
+                      <Box
+                        key={opt.key}
+                        as="button"
+                        flex="1 1 calc(33.333% - 6px)"
+                        minW="90px"
+                        onClick={() => setBannerSound(opt.value)}
+                        onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+                        borderRadius="8px"
+                        cursor="pointer"
+                        style={{
+                          padding: "8px 0",
+                          background: isOn ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.04)",
+                          border: isOn ? `1px solid ${accent}` : "1px solid rgba(255,255,255,0.08)",
+                          color: isOn ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.45)",
+                          fontSize: "0.76rem",
+                          fontFamily: "'HarmonyOS Sans', sans-serif",
+                          fontWeight: isOn ? 600 : 400,
+                          transition: "all 0.15s",
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                        }}
+                      >
+                        {isOn && <Check size={11} style={{ color: accent, flexShrink: 0 }} />}
+                        {opt.label}
+                      </Box>
+                    );
+                  })}
+                </Flex>
+              </Box>
+            </Box>
+
+            <Box px="14px" py="12px" borderRadius="10px"
+              style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+            >
+              <Flex align="center" justify="space-between" mb="4px">
+                <Text style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.82)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                  {t("pomodoroSettings.soundSettingsTitle")}
+                </Text>
+                <Toggle
+                  on={pomodoroSoundEnabled}
+                  onChange={() => onPomodoroSoundEnabled(!pomodoroSoundEnabled)}
+                  accentColor={accent}
+                />
+              </Flex>
+
+              {pomodoroSoundEnabled && (
+                <Box mt="10px" style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 10 }}>
+                  <Box mb="8px">
+                    <VolumeSlider
+                      value={pomodoroVolume}
+                      onChange={onPomodoroVolume}
+                      onRelease={previewPomodoroVolume}
+                      accentColor={accent}
+                      mutedLabel={t("settings.bannerSoundMuted")}
+                    />
+                  </Box>
+
+                  <PomodoroSoundRow
+                    label={t("pomodoroSettings.soundStartFocus")}
+                    value={pomodoroSounds.startFocus}
+                    volume={pomodoroVolume}
+                    onChange={v => onPomodoroSounds({ ...pomodoroSounds, startFocus: v })}
+                  />
+                  <PomodoroSoundRow
+                    label={t("pomodoroSettings.soundStartBreak")}
+                    value={pomodoroSounds.startBreak}
+                    volume={pomodoroVolume}
+                    onChange={v => onPomodoroSounds({ ...pomodoroSounds, startBreak: v })}
+                  />
+                  <PomodoroSoundRow
+                    label={t("pomodoroSettings.soundComplete")}
+                    value={pomodoroSounds.complete}
+                    volume={pomodoroVolume}
+                    onChange={v => onPomodoroSounds({ ...pomodoroSounds, complete: v })}
+                  />
+                  <PomodoroSoundRow
+                    label={t("pomodoroSettings.soundPause")}
+                    value={pomodoroSounds.pause}
+                    volume={pomodoroVolume}
+                    onChange={v => onPomodoroSounds({ ...pomodoroSounds, pause: v })}
+                  />
+                  <PomodoroSoundRow
+                    label={t("pomodoroSettings.soundReset")}
+                    value={pomodoroSounds.reset}
+                    volume={pomodoroVolume}
+                    onChange={v => onPomodoroSounds({ ...pomodoroSounds, reset: v })}
+                  />
+                </Box>
+              )}
+            </Box>
           </Box>
         );
 
@@ -800,10 +1040,37 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   return (
     <>
     <style>{`
+      .settings-volume-slider {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        display: block;
+        margin: 0;
+        padding: 0;
+        border: none;
+        background-clip: padding-box;
+      }
+      .settings-volume-slider::-webkit-slider-runnable-track {
+        height: 3px;
+        border-radius: 4px;
+        background: transparent;
+      }
+      .settings-volume-slider::-moz-range-track {
+        height: 3px;
+        border-radius: 4px;
+        background: transparent;
+        border: none;
+      }
+      .settings-volume-slider::-moz-range-progress {
+        height: 3px;
+        border-radius: 4px;
+        background: transparent;
+      }
       .settings-volume-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         appearance: none;
         width: 12px; height: 12px;
+        margin-top: -4.5px;
         border-radius: 50%;
         background: var(--thumb-color);
         box-shadow: 0 0 4px var(--thumb-color);
@@ -959,20 +1226,22 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
       </Box>
 
       {/* ── Right content ── */}
-      <Box style={{ flex: 1, padding: "20px 18px", overflowY: "auto", position: "relative" }}>
+      <Box style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, position: "relative" }}>
         <PanelCloseBtn onClose={onClose} />
 
-        <Text mb="16px" style={{
-          fontSize: "1.35rem",
-          fontWeight: 700,
-          color: "rgba(255,255,255,0.88)",
-          letterSpacing: "-0.01em",
-          fontFamily: "'HarmonyOS Sans', sans-serif",
-        }}>
-          {NAV_LABELS[activeNav]}
-        </Text>
+        <Box style={{ flex: 1, padding: "20px 18px", overflowY: "auto" }}>
+          <Text mb="16px" style={{
+            fontSize: "1.35rem",
+            fontWeight: 700,
+            color: "rgba(255,255,255,0.88)",
+            letterSpacing: "-0.01em",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+          }}>
+            {NAV_LABELS[activeNav]}
+          </Text>
 
-        {renderContent()}
+          {renderContent()}
+        </Box>
       </Box>
     </MotionBox>
     </>

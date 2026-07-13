@@ -40,6 +40,7 @@ export interface LayoutConfig {
     totalSes: number;
     soundEnabled?: boolean;
     sounds?: PomodoroSounds;
+    volume?: number;
   };
   todoItems?: Array<{ id: string; text: string; done: boolean }>;
   accentColor?: string;

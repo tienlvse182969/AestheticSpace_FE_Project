@@ -12,6 +12,18 @@ export interface BannerItem {
 
 type PushBannerInput = Omit<BannerItem, "durationMs"> & { durationMs?: number };
 
+export interface BannerSoundOption {
+  key: string;
+  label: string;
+  value: string;
+}
+
+export const BANNER_SOUND_OPTIONS: BannerSoundOption[] = [
+  { key: "default",       label: "Mặc định",     value: "/assets/BannerSound/Default.mp3" },
+  { key: "notification1", label: "Thông báo 1",  value: "/assets/BannerSound/Notification1.mp3" },
+  { key: "notification2", label: "Thông báo 2",  value: "/assets/BannerSound/Notification2.mp3" },
+];
+
 interface NotificationBannerCtx {
   banners: BannerItem[];
   pushBanner: (banner: PushBannerInput) => void;
@@ -21,6 +33,9 @@ interface NotificationBannerCtx {
   /** Banner sound volume, 0–100. */
   bannerVolume: number;
   setBannerVolume: (v: number) => void;
+  /** Which chime plays for banners — one of BANNER_SOUND_OPTIONS' values. */
+  bannerSound: string;
+  setBannerSound: (v: string) => void;
   /** Play the banner sound once at the current volume — used for a live preview in Settings. */
   previewBannerSound: () => void;
 }
@@ -28,6 +43,7 @@ interface NotificationBannerCtx {
 const DEFAULT_DURATION_MS = 6000;
 const POLL_INTERVAL_MS = 25000;
 const VOLUME_STORAGE_KEY = "asfe_banner_volume";
+const SOUND_STORAGE_KEY = "asfe_banner_sound";
 
 /** Backend sends "Transaction Approved" / "Transaction Rejected" for creator submission review outcomes. */
 function isCreatorReviewNotification(title: string): boolean {
@@ -51,6 +67,13 @@ export function NotificationBannerProvider({ children }: { children: ReactNode }
     return Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : 100;
   });
 
+  const [bannerSound, setBannerSoundState] = useState<string>(() => {
+    const stored = localStorage.getItem(SOUND_STORAGE_KEY);
+    return stored && BANNER_SOUND_OPTIONS.some((o) => o.value === stored)
+      ? stored
+      : BANNER_SOUND_OPTIONS[0].value;
+  });
+
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = bannerVolume / 100;
   }, [bannerVolume]);
@@ -59,6 +82,16 @@ export function NotificationBannerProvider({ children }: { children: ReactNode }
     const clamped = Math.max(0, Math.min(100, v));
     setBannerVolumeState(clamped);
     localStorage.setItem(VOLUME_STORAGE_KEY, String(clamped));
+  }, []);
+
+  const setBannerSound = useCallback((v: string) => {
+    setBannerSoundState(v);
+    localStorage.setItem(SOUND_STORAGE_KEY, v);
+    if (audioRef.current) {
+      audioRef.current.src = v;
+      audioRef.current.load();
+      audioRef.current.play().catch(() => {});
+    }
   }, []);
 
   const dismissBanner = useCallback((id: string) => {
@@ -128,13 +161,14 @@ export function NotificationBannerProvider({ children }: { children: ReactNode }
     seenBannerIdsRef.current = new Set();
     if (!user) return;
 
-    audioRef.current = new Audio("/assets/BannerSound/BannerSound.mp3");
+    audioRef.current = new Audio(bannerSound);
     audioRef.current.volume = bannerVolume / 100;
     audioRef.current.load();
 
     fetchAndAnnounce();
     const interval = window.setInterval(fetchAndAnnounce, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.userId, fetchAndAnnounce]);
 
   const markCreatorReviewNotificationsRead = useCallback(() => {
@@ -155,6 +189,8 @@ export function NotificationBannerProvider({ children }: { children: ReactNode }
         markCreatorReviewNotificationsRead,
         bannerVolume,
         setBannerVolume,
+        bannerSound,
+        setBannerSound,
         previewBannerSound,
       }}
     >

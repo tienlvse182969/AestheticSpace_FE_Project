@@ -16,6 +16,7 @@ import type { BackgroundItem } from "../../components/StudySpace/types";
 import type { LayoutConfig }   from "../../../types/workspace.types";
 import type { UserInfo }       from "../../components/StudySpace/panels/AccountPanel";
 import type { EffectType }     from "../../components/StudySpace/panels/EffectsPanel";
+import type { NavKey as SettingsNavKey } from "../../components/StudySpace/panels/SettingsPanel";
 
 export type ActivePanel =
   | "widget" | "image" | "sticker" | "theme"
@@ -40,6 +41,7 @@ export function useStudySpace() {
   /* ── UI state ── */
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [activePanel,    setActivePanel]    = useState<ActivePanel>(null);
+  const [settingsInitialNav, setSettingsInitialNav] = useState<SettingsNavKey | null>(null);
   const [layoutLocked,   setLayoutLocked]   = useState(false);
 const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const [accountOpen,         setAccountOpen]         = useState(false);
@@ -99,6 +101,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       pomodoro.setTotalSes(layout.pomodoroSettings.totalSes);
       if (layout.pomodoroSettings.soundEnabled !== undefined) pomodoro.setSoundEnabled(layout.pomodoroSettings.soundEnabled);
       if (layout.pomodoroSettings.sounds) pomodoro.setSounds({ ...DEFAULT_POMODORO_SOUNDS, ...layout.pomodoroSettings.sounds });
+      if (layout.pomodoroSettings.volume !== undefined) pomodoro.setVolume(layout.pomodoroSettings.volume);
     }
     space.restoreItems({
       activeWidgets:   layout.activeWidgets,
@@ -203,7 +206,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     },
     pomodoroSettings: {
       focusMin: pomodoro.focusMin, breakMin: pomodoro.breakMin, totalSes: pomodoro.totalSes,
-      soundEnabled: pomodoro.soundEnabled, sounds: pomodoro.sounds,
+      soundEnabled: pomodoro.soundEnabled, sounds: pomodoro.sounds, volume: pomodoro.volume,
     },
     todoItems: space.todoItems,
     accentColor: accent,
@@ -233,6 +236,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     user, currentUser, handleLogout,
     toolbarVisible, setToolbarVisible,
     activePanel, setActivePanel, togglePanel,
+    settingsInitialNav, setSettingsInitialNav,
     layoutLocked, toggleLayoutLock,
     activeEffect, setActiveEffect,
     accountOpen, setAccountOpen,

@@ -550,7 +550,9 @@
     "soundStartBreak": "Bắt đầu nghỉ",
     "soundComplete": "Hoàn thành",
     "soundPause": "Dừng",
-    "soundReset": "Đặt lại"
+    "soundReset": "Đặt lại",
+    "soundSettingsBtn": "Cài đặt âm thanh",
+    "soundSettingsTitle": "Cài đặt âm thanh Pomodoro"
   },
   "clockWidget": {
     "days": ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"],
@@ -681,6 +683,7 @@
     "bannerSound": "Âm thanh thông báo",
     "bannerSoundDesc": "Âm lượng phát ra khi có banner chào mừng hoặc thông báo mới xuất hiện",
     "bannerSoundMuted": "Đã tắt tiếng",
+    "bannerSoundChoice": "Chọn âm thanh",
     "testSound": "Nghe thử"
   },
   "premiumGate": {

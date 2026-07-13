@@ -550,7 +550,9 @@
     "soundStartBreak": "Start break",
     "soundComplete": "Complete",
     "soundPause": "Pause",
-    "soundReset": "Reset"
+    "soundReset": "Reset",
+    "soundSettingsBtn": "Sound settings",
+    "soundSettingsTitle": "Pomodoro sound settings"
   },
   "clockWidget": {
     "days": ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
@@ -682,6 +684,7 @@
     "bannerSound": "Banner sound",
     "bannerSoundDesc": "Volume for the welcome greeting and notification banner chime",
     "bannerSoundMuted": "Muted",
+    "bannerSoundChoice": "Choose sound",
     "testSound": "Test sound"
   },
   "premiumGate": {

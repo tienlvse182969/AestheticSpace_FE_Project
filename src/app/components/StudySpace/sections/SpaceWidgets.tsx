@@ -16,7 +16,11 @@ import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
 interface Props { ctx: StudySpaceCtx; }
 
 export function SpaceWidgets({ ctx }: Props) {
-  const { space, clock, pomodoro, saveNow, WIDGET_POSITIONS, layoutLocked, musicSource, musicYtUrl, musicScUrl, setMusicSource, setMusicYtUrl, setMusicScUrl } = ctx;
+  const {
+    space, clock, pomodoro, saveNow, WIDGET_POSITIONS, layoutLocked,
+    musicSource, musicYtUrl, musicScUrl, setMusicSource, setMusicYtUrl, setMusicScUrl,
+    setActivePanel, setSettingsInitialNav,
+  } = ctx;
 
   return (
     <>
@@ -73,13 +77,14 @@ export function SpaceWidgets({ ctx }: Props) {
                 focusMinutes={pomodoro.focusMin}
                 breakMinutes={pomodoro.breakMin}
                 totalSessions={pomodoro.totalSes}
-                soundEnabled={pomodoro.soundEnabled}
-                sounds={pomodoro.sounds}
                 onFocusMinutes={v => { pomodoro.setFocusMin(v); saveNow(); }}
                 onBreakMinutes={v => { pomodoro.setBreakMin(v); saveNow(); }}
                 onTotalSessions={v => { pomodoro.setTotalSes(v); saveNow(); }}
-                onSoundEnabled={v => { pomodoro.setSoundEnabled(v); saveNow(); }}
-                onSounds={v => { pomodoro.setSounds(v); saveNow(); }}
+                onOpenSoundSettings={() => {
+                  pomodoro.setSettingsOpen(false);
+                  setSettingsInitialNav("sounds");
+                  setActivePanel("settings");
+                }}
                 onClose={() => pomodoro.setSettingsOpen(false)}
               />
             }
@@ -90,6 +95,7 @@ export function SpaceWidgets({ ctx }: Props) {
               totalSessions={pomodoro.totalSes}
               soundEnabled={pomodoro.soundEnabled}
               sounds={pomodoro.sounds}
+              volume={pomodoro.volume}
             />
           </DraggableWidget>
         )}

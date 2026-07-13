@@ -19,6 +19,7 @@ interface PomodoroSettings {
   totalSes: number;
   soundEnabled?: boolean;
   sounds?: { startFocus: string; startBreak: string; complete: string; pause: string; reset: string };
+  volume?: number;
 }
 
 interface WorkspaceSaveParams {

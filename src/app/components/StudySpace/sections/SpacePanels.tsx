@@ -27,11 +27,12 @@ interface Props {
 export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
   const {
     activePanel, setActivePanel,
+    settingsInitialNav, setSettingsInitialNav,
     currentBg, setCurrentBg,
     activeEffect, setActiveEffect,
     roomId, handleRoomSelect,
     space, saveNow,
-    ambient,
+    ambient, pomodoro,
   } = ctx;
 
   const [trialItem, setTrialItem]               = useState<StoreItem | null>(null);
@@ -261,7 +262,14 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
         {activePanel === "settings" && (
           <SettingsPanel
             key="settings-panel"
-            onClose={() => setActivePanel(null)}
+            initialNav={settingsInitialNav ?? undefined}
+            pomodoroSoundEnabled={pomodoro.soundEnabled}
+            pomodoroSounds={pomodoro.sounds}
+            pomodoroVolume={pomodoro.volume}
+            onPomodoroSoundEnabled={v => { pomodoro.setSoundEnabled(v); saveNow(); }}
+            onPomodoroSounds={v => { pomodoro.setSounds(v); saveNow(); }}
+            onPomodoroVolume={v => { pomodoro.setVolume(v); saveNow(); }}
+            onClose={() => { setActivePanel(null); setSettingsInitialNav(null); }}
           />
         )}
         {activePanel === "room" && (
