@@ -1,7 +1,13 @@
 import api from "./api";
 import type { ApiResponse } from "../types/api.types";
 
-export type ThemeSubmissionStatus = "AdminCreated" | "PendingReview" | "Approved" | "Rejected";
+export type ThemeSubmissionStatus =
+  | "AdminCreated"
+  | "PendingReview"
+  | "PendingTransaction"
+  | "PurchasedPendingPricing"
+  | "Approved"
+  | "Rejected";
 
 export interface ThemeInlineComponent {
   id: string;
@@ -30,6 +36,10 @@ export interface UserThemeSubmission {
   themeAmbientSoundItemId: string | null;
   coinPrice: number | null;
   realMoneyPriceVnd: number | null;
+  requestedCoinPrice: number | null;
+  requestedRealMoneyPriceVnd: number | null;
+  isBoughtByAdmin: boolean;
+  transactionNote: string | null;
   themeSource: "Official" | "Community";
   status: ThemeSubmissionStatus;
   rejectionNote: string | null;
@@ -55,8 +65,12 @@ export interface SubmitThemeDto {
   inlineBackground?: InlineComponentDto;
   inlineSticker?: InlineComponentDto;
   inlineAmbientSound?: InlineComponentDto;
-  coinPrice?: number;
-  realMoneyPriceVnd?: number;
+  requestedCoinPrice?: number;
+  requestedRealMoneyPriceVnd?: number;
+  isAgreedToTerms: boolean;
+  bankAccountNumber?: string;
+  bankName?: string;
+  bankAccountOwnerName?: string;
 }
 
 interface PagedData<T> {

@@ -38,4 +38,8 @@ export const adminUsersService = {
   unbanUser: async (id: string): Promise<void> => {
     await api.put(`/admin/users/${id}/unban`);
   },
+
+  addCoins: async (id: string, amount: number): Promise<void> => {
+    await api.post(`/admin/users/${id}/add-coins`, { amount });
+  },
 };

@@ -20,7 +20,7 @@ import type { EffectType }     from "../../components/StudySpace/panels/EffectsP
 export type ActivePanel =
   | "widget" | "image" | "sticker" | "theme"
   | "ambient" | "effects" | "settings" | "room"
-  | "pomodoro-stats" | "quest" | "create-theme"
+  | "pomodoro-stats" | "quest"
   | null;
 
 export function useStudySpace() {

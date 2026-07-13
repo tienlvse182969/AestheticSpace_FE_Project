@@ -10,13 +10,11 @@ import { SettingsPanel }         from "../panels/SettingsPanel";
 import { RoomManagerPanel }      from "../panels/RoomManagerPanel";
 import { PomodoroStatsPanel }    from "../panels/PomodoroStatsPanel";
 import { QuestPanel }            from "../panels/QuestPanel";
-import { CreateThemePanel }      from "../panels/CreateThemePanel";
 import { TrialBanner }           from "../ui/TrialBanner";
 import { TrialExpiredModal }     from "../ui/TrialExpiredModal";
 import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
 import type { StoreItem }        from "../../../../services/aestheticStore.service";
 import type { BackgroundItem }   from "../types";
-import type { UserThemeSubmission } from "../../../../services/userTheme.service";
 
 const TRIAL_DURATION = 600; // 10 minutes in seconds
 
@@ -40,7 +38,6 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
   const [trialSecondsLeft, setTrialSecondsLeft] = useState(0);
   const [expiredItem, setExpiredItem]           = useState<StoreItem | null>(null);
   const [buyItemId, setBuyItemId]               = useState<string | undefined>(undefined);
-  const [editingTheme, setEditingTheme]         = useState<UserThemeSubmission | null>(null);
 
   const trialOriginalBgRef  = useRef<BackgroundItem | null>(null);
   const trialStickerIdRef   = useRef<string | null>(null);
@@ -240,15 +237,6 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onApplyItem={handleApplyItem}
             trialItemId={trialItem?.id}
             initialDetailItemId={buyItemId}
-            onOpenCreate={() => { setEditingTheme(null); setActivePanel("create-theme"); }}
-            onOpenEdit={(theme) => { setEditingTheme(theme); setActivePanel("create-theme"); }}
-          />
-        )}
-        {activePanel === "create-theme" && (
-          <CreateThemePanel
-            key={editingTheme?.id ?? "create-theme-panel"}
-            initialTheme={editingTheme ?? undefined}
-            onClose={() => { setEditingTheme(null); setActivePanel(null); }}
           />
         )}
         {activePanel === "ambient" && (

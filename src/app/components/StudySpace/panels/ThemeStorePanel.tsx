@@ -5,13 +5,14 @@ import {
   ShoppingBag, ChevronLeft, ChevronRight, Coins, Check, Clock,
   Sticker, Image as ImageIcon, Volume2, Wand2, Palette, LayoutGrid,
   Crown, Search, X, Heart, Package, Play, Pause, PlusCircle,
-  Trash2, AlertCircle, Pencil, CheckCircle, Music,
+  Trash2, AlertCircle, Pencil, CheckCircle, Music, Brush, Upload, Plus,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { PremiumGateModal } from "../ui/PremiumGateModal";
 import { StorePaymentModal } from "../ui/StorePaymentModal";
+import { CreateThemePanel } from "./CreateThemePanel";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import {
   aestheticStoreService,
@@ -32,7 +33,7 @@ const MotionBox = motion.create(Box);
 const PUBLIC_BETA = import.meta.env.VITE_PUBLIC_BETA === "true";
 const MY_THEMES_MAINTENANCE_MSG = "Tính năng đang trong quá trình phát triển và bảo trì";
 
-const PANEL_W = 740;
+const PANEL_W = 860;
 const PANEL_H = 680;
 
 const PLACEHOLDER_IMG = "https://placehold.co/400x240/1a1a2e/888888?text=No+Preview";
@@ -63,8 +64,6 @@ interface Props {
   onApplyItem?: (item: StoreItem, extras?: ThemeApplyExtras) => void;
   trialItemId?: string;
   initialDetailItemId?: string;
-  onOpenCreate?: () => void;
-  onOpenEdit?: (theme: UserThemeSubmission) => void;
 }
 
 type TabValue = "all" | "purchased" | "wishlist" | "my-themes" | StoreCategory;
@@ -77,6 +76,12 @@ const TABS: { value: TabValue; key: string }[] = [
   { value: "AmbientSound", key: "themeStore.tabSounds" },
   { value: "purchased",    key: "themeStore.tabPurchased" },
 ];
+
+function tabTitleKey(tab: TabValue): string {
+  if (tab === "wishlist") return "themeStore.tabWishlist";
+  if (tab === "my-themes") return "themeStore.tabCreator";
+  return TABS.find(tb => tb.value === tab)?.key ?? "themeStore.tabDiscovery";
+}
 
 function typeColor(category: StoreCategory): string {
   const map: Record<StoreCategory, string> = {
@@ -99,7 +104,7 @@ function tabIcon(value: TabValue, size = 14): React.ReactNode {
     case "Effect":       return <Wand2 size={size} />;
     case "purchased":    return <Check size={size} />;
     case "wishlist":     return <Heart size={size} />;
-    case "my-themes":    return <PlusCircle size={size} />;
+    case "my-themes":    return <Brush size={size} />;
     default:             return null;
   }
 }
@@ -1390,11 +1395,13 @@ function CompBadge({ icon, label, active, color }: {
 
 // ── MyThemeCard ───────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<ThemeSubmissionStatus, { label: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
-  PendingReview: { label: "Đang chờ duyệt", color: "#facc15", bg: "rgba(250,204,21,0.1)",    border: "rgba(250,204,21,0.28)",   icon: Clock },
-  Approved:      { label: "Đã được duyệt",  color: "#4ade80", bg: "rgba(74,222,128,0.1)",    border: "rgba(74,222,128,0.28)",   icon: Check },
-  Rejected:      { label: "Bị từ chối",     color: "#f87171", bg: "rgba(248,113,113,0.1)",   border: "rgba(248,113,113,0.28)",  icon: X },
-  AdminCreated:  { label: "Quản trị tạo",   color: "#a78bfa", bg: "rgba(167,139,250,0.1)",   border: "rgba(167,139,250,0.28)",  icon: Check },
+const STATUS_CONFIG: Record<ThemeSubmissionStatus, { labelKey: string; color: string; bg: string; border: string; icon: React.ElementType }> = {
+  PendingReview:           { labelKey: "themeStore.creator.status.pendingReview",           color: "#facc15", bg: "rgba(250,204,21,0.1)",  border: "rgba(250,204,21,0.28)",  icon: Clock },
+  PendingTransaction:      { labelKey: "themeStore.creator.status.pendingTransaction",       color: "#38bdf8", bg: "rgba(56,189,248,0.1)",  border: "rgba(56,189,248,0.28)",  icon: Clock },
+  PurchasedPendingPricing: { labelKey: "themeStore.creator.status.purchasedPendingPricing",  color: "#c084fc", bg: "rgba(192,132,252,0.1)", border: "rgba(192,132,252,0.28)", icon: Coins },
+  Approved:                { labelKey: "themeStore.creator.status.approved",                 color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.28)",  icon: Check },
+  Rejected:                { labelKey: "themeStore.creator.status.rejected",                 color: "#f87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.28)", icon: X },
+  AdminCreated:            { labelKey: "themeStore.creator.status.adminCreated",             color: "#a78bfa", bg: "rgba(167,139,250,0.1)", border: "rgba(167,139,250,0.28)", icon: Check },
 };
 
 function MyThemeCard({
@@ -1410,9 +1417,13 @@ function MyThemeCard({
   onEdit?: (theme: UserThemeSubmission) => void;
   onClick?: () => void;
 }) {
+  const { t } = useTranslation();
   const cfg = STATUS_CONFIG[theme.status];
   const StatusIcon = cfg.icon;
-  const canWithdraw = theme.status === "PendingReview" || theme.status === "Rejected";
+  // Withdrawable while admin hasn't responded yet (PendingReview/PendingTransaction),
+  // or after a rejection. Once admin has bought it (PurchasedPendingPricing) or
+  // published it (Approved), it's no longer withdrawable.
+  const canWithdraw = theme.status === "PendingReview" || theme.status === "PendingTransaction" || theme.status === "Rejected";
   const dateStr = new Date(theme.submittedAt).toLocaleDateString("vi-VN");
 
   return (
@@ -1488,7 +1499,7 @@ function MyThemeCard({
               }}
             >
               <StatusIcon size={9} />
-              {cfg.label}
+              {t(cfg.labelKey)}
             </Flex>
             <Text style={{
               fontSize: "0.62rem",
@@ -1520,7 +1531,7 @@ function MyThemeCard({
                   transition: "all 0.15s",
                 }}
                 _hover={{ background: "rgba(99,102,241,0.15) !important", color: "rgba(129,140,248,0.8) !important" }}
-                title="Chỉnh sửa theme"
+                title={t("themeStore.creator.editTooltip")}
               >
                 <Pencil size={12} />
               </Box>
@@ -1542,7 +1553,7 @@ function MyThemeCard({
                 opacity: withdrawing ? 0.5 : 1,
               }}
               _hover={{ background: "rgba(248,113,113,0.15) !important", color: "rgba(248,113,113,0.8) !important" }}
-              title="Rút lại theme"
+              title={t("themeStore.creator.withdrawTooltip")}
             >
               {withdrawing ? <LoadingRing size={12} /> : <Trash2 size={12} />}
             </Box>
@@ -1589,9 +1600,13 @@ function MyThemeDetailView({
   onWithdraw: (id: string) => void;
   onEdit?: (theme: UserThemeSubmission) => void;
 }) {
+  const { t } = useTranslation();
   const cfg = STATUS_CONFIG[theme.status];
   const StatusIcon = cfg.icon;
-  const canWithdraw = theme.status === "PendingReview" || theme.status === "Rejected";
+  // Withdrawable while admin hasn't responded yet (PendingReview/PendingTransaction),
+  // or after a rejection. Once admin has bought it (PurchasedPendingPricing) or
+  // published it (Approved), it's no longer withdrawable.
+  const canWithdraw = theme.status === "PendingReview" || theme.status === "PendingTransaction" || theme.status === "Rejected";
   const canEdit    = theme.status === "PendingReview" || theme.status === "Rejected";
 
   // Pull components directly from the embedded inlineComponents array
@@ -1627,6 +1642,11 @@ function MyThemeDetailView({
   const reviewedDate = theme.reviewedAt
     ? new Date(theme.reviewedAt).toLocaleDateString("vi-VN", { year: "numeric", month: "long", day: "numeric" })
     : null;
+
+  const showFinalPrice = theme.status === "Approved" || theme.status === "AdminCreated";
+  const displayCoinPrice = showFinalPrice ? theme.coinPrice : theme.requestedCoinPrice;
+  const displayVndPrice  = showFinalPrice ? theme.realMoneyPriceVnd : theme.requestedRealMoneyPriceVnd;
+  const priceLabel = showFinalPrice ? t("themeStore.creator.finalPriceLabel") : t("themeStore.creator.priceLabel");
 
   return (
     <MotionBox
@@ -1668,7 +1688,7 @@ function MyThemeDetailView({
             }}
             _hover={{ background: "rgba(25,35,50,0.9)" } as any}>
             <ChevronLeft size={14} />
-            Quay lại
+            {t("themeStore.creator.back")}
           </Box>
 
           {/* Status badge */}
@@ -1677,7 +1697,7 @@ function MyThemeDetailView({
             style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, backdropFilter: "blur(6px)" }}>
             <StatusIcon size={10} style={{ color: cfg.color }} />
             <Text style={{ fontSize: "0.62rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: cfg.color, letterSpacing: "0.04em" }}>
-              {cfg.label}
+              {t(cfg.labelKey)}
             </Text>
           </Flex>
         </Box>
@@ -1707,7 +1727,7 @@ function MyThemeDetailView({
           <Flex align="flex-start" gap="24px" mb="16px">
             <Box>
               <Text mb="3px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.1em" }}>
-                NGÀY GỬI
+                {t("themeStore.creator.submittedDateLabel")}
               </Text>
               <Text style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.6)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                 {submittedDate}
@@ -1716,7 +1736,7 @@ function MyThemeDetailView({
             {reviewedDate && (
               <Box>
                 <Text mb="3px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.1em" }}>
-                  {theme.status === "Approved" ? "NGÀY DUYỆT" : "NGÀY XEM XÉT"}
+                  {theme.status === "Approved" ? t("themeStore.creator.approvedDateLabel") : t("themeStore.creator.reviewedDateLabel")}
                 </Text>
                 <Text style={{ fontSize: "0.74rem", color: "rgba(255,255,255,0.6)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                   {reviewedDate}
@@ -1729,7 +1749,7 @@ function MyThemeDetailView({
           {components.length > 0 && (
             <Box mb="16px">
               <Text mb="10px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                THÀNH PHẦN
+                {t("themeStore.creator.componentsSectionLabel")}
               </Text>
 
               {/* Background gallery */}
@@ -1738,7 +1758,9 @@ function MyThemeDetailView({
                   <Flex align="center" gap="5px" mb="7px">
                     <ImageIcon size={9} color="rgba(96,165,250,0.65)" />
                     <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
-                      HÌNH NỀN{bgItems.length > 1 ? ` · ${bgItems.length} ảnh` : ""}
+                      {bgItems.length > 1
+                        ? t("themeStore.creator.backgroundsLabelCount", { count: bgItems.length })
+                        : t("themeStore.creator.backgroundsLabel")}
                     </Text>
                   </Flex>
                   <Box mx="-20px" px="20px" style={{ overflowX: "auto", scrollbarWidth: "none", display: "flex", gap: "8px", paddingRight: bgItems.length > 1 ? "44px" : "20px" }}>
@@ -1772,7 +1794,9 @@ function MyThemeDetailView({
                   <Flex align="center" gap="5px" mb="7px">
                     <Sticker size={9} color="rgba(251,146,60,0.65)" />
                     <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
-                      STICKER{stickerItems.length > 1 ? ` · ${stickerItems.length} ảnh` : ""}
+                      {stickerItems.length > 1
+                        ? t("themeStore.creator.stickersLabelCount", { count: stickerItems.length })
+                        : t("themeStore.creator.stickersLabel")}
                     </Text>
                   </Flex>
                   <Flex gap="8px" wrap="wrap">
@@ -1795,7 +1819,9 @@ function MyThemeDetailView({
                   <Flex align="center" gap="5px" mb="7px">
                     <Music size={9} color="rgba(244,114,182,0.65)" />
                     <Text style={{ fontSize: "0.56rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", letterSpacing: "0.07em" }}>
-                      ÂM THANH NỀN{soundItems.length > 1 ? ` · ${soundItems.length} file` : ""}
+                      {soundItems.length > 1
+                        ? t("themeStore.creator.soundsLabelCount", { count: soundItems.length })
+                        : t("themeStore.creator.soundsLabel")}
                     </Text>
                   </Flex>
                   <Box borderRadius="9px" overflow="hidden"
@@ -1831,26 +1857,26 @@ function MyThemeDetailView({
           )}
 
           {/* Pricing */}
-          {(theme.coinPrice || theme.realMoneyPriceVnd) && (
+          {(displayCoinPrice || displayVndPrice) && (
             <Box mb="16px">
               <Text mb="9px" style={{ fontSize: "0.58rem", color: "rgba(255,255,255,0.25)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                GIÁ BÁN
+                {priceLabel}
               </Text>
               <Flex gap="10px">
-                {theme.coinPrice != null && (
+                {displayCoinPrice != null && (
                   <Flex align="center" gap="5px" px="10px" py="6px" borderRadius="8px"
                     style={{ background: "rgba(250,204,21,0.08)", border: "1px solid rgba(250,204,21,0.2)" }}>
-                    <Text style={{ fontSize: "0.82rem" }}>🪙</Text>
+                    <Coins size={14} color="#facc15" />
                     <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "#facc15" }}>
-                      {theme.coinPrice.toLocaleString("vi-VN")}
+                      {displayCoinPrice.toLocaleString("vi-VN")}
                     </Text>
                   </Flex>
                 )}
-                {theme.realMoneyPriceVnd != null && (
+                {displayVndPrice != null && (
                   <Flex align="center" gap="5px" px="10px" py="6px" borderRadius="8px"
                     style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}>
                     <Text style={{ fontSize: "0.78rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(255,255,255,0.72)" }}>
-                      {theme.realMoneyPriceVnd.toLocaleString("vi-VN")}đ
+                      {displayVndPrice.toLocaleString("vi-VN")}đ
                     </Text>
                   </Flex>
                 )}
@@ -1865,7 +1891,7 @@ function MyThemeDetailView({
               <Flex align="center" gap="6px" mb="7px">
                 <AlertCircle size={12} color="rgba(248,113,113,0.8)" />
                 <Text style={{ fontSize: "0.6rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(248,113,113,0.75)", letterSpacing: "0.08em" }}>
-                  LÝ DO TỪ CHỐI
+                  {t("themeStore.creator.rejectionReasonLabel")}
                 </Text>
               </Flex>
               <Text style={{ fontSize: "0.76rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(248,113,113,0.7)", lineHeight: 1.6 }}>
@@ -1879,7 +1905,7 @@ function MyThemeDetailView({
               <Flex align="center" gap="7px">
                 <CheckCircle size={12} color="rgba(74,222,128,0.8)" />
                 <Text style={{ fontSize: "0.74rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(74,222,128,0.72)", lineHeight: 1.55 }}>
-                  Theme đã được duyệt và hiển thị trong Aesthetic Store
+                  {t("themeStore.creator.statusMsgApproved")}
                 </Text>
               </Flex>
             </Box>
@@ -1890,7 +1916,29 @@ function MyThemeDetailView({
               <Flex align="center" gap="7px">
                 <Clock size={12} color="rgba(250,204,21,0.7)" />
                 <Text style={{ fontSize: "0.74rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(250,204,21,0.62)", lineHeight: 1.55 }}>
-                  Theme đang chờ admin xem xét và phê duyệt
+                  {t("themeStore.creator.statusMsgPendingReview")}
+                </Text>
+              </Flex>
+            </Box>
+          )}
+          {theme.status === "PendingTransaction" && (
+            <Box mb="8px" px="14px" py="11px" borderRadius="10px"
+              style={{ background: "rgba(56,189,248,0.07)", border: "1px solid rgba(56,189,248,0.2)" }}>
+              <Flex align="center" gap="7px">
+                <Clock size={12} color="rgba(56,189,248,0.75)" />
+                <Text style={{ fontSize: "0.74rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(56,189,248,0.68)", lineHeight: 1.55 }}>
+                  {t("themeStore.creator.statusMsgPendingTransaction")}
+                </Text>
+              </Flex>
+            </Box>
+          )}
+          {theme.status === "PurchasedPendingPricing" && (
+            <Box mb="8px" px="14px" py="11px" borderRadius="10px"
+              style={{ background: "rgba(192,132,252,0.07)", border: "1px solid rgba(192,132,252,0.2)" }}>
+              <Flex align="center" gap="7px">
+                <Coins size={12} color="rgba(192,132,252,0.75)" />
+                <Text style={{ fontSize: "0.74rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(192,132,252,0.68)", lineHeight: 1.55 }}>
+                  {t("themeStore.creator.statusMsgPurchasedPendingPricing")}
                 </Text>
               </Flex>
             </Box>
@@ -1911,7 +1959,7 @@ function MyThemeDetailView({
                     fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500, transition: "all 0.15s",
                   }}
                   _hover={{ background: "rgba(99,102,241,0.2) !important" } as any}>
-                  <Pencil size={12} />Chỉnh sửa
+                  <Pencil size={12} />{t("themeStore.creator.editBtn")}
                 </Box>
               )}
               {canWithdraw && (
@@ -1928,7 +1976,7 @@ function MyThemeDetailView({
                   {withdrawing
                     ? <LoadingRing size={12} />
                     : <Trash2 size={12} />}
-                  {withdrawing ? "Đang rút…" : "Rút lại"}
+                  {withdrawing ? t("themeStore.creator.withdrawing") : t("themeStore.creator.withdraw")}
                 </Box>
               )}
             </Flex>
@@ -1936,6 +1984,120 @@ function MyThemeDetailView({
         )}
       </Box>
     </MotionBox>
+  );
+}
+
+// ── ThemeCreatorNavButton ────────────────────────────────────────────────
+// The colorful glow on the Brush icon plays both when this tab is active and
+// on hover, so the sidebar entry always feels inviting, not just after it's selected.
+
+function ThemeCreatorNavButton({ active, onClick }: { active: boolean; onClick: () => void }) {
+  const { t } = useTranslation();
+  const [hovered, setHovered] = useState(false);
+  const glowing = active || hovered;
+
+  return (
+    <Box position="relative" title={PUBLIC_BETA ? MY_THEMES_MAINTENANCE_MSG : undefined}>
+      <Box
+        as="button"
+        w="100%"
+        textAlign="left"
+        display="flex"
+        alignItems="center"
+        gap="8px"
+        px="8px"
+        py="6px"
+        borderRadius="7px"
+        border="none"
+        cursor={PUBLIC_BETA ? "not-allowed" : "pointer"}
+        onClick={() => !PUBLIC_BETA && onClick()}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          background: active ? "rgba(78,124,106,0.18)" : "transparent",
+          color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
+          fontSize: "0.82rem",
+          fontFamily: "'HarmonyOS Sans', sans-serif",
+          fontWeight: active ? 600 : 400,
+          transition: "all 0.15s",
+          filter: PUBLIC_BETA ? "blur(2.5px)" : "none",
+          opacity: PUBLIC_BETA ? 0.55 : 1,
+          userSelect: PUBLIC_BETA ? "none" : "auto",
+        }}
+        _hover={!PUBLIC_BETA ? { background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.8)" } as any : {}}
+      >
+        <Box position="relative" flexShrink={0} w="18px" h="18px" display="flex" alignItems="center" justifyContent="center">
+          {/* Glow ring stays mounted and always animating — only its opacity toggles via
+              plain CSS, so rapid hover in/out never restarts or flickers the animation. */}
+          <Box
+            position="absolute" inset="-5px" borderRadius="full"
+            style={{ opacity: glowing ? 1 : 0, transition: "opacity 0.25s ease", pointerEvents: "none" }}
+          >
+            <MotionBox
+              w="100%" h="100%" borderRadius="full"
+              animate={{ opacity: [0.55, 0.95, 0.55], scale: [1, 1.18, 1], rotate: [0, 360] }}
+              transition={{
+                opacity: { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
+                scale:   { duration: 2.2, repeat: Infinity, ease: "easeInOut" },
+                rotate:  { duration: 5,   repeat: Infinity, ease: "linear" },
+              } as any}
+              style={{
+                background: "conic-gradient(from 0deg, #f472b6, #fbbf24, #4ade80, #38bdf8, #a78bfa, #f472b6)",
+                filter: "blur(5px)",
+              }}
+            />
+          </Box>
+          <Box
+            style={{
+              position: "relative",
+              display: "flex",
+              color: glowing ? "#fff" : "rgba(255,255,255,0.28)",
+              filter: glowing ? "drop-shadow(0 0 5px rgba(250,204,21,0.85))" : "none",
+              transition: "color 0.2s ease, filter 0.2s ease",
+              pointerEvents: "none",
+            }}
+          >
+            <Brush size={14} />
+          </Box>
+        </Box>
+        <Box flex={1}>{t("themeStore.tabCreator")}</Box>
+        <Box
+          flexShrink={0}
+          px="4px"
+          py="1px"
+          borderRadius="3px"
+          style={{
+            background: "rgba(78,124,106,0.2)",
+            border: "1px solid rgba(78,124,106,0.38)",
+          }}
+        >
+          <Text style={{
+            fontSize: "0.5rem",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+            fontWeight: 700,
+            color: "rgba(78,124,106,0.9)",
+            letterSpacing: "0.07em",
+          }}>
+            BETA
+          </Text>
+        </Box>
+      </Box>
+      {PUBLIC_BETA && (
+        <Text
+          mt="3px"
+          px="8px"
+          style={{
+            fontSize: "0.56rem",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+            fontWeight: 600,
+            color: "rgba(251,191,36,0.75)",
+            lineHeight: 1.4,
+          }}
+        >
+          {MY_THEMES_MAINTENANCE_MSG}
+        </Text>
+      )}
+    </Box>
   );
 }
 
@@ -1950,8 +2112,6 @@ export function ThemeStorePanel({
   onApplyItem,
   trialItemId,
   initialDetailItemId,
-  onOpenCreate,
-  onOpenEdit,
 }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -1980,6 +2140,7 @@ export function ThemeStorePanel({
   const [myThemesError, setMyThemesError] = useState<string | null>(null);
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   const [selectedMyTheme, setSelectedMyTheme] = useState<UserThemeSubmission | null>(null);
+  const [createEditTarget, setCreateEditTarget] = useState<"new" | UserThemeSubmission | null>(null);
 
   const myThemeChildIds = useMemo(() => {
     const ids = new Set<string>();
@@ -2021,15 +2182,19 @@ export function ThemeStorePanel({
 
 
   // Fetch my submitted themes when switching to "my-themes" tab
-  useEffect(() => {
-    if (activeTab !== "my-themes") return;
+  const refreshMyThemes = useCallback(() => {
     setMyThemesLoading(true);
     setMyThemesError(null);
     userThemeService.getMyThemes()
       .then((data) => setMyThemes(data))
       .catch(() => setMyThemesError("Không thể tải danh sách theme. Vui lòng thử lại."))
       .finally(() => setMyThemesLoading(false));
-  }, [activeTab]);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab !== "my-themes") return;
+    refreshMyThemes();
+  }, [activeTab, refreshMyThemes]);
 
   const handleWithdraw = useCallback(async (id: string) => {
     setWithdrawingId(id);
@@ -2271,7 +2436,7 @@ export function ThemeStorePanel({
                 style={{
                   background: active ? "rgba(255,255,255,0.1)" : "transparent",
                   color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
-                  fontSize: "0.76rem",
+                  fontSize: "0.82rem",
                   fontFamily: "'HarmonyOS Sans', sans-serif",
                   fontWeight: active ? 600 : 400,
                   transition: "all 0.15s",
@@ -2316,7 +2481,7 @@ export function ThemeStorePanel({
                 style={{
                   background: active ? "rgba(255,255,255,0.1)" : "transparent",
                   color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
-                  fontSize: "0.76rem",
+                  fontSize: "0.82rem",
                   fontFamily: "'HarmonyOS Sans', sans-serif",
                   fontWeight: active ? 600 : 400,
                   transition: "all 0.15s",
@@ -2351,85 +2516,25 @@ export function ThemeStorePanel({
           {/* Create section */}
           <Box my="8px" mx="4px" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }} />
           <Text px="8px" mb="4px" style={{ fontSize: "0.58rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.22)", letterSpacing: "0.1em" }}>
-            TẠO
+            SÁNG TẠO
           </Text>
-          {(() => {
-            const active = activeTab === "my-themes";
-            return (
-              <Box position="relative" title={PUBLIC_BETA ? MY_THEMES_MAINTENANCE_MSG : undefined}>
-                <Box
-                  as="button"
-                  w="100%"
-                  textAlign="left"
-                  display="flex"
-                  alignItems="center"
-                  gap="8px"
-                  px="8px"
-                  py="6px"
-                  borderRadius="7px"
-                  border="none"
-                  cursor={PUBLIC_BETA ? "not-allowed" : "pointer"}
-                  onClick={() => !PUBLIC_BETA && setActiveTab("my-themes")}
-                  style={{
-                    background: active ? "rgba(78,124,106,0.18)" : "transparent",
-                    color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
-                    fontSize: "0.76rem",
-                    fontFamily: "'HarmonyOS Sans', sans-serif",
-                    fontWeight: active ? 600 : 400,
-                    transition: "all 0.15s",
-                    filter: PUBLIC_BETA ? "blur(2.5px)" : "none",
-                    opacity: PUBLIC_BETA ? 0.55 : 1,
-                    userSelect: PUBLIC_BETA ? "none" : "auto",
-                  }}
-                  _hover={!PUBLIC_BETA ? { background: "rgba(255,255,255,0.07)", color: "rgba(255,255,255,0.8)" } as any : {}}
-                >
-                  <Box flexShrink={0} style={{ color: active ? "rgba(78,124,106,0.9)" : "rgba(255,255,255,0.28)", display: "flex" }}>
-                    <PlusCircle size={14} />
-                  </Box>
-                  <Box flex={1}>Của tôi</Box>
-                  <Box
-                    flexShrink={0}
-                    px="4px"
-                    py="1px"
-                    borderRadius="3px"
-                    style={{
-                      background: "rgba(78,124,106,0.2)",
-                      border: "1px solid rgba(78,124,106,0.38)",
-                    }}
-                  >
-                    <Text style={{
-                      fontSize: "0.5rem",
-                      fontFamily: "'HarmonyOS Sans', sans-serif",
-                      fontWeight: 700,
-                      color: "rgba(78,124,106,0.9)",
-                      letterSpacing: "0.07em",
-                    }}>
-                      BETA
-                    </Text>
-                  </Box>
-                </Box>
-                {PUBLIC_BETA && (
-                  <Text
-                    mt="3px"
-                    px="8px"
-                    style={{
-                      fontSize: "0.56rem",
-                      fontFamily: "'HarmonyOS Sans', sans-serif",
-                      fontWeight: 600,
-                      color: "rgba(251,191,36,0.75)",
-                      lineHeight: 1.4,
-                    }}
-                  >
-                    {MY_THEMES_MAINTENANCE_MSG}
-                  </Text>
-                )}
-              </Box>
-            );
-          })()}
+          <ThemeCreatorNavButton
+            active={activeTab === "my-themes"}
+            onClick={() => setActiveTab("my-themes")}
+          />
         </Box>
 
         {/* ── Right content ── */}
         <Box flex={1} display="flex" flexDirection="column" position="relative" style={{ minWidth: 0 }}>
+          <AnimatePresence>
+            {createEditTarget && (
+              <CreateThemePanel
+                key={createEditTarget === "new" ? "create-theme-new" : createEditTarget.id}
+                initialTheme={createEditTarget === "new" ? undefined : createEditTarget}
+                onClose={() => { setCreateEditTarget(null); refreshMyThemes(); }}
+              />
+            )}
+          </AnimatePresence>
           <AnimatePresence>
             {selectedMyTheme && (
               <MyThemeDetailView
@@ -2438,7 +2543,7 @@ export function ThemeStorePanel({
                 withdrawing={withdrawingId === selectedMyTheme.id}
                 onBack={() => setSelectedMyTheme(null)}
                 onWithdraw={handleWithdraw}
-                onEdit={onOpenEdit}
+                onEdit={(theme) => { setSelectedMyTheme(null); setCreateEditTarget(theme); }}
               />
             )}
           </AnimatePresence>
@@ -2497,82 +2602,54 @@ export function ThemeStorePanel({
             pb="12px"
             style={{ minHeight: 0, scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.12) transparent" }}
           >
+            {/* ── Title bar ── */}
+            <Flex align="center" justify="space-between" mb="16px" gap="12px">
+              <Text style={{
+                fontSize: "1.3rem",
+                fontWeight: 700,
+                color: "rgba(255,255,255,0.9)",
+                letterSpacing: "-0.01em",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+              }}>
+                {t(tabTitleKey(activeTab))}
+              </Text>
+              {activeTab === "my-themes" && (
+                <Box
+                  as="button"
+                  flexShrink={0}
+                  onClick={canPurchase ? () => { setSelectedMyTheme(null); setCreateEditTarget("new"); } : undefined}
+                  title={!canPurchase ? t("themeStore.creator.upgradeToCreate") : undefined}
+                  display="flex" alignItems="center" gap="6px"
+                  px="12px" py="7px" borderRadius="20px" border="none"
+                  cursor={canPurchase ? "pointer" : "not-allowed"}
+                  style={{
+                    background: canPurchase
+                      ? "linear-gradient(135deg, rgba(78,124,106,0.9) 0%, rgba(16,185,129,0.8) 100%)"
+                      : "rgba(255,255,255,0.05)",
+                    color: canPurchase ? "#fff" : "rgba(255,255,255,0.32)",
+                    fontSize: "0.74rem",
+                    fontWeight: 600,
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    boxShadow: canPurchase ? "0 2px 10px rgba(16,185,129,0.25)" : "none",
+                    transition: "all 0.15s",
+                  }}
+                  _hover={canPurchase ? { filter: "brightness(1.1)" } as any : undefined}
+                >
+                  {canPurchase ? <Plus size={14} /> : <Crown size={13} color="#fbbf24" />}
+                  {t("themeStore.creator.createTitle")}
+                </Box>
+              )}
+            </Flex>
+
             {/* ── My Themes tab ── */}
             {activeTab === "my-themes" && (
               <Box>
-                {/* Create new button */}
-                <Box
-                  as="button"
-                  w="100%"
-                  onClick={canPurchase ? onOpenCreate : undefined}
-                  border="none"
-                  cursor={canPurchase ? "pointer" : "not-allowed"}
-                  borderRadius="12px"
-                  mb="14px"
-                  overflow="hidden"
-                  style={{
-                    background: canPurchase
-                      ? "linear-gradient(135deg, rgba(78,124,106,0.18) 0%, rgba(20,184,166,0.12) 100%)"
-                      : "rgba(255,255,255,0.03)",
-                    border: canPurchase
-                      ? "1px dashed rgba(78,124,106,0.45)"
-                      : "1px dashed rgba(255,255,255,0.12)",
-                    padding: "20px 16px",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 10,
-                    transition: "all 0.18s",
-                    opacity: canPurchase ? 1 : 0.5,
-                  }}
-                  _hover={canPurchase ? { background: "rgba(78,124,106,0.25) !important", border: "1px dashed rgba(78,124,106,0.7) !important" } as any : undefined}
-                >
-                  <Box
-                    style={{
-                      width: 40, height: 40,
-                      borderRadius: "12px",
-                      background: canPurchase ? "rgba(78,124,106,0.22)" : "rgba(255,255,255,0.06)",
-                      border: canPurchase ? "1px solid rgba(78,124,106,0.4)" : "1px solid rgba(255,255,255,0.1)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}
-                  >
-                    {canPurchase
-                      ? <Palette size={18} color="rgba(78,124,106,0.9)" />
-                      : <Crown size={18} color="rgba(251,191,36,0.7)" />}
-                  </Box>
-                  <Box>
-                    <Flex align="center" gap="6px" justify="center" mb="3px">
-                      <Text style={{ fontSize: "0.86rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: canPurchase ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
-                        Tạo theme mới
-                      </Text>
-                      {!canPurchase && (
-                        <Box style={{
-                          padding: "1px 6px",
-                          borderRadius: 20,
-                          background: "rgba(251,191,36,0.12)",
-                          border: "1px solid rgba(251,191,36,0.3)",
-                          fontSize: "0.62rem",
-                          color: "#fbbf24",
-                          fontFamily: "'HarmonyOS Sans', sans-serif",
-                          fontWeight: 600,
-                          letterSpacing: "0.04em",
-                        }}>
-                          Premium
-                        </Box>
-                      )}
-                    </Flex>
-                    <Text style={{ fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
-                      {canPurchase ? "Tuỳ chỉnh màu nhấn, hình nền và âm thanh" : "Nâng cấp Premium để tạo và gửi theme"}
-                    </Text>
-                  </Box>
-                </Box>
-
                 {/* My themes list */}
                 {myThemesLoading ? (
                   <Flex h="100px" align="center" justify="center" gap="8px">
                     <LoadingRing size={14} />
                     <Text style={{ fontSize: "0.75rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.28)" }}>
-                      Đang tải…
+                      {t("themeStore.creator.loadingList")}
                     </Text>
                   </Flex>
                 ) : myThemesError ? (
@@ -2583,21 +2660,57 @@ export function ThemeStorePanel({
                     </Text>
                   </Flex>
                 ) : myThemes.length === 0 ? (
-                  <Flex direction="column" align="center" justify="center" py="24px" gap={3}>
-                    <Box style={{
-                      width: 44, height: 44, borderRadius: "50%",
-                      background: "rgba(255,255,255,0.04)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                    }}>
-                      <Palette size={18} color="rgba(255,255,255,0.18)" />
+                  <Flex direction="column" align="center" py="8px" gap="16px">
+                    <Box position="relative" w="56px" h="56px">
+                      <MotionBox
+                        position="absolute" inset="-9px" borderRadius="22px"
+                        animate={{ opacity: [0.5, 0.9, 0.5], scale: [1, 1.08, 1], rotate: [0, 360] }}
+                        transition={{
+                          opacity: { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+                          scale:   { duration: 2.4, repeat: Infinity, ease: "easeInOut" },
+                          rotate:  { duration: 6,   repeat: Infinity, ease: "linear" },
+                        } as any}
+                        style={{
+                          background: "conic-gradient(from 0deg, #f472b6, #fbbf24, #4ade80, #38bdf8, #a78bfa, #f472b6)",
+                          filter: "blur(10px)",
+                          pointerEvents: "none",
+                        }}
+                      />
+                      <Box position="relative" w="56px" h="56px" style={{
+                        borderRadius: "16px",
+                        background: "linear-gradient(135deg, rgba(78,124,106,0.22) 0%, rgba(20,184,166,0.14) 100%)",
+                        border: "1px solid rgba(78,124,106,0.35)",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <Brush size={24} color="#fff" style={{ filter: "drop-shadow(0 0 6px rgba(250,204,21,0.85))" }} />
+                      </Box>
                     </Box>
-                    <Text style={{ fontSize: "0.75rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.28)", textAlign: "center", lineHeight: 1.6 }}>
-                      Chưa có theme nào<br />
-                      <span style={{ fontSize: "0.66rem", color: "rgba(255,255,255,0.16)" }}>
-                        Theme đã tạo sẽ hiển thị ở đây
-                      </span>
-                    </Text>
+                    <Box textAlign="center" px="8px">
+                      <Text style={{ fontSize: "0.9rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(255,255,255,0.88)", marginBottom: "5px" }}>
+                        {t("themeStore.tabCreator")}
+                      </Text>
+                      <Text style={{ fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.35)", lineHeight: 1.6 }}>
+                        {t("themeStore.creator.introDesc")}
+                      </Text>
+                    </Box>
+                    <Flex direction="column" gap="8px" w="100%">
+                      {[
+                        { icon: <Upload size={13} />, text: t("themeStore.creator.introStep1") },
+                        { icon: <Clock size={13} />, text: t("themeStore.creator.introStep2") },
+                        { icon: <Coins size={13} />, text: t("themeStore.creator.introStep3") },
+                      ].map((step, i) => (
+                        <Flex key={i} align="center" gap="10px" px="12px" py="9px" borderRadius="10px"
+                          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                          <Flex align="center" justify="center" flexShrink={0} w="26px" h="26px" borderRadius="8px"
+                            style={{ background: "rgba(78,124,106,0.15)", color: "rgba(129,190,163,0.9)" }}>
+                            {step.icon}
+                          </Flex>
+                          <Text style={{ fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}>
+                            {step.text}
+                          </Text>
+                        </Flex>
+                      ))}
+                    </Flex>
                   </Flex>
                 ) : (
                   <Box display="flex" flexDirection="column" gap="8px">
@@ -2607,7 +2720,7 @@ export function ThemeStorePanel({
                         theme={theme}
                         withdrawing={withdrawingId === theme.id}
                         onWithdraw={handleWithdraw}
-                        onEdit={onOpenEdit}
+                        onEdit={(theme) => { setSelectedMyTheme(null); setCreateEditTarget(theme); }}
                         onClick={() => setSelectedMyTheme(theme)}
                       />
                     ))}

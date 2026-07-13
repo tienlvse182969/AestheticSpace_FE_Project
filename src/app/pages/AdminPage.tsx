@@ -11,6 +11,8 @@ import { useAuth } from "../../context/AuthContext";
 import { AdminThemeProvider, useAdminTheme } from "../components/admin/AdminThemeContext";
 import { analyticsAdminService } from "../../services/admin/analytics.admin.service";
 import { AvatarCircle } from "../components/StudySpace/panels/AccountPanel";
+import { NotificationBell } from "../components/StudySpace/ui/NotificationBell";
+import { adminNotificationService } from "../../services/admin/notification.admin.service";
 import { DashboardSection }         from "../components/admin/DashboardSection";
 import { UsersSection }             from "../components/admin/UsersSection";
 import { MissionsSection }          from "../components/admin/MissionsSection";
@@ -280,6 +282,15 @@ function AdminPageInner() {
                 />
                 <Text style={{ fontSize: "0.7rem", color: "#4ade80" }}>{t("admin.topbar.live")}</Text>
               </Flex>
+
+              {/* Notification bell */}
+              <NotificationBell
+                enabled
+                fetchNotifications={adminNotificationService.getAdminNotifications}
+                markRead={adminNotificationService.markRead}
+                markAllRead={adminNotificationService.markAllRead}
+                variant="inline"
+              />
 
               {/* Language toggle */}
               <Box

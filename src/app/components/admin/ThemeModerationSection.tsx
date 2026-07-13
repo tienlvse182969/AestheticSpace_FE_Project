@@ -3,13 +3,15 @@ import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Check, X, ChevronLeft, ChevronRight, Image, Volume2, Sparkles,
-  Palette, ClipboardList, Play, Pause,
+  Palette, ClipboardList, Play, Pause, Coins, Landmark, Tag,
 } from "lucide-react";
 import {
   adminStoreService,
   AdminStoreItemDto,
   StoreCategory,
-  ApproveItemBody,
+  ApproveTransactionBody,
+  RejectTransactionBody,
+  PricePublishBody,
 } from "../../../services/admin/store.admin.service";
 import { useAdminTheme } from "./AdminThemeContext";
 
@@ -17,6 +19,69 @@ const MotionBox = motion.create(Box);
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+// Plain-text price summary (no icon) — for inline mentions within a sentence.
+function fmtPriceText(item: AdminStoreItemDto): string {
+  const coin = item.requestedCoinPrice;
+  const vnd = item.requestedRealMoneyPriceVnd;
+  if (coin == null && vnd == null) return "Miễn phí";
+  const parts: string[] = [];
+  if (coin != null) parts.push(`${coin.toLocaleString("vi-VN")} coin`);
+  if (vnd != null) parts.push(`${vnd.toLocaleString("vi-VN")}đ`);
+  return parts.join(" / ");
+}
+
+// Icon-based price display — for dedicated price cells/fields (table column, detail meta).
+function PriceDisplay({ item, fontSize, color }: { item: AdminStoreItemDto; fontSize: string; color?: string }) {
+  const coin = item.requestedCoinPrice;
+  const vnd = item.requestedRealMoneyPriceVnd;
+  if (coin == null && vnd == null) {
+    return <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>Miễn phí</Text>;
+  }
+  return (
+    <Flex align="center" gap="8px">
+      {coin != null && (
+        <Flex align="center" gap="3px">
+          <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{coin.toLocaleString("vi-VN")}</Text>
+          <Coins size={11} color="#facc15" />
+        </Flex>
+      )}
+      {vnd != null && (
+        <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{vnd.toLocaleString("vi-VN")}đ</Text>
+      )}
+    </Flex>
+  );
+}
+
+// 3-line bank info display — for dedicated bank-detail sections (detail meta, approve modal).
+function BankInfoDisplay({ item, fontSize, color }: { item: AdminStoreItemDto; fontSize: string; color?: string }) {
+  if (!item.bankAccountNumber && !item.bankName && !item.bankAccountOwnerName) {
+    return <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>— (dùng thông tin đã lưu)</Text>;
+  }
+  const rows: [string, string | null | undefined][] = [
+    ["Chủ TK", item.bankAccountOwnerName],
+    ["Ngân hàng", item.bankName],
+    ["Số TK", item.bankAccountNumber],
+  ];
+  return (
+    <Flex direction="column" gap="2px">
+      {rows.map(([label, value]) => value ? (
+        <Flex key={label} align="baseline" gap="6px">
+          <Text style={{ fontSize: "0.68rem", color: color ?? "inherit", opacity: 0.6, fontFamily: "'HarmonyOS Sans', sans-serif", minWidth: "52px" }}>
+            {label}:
+          </Text>
+          <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{value}</Text>
+        </Flex>
+      ) : null)}
+    </Flex>
+  );
+}
+
+// Payout method is chosen by the creator at submission time (which price field they
+// filled in), not by the admin — admin only confirms and pays out accordingly.
+function wantsPayInCoins(item: AdminStoreItemDto): boolean {
+  return item.requestedCoinPrice != null;
 }
 
 const CAT_META: Record<StoreCategory, { label: string; color: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
@@ -27,9 +92,15 @@ const CAT_META: Record<StoreCategory, { label: string; color: string; icon: Reac
   AmbientSound: { label: "Ambient Sound", color: "#f472b6", icon: Volume2  },
 };
 
+type QueueType = "pendingTx" | "pricingPool";
+const QUEUE_TABS: { key: QueueType; label: string }[] = [
+  { key: "pendingTx",   label: "Chờ giao dịch" },
+  { key: "pricingPool", label: "Chờ định giá"  },
+];
+
 type FilterTab = "all" | StoreCategory;
-const TABS: { key: FilterTab; label: string }[] = [
-  { key: "all",          label: "All Pending"  },
+const CATEGORY_TABS: { key: FilterTab; label: string }[] = [
+  { key: "all",          label: "All"          },
   { key: "Theme",        label: "Themes"       },
   { key: "Background",   label: "Backgrounds"  },
   { key: "Sticker",      label: "Stickers"     },
@@ -52,24 +123,6 @@ function ModalCenter({ children, zIndex = 310 }: { children: React.ReactNode; zI
       zIndex={zIndex} style={{ pointerEvents: "none" }}>
       <Box style={{ pointerEvents: "auto" }}>{children}</Box>
     </Box>
-  );
-}
-
-function Toggle({ value, onChange, label, textColor }: {
-  value: boolean; onChange: () => void; label: string; textColor: string;
-}) {
-  return (
-    <Flex align="center" gap={2} as="button" onClick={onChange}
-      style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-      <Box w="32px" h="18px" borderRadius="full" position="relative" transition="all 0.2s"
-        style={{ background: value ? "rgba(78,124,106,0.6)" : "rgba(128,128,128,0.25)" }}>
-        <Box w="14px" h="14px" borderRadius="full" position="absolute" top="2px" transition="all 0.2s"
-          style={{ background: "#fff", left: value ? "16px" : "2px" }} />
-      </Box>
-      <Text style={{ fontSize: "0.8rem", color: textColor, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-        {label}
-      </Text>
-    </Flex>
   );
 }
 
@@ -129,21 +182,28 @@ export function ThemeModerationSection() {
   const [page,       setPage]       = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-  const [tab,        setTab]        = useState<FilterTab>("all");
+  const [queue,          setQueue]          = useState<QueueType>("pendingTx");
+  const [categoryFilter, setCategoryFilter] = useState<FilterTab>("all");
 
   /* ── Detail modal ──────────────────────────────────────────────────── */
   const [detailItem,    setDetailItem]    = useState<AdminStoreItemDto | null>(null);
   const [childItems,    setChildItems]    = useState<AdminStoreItemDto[]>([]);
   const [childLoading,  setChildLoading]  = useState(false);
 
-  /* ── Approve ───────────────────────────────────────────────────────── */
-  const [approveTarget,  setApproveTarget]  = useState<{ item: AdminStoreItemDto; isComponent: boolean } | null>(null);
-  const [approveLoading, setApproveLoading] = useState(false);
+  /* ── Approve transaction (buyout) ─────────────────────────────────── */
+  const [approveTxTarget,  setApproveTxTarget]  = useState<AdminStoreItemDto | null>(null);
+  const [transactionNote,  setTransactionNote]  = useState("");
+  const [approveTxLoading, setApproveTxLoading] = useState(false);
 
-  /* ── Reject ────────────────────────────────────────────────────────── */
-  const [rejectTarget,  setRejectTarget]  = useState<{ item: AdminStoreItemDto; isComponent: boolean } | null>(null);
-  const [rejectLoading, setRejectLoading] = useState(false);
-  const [rejectNote,    setRejectNote]    = useState("");
+  /* ── Reject transaction ───────────────────────────────────────────── */
+  const [rejectTxTarget,  setRejectTxTarget]  = useState<AdminStoreItemDto | null>(null);
+  const [rejectTxLoading, setRejectTxLoading] = useState(false);
+  const [rejectNote,      setRejectNote]      = useState("");
+
+  /* ── Price & publish ──────────────────────────────────────────────── */
+  const [priceTarget,     setPriceTarget]     = useState<AdminStoreItemDto | null>(null);
+  const [finalCoinPrice,  setFinalCoinPrice]  = useState("");
+  const [priceLoading,    setPriceLoading]    = useState(false);
 
   /* ── Audio ─────────────────────────────────────────────────────────── */
   const [playingId, setPlayingId] = useState<string | null>(null);
@@ -177,12 +237,15 @@ export function ThemeModerationSection() {
   };
   const closeDetail = () => { stopAudio(); setDetailItem(null); };
 
-  /* ── Load pending ──────────────────────────────────────────────────── */
+  /* ── Load queue ────────────────────────────────────────────────────── */
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    adminStoreService.getPendingItems({
-      category: tab !== "all" ? (tab as StoreCategory) : undefined,
+    const fetcher = queue === "pendingTx"
+      ? adminStoreService.getPendingTransactions
+      : adminStoreService.getPurchasedPendingPricing;
+    fetcher({
+      category: categoryFilter !== "all" ? (categoryFilter as StoreCategory) : undefined,
       page,
       pageSize: 15,
     }).then(r => {
@@ -192,9 +255,10 @@ export function ThemeModerationSection() {
       setTotalPages(r.totalPages);
     }).catch(() => {}).finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [tab, page]);
+  }, [queue, categoryFilter, page]);
 
-  const changeTab = (t: FilterTab) => { setTab(t); setPage(1); };
+  const changeQueue = (q: QueueType) => { setQueue(q); setPage(1); };
+  const changeCategory = (t: FilterTab) => { setCategoryFilter(t); setPage(1); };
 
   /* ── Detail open ───────────────────────────────────────────────────── */
   const openDetail = async (item: AdminStoreItemDto) => {
@@ -234,58 +298,89 @@ export function ThemeModerationSection() {
     } catch {} finally { setChildLoading(false); }
   };
 
-  const openApprove = (item: AdminStoreItemDto, isComponent: boolean) => {
-    setApproveTarget({ item, isComponent });
+  const openApproveTx = (item: AdminStoreItemDto) => {
+    setApproveTxTarget(item);
+    setTransactionNote("");
   };
 
-  const openReject = (item: AdminStoreItemDto, isComponent: boolean) => {
-    setRejectTarget({ item, isComponent });
+  const openRejectTx = (item: AdminStoreItemDto) => {
+    setRejectTxTarget(item);
     setRejectNote("");
   };
 
-  /* ── Approve handler ───────────────────────────────────────────────── */
-  const handleApprove = async () => {
-    if (!approveTarget) return;
-    setApproveLoading(true);
-    const body: ApproveItemBody = {
-      isPremium: false,
-      coinPrice: null,
-      realMoneyPriceVnd: null,
-    };
-    try {
-      if (approveTarget.isComponent) {
-        await adminStoreService.approveComponent(approveTarget.item.id, body);
-      } else {
-        await adminStoreService.approveItem(approveTarget.item.id, body);
-      }
-      const id = approveTarget.item.id;
-      setItems(prev => prev.filter(i => i.id !== id));
-      setTotalCount(n => n - 1);
-      setChildItems(prev => prev.filter(i => i.id !== id));
-      if (detailItem?.id === id) setDetailItem(null);
-      setApproveTarget(null);
-    } catch {} finally { setApproveLoading(false); }
+  const openPricePublish = (item: AdminStoreItemDto) => {
+    setPriceTarget(item);
+    setFinalCoinPrice(item.coinPrice != null ? String(item.coinPrice) : "");
   };
 
-  /* ── Reject handler ────────────────────────────────────────────────── */
-  const handleReject = async () => {
-    if (!rejectTarget || !rejectNote.trim()) return;
-    setRejectLoading(true);
+  /* ── Approve transaction handler ──────────────────────────────────── */
+  const handleApproveTx = async () => {
+    if (!approveTxTarget) return;
+    setApproveTxLoading(true);
+    const body: ApproveTransactionBody = {
+      payInCoins: wantsPayInCoins(approveTxTarget),
+      transactionNote: transactionNote.trim() || undefined,
+    };
     try {
-      if (rejectTarget.isComponent) {
-        await adminStoreService.rejectComponent(rejectTarget.item.id, { rejectionNote: rejectNote.trim() });
-      } else {
-        await adminStoreService.rejectItem(rejectTarget.item.id, { rejectionNote: rejectNote.trim() });
-      }
-      const id = rejectTarget.item.id;
+      await adminStoreService.approveTransaction(approveTxTarget.id, body);
+      const id = approveTxTarget.id;
       setItems(prev => prev.filter(i => i.id !== id));
       setTotalCount(n => n - 1);
       setChildItems(prev => prev.filter(i => i.id !== id));
       if (detailItem?.id === id) setDetailItem(null);
-      setRejectTarget(null);
-      setRejectNote("");
-    } catch {} finally { setRejectLoading(false); }
+      setApproveTxTarget(null);
+    } catch {} finally { setApproveTxLoading(false); }
   };
+
+  /* ── Reject transaction handler ───────────────────────────────────── */
+  const handleRejectTx = async () => {
+    if (!rejectTxTarget || !rejectNote.trim()) return;
+    setRejectTxLoading(true);
+    const body: RejectTransactionBody = { rejectionNote: rejectNote.trim() };
+    try {
+      await adminStoreService.rejectTransaction(rejectTxTarget.id, body);
+      const id = rejectTxTarget.id;
+      setItems(prev => prev.filter(i => i.id !== id));
+      setTotalCount(n => n - 1);
+      setChildItems(prev => prev.filter(i => i.id !== id));
+      if (detailItem?.id === id) setDetailItem(null);
+      setRejectTxTarget(null);
+      setRejectNote("");
+    } catch {} finally { setRejectTxLoading(false); }
+  };
+
+  /* ── Price & publish handler ──────────────────────────────────────── */
+  const canConfirmPrice = finalCoinPrice.trim() !== "" && Number(finalCoinPrice) > 0;
+  const handlePricePublish = async () => {
+    if (!priceTarget || !canConfirmPrice) return;
+    setPriceLoading(true);
+    const body: PricePublishBody = { coinPrice: Number(finalCoinPrice), isPremium: true };
+    try {
+      await adminStoreService.pricePublish(priceTarget.id, body);
+      const id = priceTarget.id;
+      setItems(prev => prev.filter(i => i.id !== id));
+      setTotalCount(n => n - 1);
+      setChildItems(prev => prev.filter(i => i.id !== id));
+      if (detailItem?.id === id) setDetailItem(null);
+      setPriceTarget(null);
+    } catch {} finally { setPriceLoading(false); }
+  };
+
+  /* ── Table column config ──────────────────────────────────────────── */
+  const columns = queue === "pendingTx"
+    ? [
+        { label: "ITEM",         flex: 2.3 },
+        { label: "CATEGORY",     flex: 0.9 },
+        { label: "CREATOR",      flex: 0.9 },
+        { label: "PHƯƠNG THỨC THANH TOÁN", flex: 1.5 },
+        { label: "GIÁ ĐỀ XUẤT",            flex: 1.1 },
+      ]
+    : [
+        { label: "ITEM",      flex: 3   },
+        { label: "CATEGORY",  flex: 1   },
+        { label: "CREATOR",   flex: 1   },
+        { label: "SUBMITTED", flex: 1.5 },
+      ];
 
   /* ── Render ────────────────────────────────────────────────────────── */
   return (
@@ -298,24 +393,46 @@ export function ThemeModerationSection() {
             {totalCount}
           </Text>
           <Text style={{ fontSize: "0.68rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            Pending Review
+            {queue === "pendingTx" ? "Chờ giao dịch" : "Chờ định giá"}
           </Text>
         </Box>
       </Flex>
 
-      {/* Tabs */}
-      <Flex gap="2px" mb={5} p="3px" borderRadius="10px" flexWrap="wrap"
+      {/* Queue tabs */}
+      <Flex gap="2px" mb={3} p="3px" borderRadius="10px" flexWrap="wrap"
         style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}`, width: "fit-content" }}>
-        {TABS.map(t => (
-          <Box key={t.key} as="button" onClick={() => changeTab(t.key)}
+        {QUEUE_TABS.map(q => (
+          <Box key={q.key} as="button" onClick={() => changeQueue(q.key)}
             px={3} py="6px" borderRadius="7px" border="none" cursor="pointer" transition="all 0.15s"
             style={{
-              background: tab === t.key ? c.navActive : "transparent",
-              outline:    tab === t.key ? `1px solid ${c.navActiveBorder}` : "1px solid transparent",
+              background: queue === q.key ? c.navActive : "transparent",
+              outline:    queue === q.key ? `1px solid ${c.navActiveBorder}` : "1px solid transparent",
             }}>
             <Text style={{
               fontSize:   "0.78rem",
-              color:      tab === t.key ? c.accent : c.textMuted,
+              color:      queue === q.key ? c.accent : c.textMuted,
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              fontWeight: 600,
+            }}>
+              {q.label}
+            </Text>
+          </Box>
+        ))}
+      </Flex>
+
+      {/* Category tabs */}
+      <Flex gap="2px" mb={5} p="3px" borderRadius="10px" flexWrap="wrap"
+        style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}`, width: "fit-content" }}>
+        {CATEGORY_TABS.map(t => (
+          <Box key={t.key} as="button" onClick={() => changeCategory(t.key)}
+            px={3} py="6px" borderRadius="7px" border="none" cursor="pointer" transition="all 0.15s"
+            style={{
+              background: categoryFilter === t.key ? c.navActive : "transparent",
+              outline:    categoryFilter === t.key ? `1px solid ${c.navActiveBorder}` : "1px solid transparent",
+            }}>
+            <Text style={{
+              fontSize:   "0.78rem",
+              color:      categoryFilter === t.key ? c.accent : c.textMuted,
               fontFamily: "'HarmonyOS Sans', sans-serif",
             }}>
               {t.label}
@@ -333,7 +450,7 @@ export function ThemeModerationSection() {
         <Flex justify="center" py={14} direction="column" align="center" gap={3}>
           <ClipboardList size={32} style={{ color: c.textDim }} />
           <Text style={{ color: c.textDim, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            No pending submissions
+            {queue === "pendingTx" ? "No pending transactions" : "No items awaiting pricing"}
           </Text>
         </Flex>
       ) : (
@@ -341,12 +458,7 @@ export function ThemeModerationSection() {
           style={{ border: `1px solid ${c.cardBorder}`, background: c.cardBg }}>
           {/* Header */}
           <Flex px={4} py={3} style={{ borderBottom: `1px solid ${c.rowDivider}` }}>
-            {[
-              { label: "ITEM",      flex: 3   },
-              { label: "CATEGORY",  flex: 1   },
-              { label: "CREATOR",   flex: 1   },
-              { label: "SUBMITTED", flex: 1.5 },
-            ].map(col => (
+            {columns.map(col => (
               <Box key={col.label} flex={col.flex}>
                 <Text style={{ fontSize: "0.65rem", color: c.textDim, letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                   {col.label}
@@ -367,7 +479,7 @@ export function ThemeModerationSection() {
                 _hover={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)" } as any}>
 
                 {/* Thumbnail + name */}
-                <Flex flex={3} align="center" gap={3} minW={0}>
+                <Flex flex={columns[0].flex} align="center" gap={3} minW={0}>
                   <Box w="40px" h="40px" borderRadius="9px" flexShrink={0} overflow="hidden"
                     style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}` }}>
                     {item.assetUrl && item.category !== "AmbientSound" ? (
@@ -391,7 +503,7 @@ export function ThemeModerationSection() {
                       <Text style={{
                         fontSize: "0.7rem", color: c.textDim,
                         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                        fontFamily: "'HarmonyOS Sans', sans-serif", maxWidth: 260,
+                        fontFamily: "'HarmonyOS Sans', sans-serif", maxWidth: 220,
                       }}>
                         {item.description}
                       </Text>
@@ -400,7 +512,7 @@ export function ThemeModerationSection() {
                 </Flex>
 
                 {/* Category */}
-                <Box flex={1}>
+                <Box flex={columns[1].flex}>
                   <Box display="inline-flex" borderRadius="full" px="8px" py="2px"
                     style={{ background: `${catMeta.color}18`, border: `1px solid ${catMeta.color}35` }}>
                     <Text style={{ fontSize: "0.65rem", color: catMeta.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
@@ -410,35 +522,73 @@ export function ThemeModerationSection() {
                 </Box>
 
                 {/* Creator */}
-                <Box flex={1}>
+                <Box flex={columns[2].flex}>
                   <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                     {item.creatorUsername ?? "—"}
                   </Text>
                 </Box>
 
-                {/* Submitted */}
-                <Box flex={1.5}>
-                  <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    {fmtDate(item.createdAt)}
-                  </Text>
-                </Box>
+                {queue === "pendingTx" ? (
+                  <>
+                    {/* Payment method */}
+                    <Box flex={columns[3].flex} pr={2}>
+                      {wantsPayInCoins(item) ? (
+                        <Flex align="center" gap="4px">
+                          <Coins size={12} color="#facc15" />
+                          <Text style={{ fontSize: "0.72rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                            Coin
+                          </Text>
+                        </Flex>
+                      ) : (
+                        <Flex align="center" gap="4px">
+                          <Landmark size={12} color="#4e7c6a" />
+                          <Text style={{ fontSize: "0.72rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                            Chuyển khoản
+                          </Text>
+                        </Flex>
+                      )}
+                    </Box>
+                    {/* Requested price */}
+                    <Box flex={columns[4].flex}>
+                      <PriceDisplay item={item} fontSize="0.78rem" color={c.textMuted} />
+                    </Box>
+                  </>
+                ) : (
+                  <Box flex={columns[3].flex}>
+                    <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      {fmtDate(item.createdAt)}
+                    </Text>
+                  </Box>
+                )}
 
                 {/* Actions */}
                 <Flex w="80px" justify="flex-end" gap="4px">
-                  <Box as="button"
-                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); openApprove(item, item.category !== "Theme"); }}
-                    display="flex" alignItems="center" justifyContent="center"
-                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Approve"
-                    style={{ background: "rgba(74,222,128,0.12)", color: "#16a34a" }}>
-                    <Check size={13} />
-                  </Box>
-                  <Box as="button"
-                    onClick={(e: React.MouseEvent) => { e.stopPropagation(); openReject(item, item.category !== "Theme"); }}
-                    display="flex" alignItems="center" justifyContent="center"
-                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Reject"
-                    style={{ background: "rgba(248,113,113,0.12)", color: "#dc2626" }}>
-                    <X size={13} />
-                  </Box>
+                  {queue === "pendingTx" ? (
+                    <>
+                      <Box as="button"
+                        onClick={(e: React.MouseEvent) => { e.stopPropagation(); openApproveTx(item); }}
+                        display="flex" alignItems="center" justifyContent="center"
+                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Approve transaction"
+                        style={{ background: "rgba(74,222,128,0.12)", color: "#16a34a" }}>
+                        <Check size={13} />
+                      </Box>
+                      <Box as="button"
+                        onClick={(e: React.MouseEvent) => { e.stopPropagation(); openRejectTx(item); }}
+                        display="flex" alignItems="center" justifyContent="center"
+                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Reject transaction"
+                        style={{ background: "rgba(248,113,113,0.12)", color: "#dc2626" }}>
+                        <X size={13} />
+                      </Box>
+                    </>
+                  ) : (
+                    <Box as="button"
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); openPricePublish(item); }}
+                      display="flex" alignItems="center" justifyContent="center"
+                      w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Price & publish"
+                      style={{ background: "rgba(192,132,252,0.12)", color: "#a855f7" }}>
+                      <Coins size={13} />
+                    </Box>
+                  )}
                 </Flex>
               </Flex>
             );
@@ -483,7 +633,7 @@ export function ThemeModerationSection() {
                   {/* Header */}
                   <Flex align="center" justify="space-between" mb={4}>
                     <Text style={{ fontSize: "0.9rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      Theme Submission
+                      {queue === "pendingTx" ? "Buyout Request" : "Pricing Pool Item"}
                     </Text>
                     <Box as="button" onClick={closeDetail} style={closeBtnSt}>
                       <X size={13} />
@@ -515,7 +665,7 @@ export function ThemeModerationSection() {
                   )}
 
                   {/* Meta */}
-                  <Flex gap={6} mb={5}>
+                  <Flex gap={6} mb={5} flexWrap="wrap">
                     <Box>
                       <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>CREATOR</Text>
                       <Text style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{detailItem.creatorUsername ?? "—"}</Text>
@@ -524,6 +674,23 @@ export function ThemeModerationSection() {
                       <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>SUBMITTED</Text>
                       <Text style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{fmtDate(detailItem.createdAt)}</Text>
                     </Box>
+                    {queue === "pendingTx" && (
+                      <>
+                        <Box>
+                          <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>GIÁ ĐỀ XUẤT</Text>
+                          <PriceDisplay item={detailItem} fontSize="0.82rem" color={c.textMuted} />
+                        </Box>
+                        {!wantsPayInCoins(detailItem) && (
+                          <Box>
+                            <Flex align="center" gap="4px" mb="2px">
+                              <Landmark size={10} style={{ color: c.textDim }} />
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>NGÂN HÀNG</Text>
+                            </Flex>
+                            <BankInfoDisplay item={detailItem} fontSize="0.82rem" color={c.textMuted} />
+                          </Box>
+                        )}
+                      </>
+                    )}
                   </Flex>
 
                   {/* Components */}
@@ -640,27 +807,37 @@ export function ThemeModerationSection() {
                     );
                   })() : null}
 
-                  {/* Theme decision */}
+                  {/* Decision */}
                   <Box mb={3} h="1px" style={{ background: c.border }} />
                   <Text mb={3} style={{ fontSize: "0.62rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    THEME DECISION
+                    {queue === "pendingTx" ? "TRANSACTION DECISION" : "PRICING DECISION"}
                   </Text>
-                  <Flex gap={2}>
-                    <Box as="button" onClick={() => openApprove(detailItem, false)}
+                  {queue === "pendingTx" ? (
+                    <Flex gap={2}>
+                      <Box as="button" onClick={() => openApproveTx(detailItem)}
+                        display="flex" alignItems="center" justifyContent="center" gap={2}
+                        flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
+                        style={{ background: "rgba(74,222,128,0.12)", outline: "1px solid rgba(74,222,128,0.3)", color: "#16a34a", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        <Check size={14} />
+                        Approve Transaction
+                      </Box>
+                      <Box as="button" onClick={() => openRejectTx(detailItem)}
+                        display="flex" alignItems="center" justifyContent="center" gap={2}
+                        flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
+                        style={{ background: "rgba(248,113,113,0.12)", outline: "1px solid rgba(248,113,113,0.3)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        <X size={14} />
+                        Reject Transaction
+                      </Box>
+                    </Flex>
+                  ) : (
+                    <Box as="button" onClick={() => openPricePublish(detailItem)}
                       display="flex" alignItems="center" justifyContent="center" gap={2}
-                      flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
-                      style={{ background: "rgba(74,222,128,0.12)", outline: "1px solid rgba(74,222,128,0.3)", color: "#16a34a", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      <Check size={14} />
-                      Approve Theme
+                      w="100%" py="9px" borderRadius="9px" border="none" cursor="pointer"
+                      style={{ background: "rgba(192,132,252,0.12)", outline: "1px solid rgba(192,132,252,0.3)", color: "#a855f7", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      <Tag size={14} />
+                      Price & Publish
                     </Box>
-                    <Box as="button" onClick={() => openReject(detailItem, false)}
-                      display="flex" alignItems="center" justifyContent="center" gap={2}
-                      flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
-                      style={{ background: "rgba(248,113,113,0.12)", outline: "1px solid rgba(248,113,113,0.3)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      <X size={14} />
-                      Reject Theme
-                    </Box>
-                  </Flex>
+                  )}
                 </Box>
               </MotionBox>
             </ModalCenter>
@@ -668,11 +845,11 @@ export function ThemeModerationSection() {
         )}
       </AnimatePresence>
 
-      {/* ═══ Approve Modal ════════════════════════════════════════════════ */}
+      {/* ═══ Approve Transaction Modal ═══════════════════════════════════ */}
       <AnimatePresence>
-        {approveTarget && (
+        {approveTxTarget && (
           <>
-            <ModalBackdrop onClose={() => setApproveTarget(null)} loading={approveLoading} />
+            <ModalBackdrop onClose={() => setApproveTxTarget(null)} loading={approveTxLoading} />
             <ModalCenter zIndex={320}>
               <MotionBox style={{ width: "400px" }}
                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
@@ -680,23 +857,48 @@ export function ThemeModerationSection() {
                 <Box style={modalBoxSt}>
                   <Flex align="center" justify="space-between" mb={4}>
                     <Text style={{ fontSize: "0.9rem", color: "#16a34a", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {approveTarget.isComponent ? "Approve Component" : "Approve Theme"}
+                      Approve Transaction
                     </Text>
-                    <Box as="button" onClick={() => !approveLoading && setApproveTarget(null)} style={closeBtnSt}>
+                    <Box as="button" onClick={() => !approveTxLoading && setApproveTxTarget(null)} style={closeBtnSt}>
                       <X size={13} />
                     </Box>
                   </Flex>
-                  <Text mb={5} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Approving: <span style={{ color: c.text }}>{approveTarget.item.name}</span>
+                  <Text mb={4} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    Chuyển nhượng: <span style={{ color: c.text }}>{approveTxTarget.name}</span>
+                    {" "}({fmtPriceText(approveTxTarget)})
                   </Text>
+                  <Box mb={4} px={3} py="10px" borderRadius="9px"
+                    style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", border: `1px solid ${c.cardBorder}` }}>
+                    <Text style={{ fontSize: "0.62rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 6 }}>
+                      PHƯƠNG THỨC CREATOR YÊU CẦU
+                    </Text>
+                    <Flex align="center" gap="6px">
+                      {wantsPayInCoins(approveTxTarget) ? <Coins size={13} color="#facc15" /> : <Landmark size={13} color="#4e7c6a" />}
+                      <Text style={{ fontSize: "0.8rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        {wantsPayInCoins(approveTxTarget) ? "Coin (cộng thẳng vào ví)" : "Chuyển khoản ngân hàng"}
+                      </Text>
+                    </Flex>
+                    {!wantsPayInCoins(approveTxTarget) && (
+                      <Box mt="6px">
+                        <BankInfoDisplay item={approveTxTarget} fontSize="0.72rem" color={c.textMuted} />
+                      </Box>
+                    )}
+                  </Box>
+                  <Box mb={5}>
+                    <Text as="label" style={labelSt}>GHI CHÚ GIAO DỊCH (tùy chọn)</Text>
+                    <Box as="textarea" value={transactionNote} rows={3}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setTransactionNote(e.target.value)}
+                      placeholder="Ví dụ: đã chuyển khoản qua Vietcombank, mã GD..."
+                      style={{ ...inputSt, height: "auto", padding: "8px 12px", resize: "vertical" }} />
+                  </Box>
                   <Flex justify="flex-end" gap={2}>
-                    <Box as="button" onClick={() => !approveLoading && setApproveTarget(null)} style={cancelBtnSt}>Cancel</Box>
-                    <Box as="button" onClick={handleApprove} disabled={approveLoading}
+                    <Box as="button" onClick={() => !approveTxLoading && setApproveTxTarget(null)} style={cancelBtnSt}>Cancel</Box>
+                    <Box as="button" onClick={handleApproveTx} disabled={approveTxLoading}
                       display="flex" alignItems="center" gap={2}
                       px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
-                      style={{ background: "rgba(74,222,128,0.15)", outline: "1px solid rgba(74,222,128,0.4)", color: "#16a34a", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: approveLoading ? 0.6 : 1 }}>
+                      style={{ background: "rgba(74,222,128,0.15)", outline: "1px solid rgba(74,222,128,0.4)", color: "#16a34a", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: approveTxLoading ? 0.6 : 1 }}>
                       <Check size={13} />
-                      {approveLoading ? "Approving…" : "Approve"}
+                      {approveTxLoading ? "Đang xử lý…" : "Approve"}
                     </Box>
                   </Flex>
                 </Box>
@@ -706,11 +908,11 @@ export function ThemeModerationSection() {
         )}
       </AnimatePresence>
 
-      {/* ═══ Reject Modal ═════════════════════════════════════════════════ */}
+      {/* ═══ Reject Transaction Modal ════════════════════════════════════ */}
       <AnimatePresence>
-        {rejectTarget && (
+        {rejectTxTarget && (
           <>
-            <ModalBackdrop onClose={() => setRejectTarget(null)} loading={rejectLoading} />
+            <ModalBackdrop onClose={() => setRejectTxTarget(null)} loading={rejectTxLoading} />
             <ModalCenter zIndex={320}>
               <MotionBox style={{ width: "400px" }}
                 initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
@@ -718,14 +920,14 @@ export function ThemeModerationSection() {
                 <Box style={modalBoxSt}>
                   <Flex align="center" justify="space-between" mb={4}>
                     <Text style={{ fontSize: "0.9rem", color: "#dc2626", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {rejectTarget.isComponent ? "Reject Component" : "Reject Theme"}
+                      Reject Transaction
                     </Text>
-                    <Box as="button" onClick={() => !rejectLoading && setRejectTarget(null)} style={closeBtnSt}>
+                    <Box as="button" onClick={() => !rejectTxLoading && setRejectTxTarget(null)} style={closeBtnSt}>
                       <X size={13} />
                     </Box>
                   </Flex>
                   <Text mb={4} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Rejecting: <span style={{ color: c.text }}>{rejectTarget.item.name}</span>
+                    Rejecting: <span style={{ color: c.text }}>{rejectTxTarget.name}</span>
                   </Text>
                   <Box mb={5}>
                     <Text as="label" style={labelSt}>REJECTION REASON *</Text>
@@ -735,13 +937,58 @@ export function ThemeModerationSection() {
                       style={{ ...inputSt, height: "auto", padding: "8px 12px", resize: "vertical" }} />
                   </Box>
                   <Flex justify="flex-end" gap={2}>
-                    <Box as="button" onClick={() => !rejectLoading && setRejectTarget(null)} style={cancelBtnSt}>Cancel</Box>
-                    <Box as="button" onClick={handleReject} disabled={rejectLoading || !rejectNote.trim()}
+                    <Box as="button" onClick={() => !rejectTxLoading && setRejectTxTarget(null)} style={cancelBtnSt}>Cancel</Box>
+                    <Box as="button" onClick={handleRejectTx} disabled={rejectTxLoading || !rejectNote.trim()}
                       display="flex" alignItems="center" gap={2}
                       px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
-                      style={{ background: "rgba(248,113,113,0.15)", outline: "1px solid rgba(248,113,113,0.4)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: (rejectLoading || !rejectNote.trim()) ? 0.45 : 1 }}>
+                      style={{ background: "rgba(248,113,113,0.15)", outline: "1px solid rgba(248,113,113,0.4)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: (rejectTxLoading || !rejectNote.trim()) ? 0.45 : 1 }}>
                       <X size={13} />
-                      {rejectLoading ? "Rejecting…" : "Reject"}
+                      {rejectTxLoading ? "Rejecting…" : "Reject"}
+                    </Box>
+                  </Flex>
+                </Box>
+              </MotionBox>
+            </ModalCenter>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ═══ Price & Publish Modal ═══════════════════════════════════════ */}
+      <AnimatePresence>
+        {priceTarget && (
+          <>
+            <ModalBackdrop onClose={() => setPriceTarget(null)} loading={priceLoading} />
+            <ModalCenter zIndex={320}>
+              <MotionBox style={{ width: "400px" }}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.18, ease: [0.4,0,0.2,1] } as any}>
+                <Box style={modalBoxSt}>
+                  <Flex align="center" justify="space-between" mb={4}>
+                    <Text style={{ fontSize: "0.9rem", color: "#a855f7", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                      Price & Publish
+                    </Text>
+                    <Box as="button" onClick={() => !priceLoading && setPriceTarget(null)} style={closeBtnSt}>
+                      <X size={13} />
+                    </Box>
+                  </Flex>
+                  <Text mb={4} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                    Publishing: <span style={{ color: c.text }}>{priceTarget.name}</span>
+                  </Text>
+                  <Box mb={4}>
+                    <Text as="label" style={labelSt}>GIÁ BÁN (COIN) *</Text>
+                    <Box as="input" value={finalCoinPrice}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFinalCoinPrice(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="0"
+                      style={inputSt} />
+                  </Box>
+                  <Flex justify="flex-end" gap={2}>
+                    <Box as="button" onClick={() => !priceLoading && setPriceTarget(null)} style={cancelBtnSt}>Cancel</Box>
+                    <Box as="button" onClick={handlePricePublish} disabled={priceLoading || !canConfirmPrice}
+                      display="flex" alignItems="center" gap={2}
+                      px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
+                      style={{ background: "rgba(192,132,252,0.15)", outline: "1px solid rgba(192,132,252,0.4)", color: "#a855f7", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: (priceLoading || !canConfirmPrice) ? 0.45 : 1 }}>
+                      <Tag size={13} />
+                      {priceLoading ? "Publishing…" : "Publish"}
                     </Box>
                   </Flex>
                 </Box>
