@@ -67,7 +67,9 @@ export function NotificationBannerProvider({ children }: { children: ReactNode }
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [bannerVolume, setBannerVolumeState] = useState<number>(() => {
-    const stored = Number(localStorage.getItem(VOLUME_STORAGE_KEY));
+    const raw = localStorage.getItem(VOLUME_STORAGE_KEY);
+    if (raw === null) return 100;
+    const stored = Number(raw);
     return Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : 100;
   });
 
