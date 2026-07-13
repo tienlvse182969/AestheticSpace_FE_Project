@@ -24,10 +24,12 @@ const CATEGORY_META: Record<StoreCategory, { label: string; color: string; icon:
 };
 
 const STATUS_META: Record<StoreItemStatus, { label: string; color: string; bg: string }> = {
-  AdminCreated:  { label: "Admin",    color: "#94a3b8", bg: "rgba(148,163,184,0.12)" },
-  PendingReview: { label: "Pending",  color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
-  Approved:      { label: "Approved", color: "#4ade80", bg: "rgba(74,222,128,0.12)"  },
-  Rejected:      { label: "Rejected", color: "#f87171", bg: "rgba(248,113,113,0.12)" },
+  AdminCreated:            { label: "Admin",            color: "#94a3b8", bg: "rgba(148,163,184,0.12)" },
+  PendingReview:           { label: "Pending",           color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
+  PendingTransaction:      { label: "Buyout Pending",    color: "#38bdf8", bg: "rgba(56,189,248,0.12)"  },
+  PurchasedPendingPricing: { label: "Pricing Pool",      color: "#c084fc", bg: "rgba(192,132,252,0.12)" },
+  Approved:                { label: "Approved",          color: "#4ade80", bg: "rgba(74,222,128,0.12)"  },
+  Rejected:                { label: "Rejected",          color: "#f87171", bg: "rgba(248,113,113,0.12)" },
 };
 
 type TabType = "all" | StoreCategory;

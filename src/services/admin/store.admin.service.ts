@@ -3,7 +3,13 @@ import type { ApiResponse } from "../../types/api.types";
 
 export type StoreCategory = "Theme" | "Background" | "Sticker" | "Effect" | "AmbientSound";
 export type StoreThemeSource = "Official" | "Community";
-export type StoreItemStatus = "AdminCreated" | "PendingReview" | "Approved" | "Rejected";
+export type StoreItemStatus =
+  | "AdminCreated"
+  | "PendingReview"
+  | "PendingTransaction"
+  | "PurchasedPendingPricing"
+  | "Approved"
+  | "Rejected";
 
 export interface AdminStoreItemDto {
   id: string;
@@ -20,6 +26,13 @@ export interface AdminStoreItemDto {
   isPremium: boolean;
   coinPrice: number | null;
   realMoneyPriceVnd: number | null;
+  requestedCoinPrice: number | null;
+  requestedRealMoneyPriceVnd: number | null;
+  isBoughtByAdmin: boolean;
+  bankAccountNumber: string | null;
+  bankName: string | null;
+  bankAccountOwnerName: string | null;
+  transactionNote: string | null;
   isActive: boolean;
   status: StoreItemStatus;
   creatorId: string | null;
@@ -56,10 +69,18 @@ export interface CreateStoreItemBody {
   isActive: boolean;
 }
 
-export interface ApproveItemBody {
+export interface ApproveTransactionBody {
+  payInCoins: boolean;
+  transactionNote?: string;
+}
+
+export interface RejectTransactionBody {
+  rejectionNote: string;
+}
+
+export interface PricePublishBody {
+  coinPrice: number;
   isPremium: boolean;
-  coinPrice: number | null;
-  realMoneyPriceVnd: number | null;
 }
 
 export const adminStoreService = {
@@ -88,32 +109,36 @@ export const adminStoreService = {
     await api.delete(`/admin/store/items/${id}`);
   },
 
-  getPendingItems: async (params?: {
+  getPendingTransactions: async (params?: {
     category?: StoreCategory;
     page?: number;
     pageSize?: number;
   }): Promise<StoreItemPagedResult> => {
-    const { data } = await api.get<ApiResponse<StoreItemPagedResult>>("/admin/store/items/pending", { params });
+    const { data } = await api.get<ApiResponse<StoreItemPagedResult>>("/admin/store/items/pending-transactions", { params });
     return data.data;
   },
 
-  approveItem: async (id: string, body: ApproveItemBody): Promise<AdminStoreItemDto> => {
-    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/approve`, body);
+  approveTransaction: async (id: string, body: ApproveTransactionBody): Promise<AdminStoreItemDto> => {
+    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/approve-transaction`, body);
     return data.data;
   },
 
-  rejectItem: async (id: string, body: { rejectionNote: string }): Promise<AdminStoreItemDto> => {
-    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/reject`, body);
+  rejectTransaction: async (id: string, body: RejectTransactionBody): Promise<AdminStoreItemDto> => {
+    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/reject-transaction`, body);
     return data.data;
   },
 
-  approveComponent: async (id: string, body: ApproveItemBody): Promise<AdminStoreItemDto> => {
-    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/approve-component`, body);
+  getPurchasedPendingPricing: async (params?: {
+    category?: StoreCategory;
+    page?: number;
+    pageSize?: number;
+  }): Promise<StoreItemPagedResult> => {
+    const { data } = await api.get<ApiResponse<StoreItemPagedResult>>("/admin/store/items/purchased-pending-pricing", { params });
     return data.data;
   },
 
-  rejectComponent: async (id: string, body: { rejectionNote: string }): Promise<AdminStoreItemDto> => {
-    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/reject-component`, body);
+  pricePublish: async (id: string, body: PricePublishBody): Promise<AdminStoreItemDto> => {
+    const { data } = await api.post<ApiResponse<AdminStoreItemDto>>(`/admin/store/items/${id}/price-publish`, body);
     return data.data;
   },
 };

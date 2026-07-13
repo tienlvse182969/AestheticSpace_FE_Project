@@ -9,6 +9,8 @@ import { SpaceToolbar }      from "../components/StudySpace/sections/SpaceToolba
 import { SpaceContextMenu }  from "../components/StudySpace/ui/SpaceContextMenu";
 import { FirstRoomModal }    from "../components/StudySpace/ui/FirstRoomModal";
 import { WelcomeGreeting }  from "../components/StudySpace/WelcomeGreeting";
+import { NotificationBannerStack } from "../components/StudySpace/NotificationBannerStack";
+import { NotificationBannerProvider } from "../context/NotificationBannerContext";
 
 export function StudySpacePage() {
   const ctx = useStudySpace();
@@ -31,12 +33,15 @@ export function StudySpacePage() {
       >
         <SpaceBackground ctx={ctx} />
         <SpaceWidgets    ctx={ctx} />
-        <SpacePanels     ctx={ctx} coinBalance={coinBalance} onCoinBalanceChange={setCoinBalance} />
-        <SpaceToolbar    ctx={ctx} coinBalance={coinBalance} onCoinBalanceReady={setCoinBalance} />
-        {ctx.showFirstRoomModal && (
-          <FirstRoomModal onConfirm={ctx.handleFirstRoomCreate} />
-        )}
-        <WelcomeGreeting />
+        <NotificationBannerProvider>
+          <SpacePanels     ctx={ctx} coinBalance={coinBalance} onCoinBalanceChange={setCoinBalance} />
+          <SpaceToolbar    ctx={ctx} coinBalance={coinBalance} onCoinBalanceReady={setCoinBalance} />
+          {ctx.showFirstRoomModal && (
+            <FirstRoomModal onConfirm={ctx.handleFirstRoomCreate} />
+          )}
+          <WelcomeGreeting />
+          <NotificationBannerStack />
+        </NotificationBannerProvider>
       </Box>
     </SpaceContextMenu>
   );

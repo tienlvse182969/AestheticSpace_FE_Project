@@ -1,11 +1,33 @@
 import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Flex, Text, Input, Spinner } from "@chakra-ui/react";
-import { Search, MoreHorizontal, UserX, UserCheck, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Search, MoreHorizontal, UserX, UserCheck, Coins, X, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { adminUsersService, type AdminUserDto } from "../../../services/admin/user.admin.services";
 import { useAdminTheme } from "./AdminThemeContext";
 
+const MotionBox = motion.create(Box);
+
 const AVATAR_COLORS = ["#4e7c6a", "#1a3a8a", "#a78bfa", "#fb923c", "#38bdf8", "#f97316", "#4ade80", "#c084fc", "#fbbf24", "#60a5fa"];
+
+function ModalBackdrop({ onClose, loading }: { onClose: () => void; loading: boolean }) {
+  return (
+    <MotionBox position="fixed" inset={0} zIndex={300}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 } as any}
+      onClick={() => !loading && onClose()}
+      style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)" }} />
+  );
+}
+
+function ModalCenter({ children }: { children: React.ReactNode }) {
+  return (
+    <Box position="fixed" inset={0} display="flex" alignItems="center" justifyContent="center"
+      zIndex={310} style={{ pointerEvents: "none" }}>
+      <Box style={{ pointerEvents: "auto" }}>{children}</Box>
+    </Box>
+  );
+}
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -55,6 +77,9 @@ export function UsersSection() {
   const [openMenu,     setOpenMenu]     = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [hoveredRow,    setHoveredRow]    = useState<string | null>(null);
+  const [coinTarget,   setCoinTarget]   = useState<AdminUserDto | null>(null);
+  const [coinAmount,   setCoinAmount]   = useState("");
+  const [coinLoading,  setCoinLoading]  = useState(false);
 
   const fetchUsers = useCallback(async (p: number) => {
     setLoading(true);
@@ -98,6 +123,18 @@ export function UsersSection() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const canConfirmCoins = coinAmount.trim() !== "" && Number(coinAmount) > 0;
+  const handleAddCoins = async () => {
+    if (!coinTarget || !canConfirmCoins) return;
+    setCoinLoading(true);
+    try {
+      const amount = Number(coinAmount);
+      await adminUsersService.addCoins(coinTarget.id, amount);
+      setUsers(prev => prev.map(x => x.id === coinTarget.id ? { ...x, coinsBalance: x.coinsBalance + amount } : x));
+      setCoinTarget(null);
+    } catch {} finally { setCoinLoading(false); }
   };
 
   const filtered = users.filter(u =>
@@ -329,6 +366,18 @@ export function UsersSection() {
                           <Box
                             as="button"
                             w="full" textAlign="left"
+                            onClick={() => { setOpenMenu(null); setCoinTarget(u); setCoinAmount(""); }}
+                            display="flex" alignItems="center" gap={2}
+                            px={4} py="10px" border="none" cursor="pointer" transition="background 0.15s"
+                            style={{ background: "transparent", color: "#facc15" }}
+                            _hover={{ background: "rgba(255,255,255,0.05)" } as any}
+                          >
+                            <Coins size={13} />
+                            <Text style={{ fontSize: "0.8rem", color: "#facc15" }}>{t("admin.users.actionAddCoins")}</Text>
+                          </Box>
+                          <Box
+                            as="button"
+                            w="full" textAlign="left"
                             onClick={() => handleToggleBan(u)}
                             display="flex" alignItems="center" gap={2}
                             px={4} py="10px" border="none" cursor="pointer" transition="background 0.15s"
@@ -404,6 +453,92 @@ export function UsersSection() {
           </Flex>
         )}
       </Flex>
+
+      {/* Add Coins modal */}
+      <AnimatePresence>
+        {coinTarget && (
+          <>
+            <ModalBackdrop onClose={() => setCoinTarget(null)} loading={coinLoading} />
+            <ModalCenter>
+              <MotionBox style={{ width: "360px" }}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] } as any}>
+                <Box borderRadius="16px" p={6} style={{
+                  background: c.panelBg, backdropFilter: "blur(20px)",
+                  border: `1px solid ${c.panelBorder}`, boxShadow: c.panelShadow,
+                }}>
+                  <Flex align="center" justify="space-between" mb={4}>
+                    <Text style={{ fontSize: "0.9rem", color: "#facc15", fontWeight: 600 }}>
+                      {t("admin.users.addCoinsTitle")}
+                    </Text>
+                    <Box as="button" onClick={() => !coinLoading && setCoinTarget(null)}
+                      display="flex" alignItems="center" justifyContent="center"
+                      w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer"
+                      style={{ background: c.cardBg, color: c.textMuted }}>
+                      <X size={13} />
+                    </Box>
+                  </Flex>
+                  <Text mb={4} style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>
+                    {coinTarget.username ?? coinTarget.email ?? "—"}
+                    {" · "}
+                    {coinTarget.coinsBalance.toLocaleString("vi-VN")} coin
+                  </Text>
+                  <Box mb={5}>
+                    <Text as="label" style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.08em", marginBottom: 6, display: "block" }}>
+                      {t("admin.users.addCoinsLabel").toUpperCase()}
+                    </Text>
+                    <Input
+                      value={coinAmount}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCoinAmount(e.target.value.replace(/[^0-9]/g, ""))}
+                      placeholder="0"
+                      style={{
+                        background:   c.cardBg,
+                        border:       `1px solid ${c.cardBorder}`,
+                        borderRadius: "8px",
+                        color:        c.cardText,
+                        fontSize:     "0.85rem",
+                        height:       "38px",
+                        outline:      "none",
+                        width:        "100%",
+                        paddingLeft:  12,
+                        paddingRight: 12,
+                      }}
+                    />
+                  </Box>
+                  <Flex justify="flex-end" gap={2}>
+                    <Box as="button" onClick={() => !coinLoading && setCoinTarget(null)}
+                      style={{
+                        background:   c.cardBg,
+                        color:        c.textMuted,
+                        fontSize:     "0.82rem",
+                        border:       `1px solid ${c.cardBorder}`,
+                        borderRadius: "8px",
+                        cursor:       "pointer",
+                        padding:      "8px 16px",
+                      }}>
+                      {t("admin.users.addCoinsCancel")}
+                    </Box>
+                    <Box as="button" onClick={() => !(coinLoading || !canConfirmCoins) && handleAddCoins()}
+                      display="flex" alignItems="center" gap={2}
+                      px={4} py="8px" borderRadius="8px" border="none"
+                      cursor={(coinLoading || !canConfirmCoins) ? "not-allowed" : "pointer"}
+                      style={{
+                        background: "rgba(250,204,21,0.15)",
+                        outline: "1px solid rgba(250,204,21,0.4)",
+                        color: "#facc15",
+                        fontSize: "0.82rem",
+                        opacity: (coinLoading || !canConfirmCoins) ? 0.45 : 1,
+                      }}>
+                      <Coins size={13} />
+                      {coinLoading ? "…" : t("admin.users.addCoinsConfirm")}
+                    </Box>
+                  </Flex>
+                </Box>
+              </MotionBox>
+            </ModalCenter>
+          </>
+        )}
+      </AnimatePresence>
     </Box>
   );
 }

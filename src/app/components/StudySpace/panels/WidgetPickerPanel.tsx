@@ -247,6 +247,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
   return (
     <>
     <MotionBox
+      id="tour-target-widget-panel"
       ref={ref as any}
       drag
       dragControls={dragControls}

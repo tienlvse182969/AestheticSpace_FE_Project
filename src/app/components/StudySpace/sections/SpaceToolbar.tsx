@@ -10,8 +10,10 @@ import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
 import { PremiumGateModal, type LockedFeature } from "../ui/PremiumGateModal";
+import { OnboardingTour }             from "../ui/OnboardingTour";
 import { coinService }                from "../../../../services/coin.service";
 import type { StudySpaceCtx }         from "../../../hooks/studyspace/useStudySpace";
+import type { TourStepId }            from "../../../hooks/studyspace/useOnboardingTour";
 
 const MotionBox = motion.create(Box);
 
@@ -27,9 +29,10 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
     currentUser, handleLogout,
     saveStatus,
     toolbarVisible, setToolbarVisible,
-    activePanel, togglePanel,
+    activePanel, togglePanel, setActivePanel,
     accountOpen, setAccountOpen,
     avatarBtnRef, accountPanelRef,
+    tour,
   } = ctx;
 
   const isFree = !!currentUser && currentUser.accountTier?.toLowerCase() !== "premium";
@@ -37,6 +40,40 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
   const [nearToolbar, setNearToolbar] = useState(false);
   const { position } = useToolbarPosition();
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tourTargetsRef = useRef<Partial<Record<TourStepId, HTMLElement | null>>>({});
+
+  // Steps whose target lives inside a panel rendered elsewhere (SpacePanels), located by DOM id
+  // rather than a React ref, since those panels are far outside the toolbar's component tree.
+  const TOUR_DOM_TARGET_IDS: Partial<Record<TourStepId, string>> = {
+    "widget-add":        "tour-target-widget-panel",
+    "background-change": "tour-target-bg-panel",
+    "room-create":       "tour-target-room-panel",
+  };
+
+  const getTourTarget = (id: TourStepId) => {
+    if (id === "account") return avatarBtnRef.current;
+    const domId = TOUR_DOM_TARGET_IDS[id];
+    if (domId) return document.getElementById(domId);
+    return tourTargetsRef.current[id] ?? null;
+  };
+
+  // Keep the toolbar visible for the duration of the tour so its targets stay on screen.
+  useEffect(() => {
+    if (tour.active && !toolbarVisible) setToolbarVisible(true);
+  }, [tour.active, toolbarVisible, setToolbarVisible]);
+
+  // Auto-open/close the panel a tour step wants shown (e.g. the widget/background/room panels).
+  useEffect(() => {
+    if (!tour.active) return;
+    setActivePanel(tour.currentStep.panel ?? null);
+  }, [tour.active, tour.currentStep, setActivePanel]);
+
+  // Close whatever panel the tour opened once the tour ends.
+  const tourWasActiveRef = useRef(false);
+  useEffect(() => {
+    if (tourWasActiveRef.current && !tour.active) setActivePanel(null);
+    tourWasActiveRef.current = tour.active;
+  }, [tour.active, setActivePanel]);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -131,6 +168,19 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
         onClose={() => setAccountOpen(false)}
         onLogout={handleLogout}
         onHome={() => navigate("/")}
+        onHelp={() => tour.start(ctx.user?.userId ?? null)}
+      />
+
+      {/* ── Onboarding tour ── */}
+      <OnboardingTour
+        active={tour.active}
+        stepIndex={tour.stepIndex}
+        steps={tour.steps}
+        getTarget={getTourTarget}
+        toolbarPosition={position}
+        onNext={tour.next}
+        onPrev={tour.prev}
+        onSkip={tour.skip}
       />
 
       {/* ── Arrow toggle (shown only when near toolbar) ── */}
@@ -261,16 +311,16 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                   }),
                 }}
               >
-                <ToolbarBtn icon={<Layers size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} position={position} />
-                <ToolbarBtn icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} position={position} />
-                <ToolbarBtn icon={<ShoppingBag size={22} />}     active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("themeStore.tooltip")} position={position} />
-                <ToolbarBtn icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} position={position} />
-                <ToolbarBtn icon={<Sticker size={22} />}       active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} position={position} />
-                <ToolbarBtn icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} locked={isFree} onClick={() => isFree ? handleLockedClick("ambient") : togglePanel("ambient")} tooltip={t("space.ambientSounds")} position={position} />
-                <ToolbarBtn icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} position={position} />
-                <ToolbarBtn icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" position={position} />
-                <ToolbarBtn icon={<BarChart2 size={22} />} active={activePanel === "pomodoro-stats"} onClick={() => togglePanel("pomodoro-stats")} tooltip="Phân tích Pomodoro" position={position} />
-                <ToolbarBtn icon={<Settings size={22} />}  active={activePanel === "settings"}       onClick={() => togglePanel("settings")}       tooltip={t("settings.title")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.room = el)} icon={<Layers size={22} />} active={activePanel === "room"}   onClick={() => togglePanel("room")}   tooltip={t("space.rooms")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.widget = el)} icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.theme = el)} icon={<ShoppingBag size={22} />}     active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("themeStore.tooltip")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.image = el)} icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.sticker = el)} icon={<Sticker size={22} />}       active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.ambient = el)} icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} locked={isFree} onClick={() => isFree ? handleLockedClick("ambient") : togglePanel("ambient")} tooltip={t("space.ambientSounds")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.effects = el)} icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.quest = el)} icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current["pomodoro-stats"] = el)} icon={<BarChart2 size={22} />} active={activePanel === "pomodoro-stats"} onClick={() => togglePanel("pomodoro-stats")} tooltip="Phân tích Pomodoro" position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.settings = el)} icon={<Settings size={22} />}  active={activePanel === "settings"}       onClick={() => togglePanel("settings")}       tooltip={t("settings.title")} position={position} />
 
                 {/* Account avatar button */}
                 <Box

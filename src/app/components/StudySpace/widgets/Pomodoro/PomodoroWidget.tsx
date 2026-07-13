@@ -26,9 +26,10 @@ const DEFAULT_SOUNDS: PomodoroSounds = {
   reset:      "/assets/PomodoroChime/ResetPomodoroChime.mp3",
 };
 
-const playChime = (path: string, enabled = true) => {
+const playChime = (path: string, enabled = true, volume = 100) => {
   if (!enabled || !path) return;
   const audio = new Audio(path);
+  audio.volume = Math.max(0, Math.min(100, volume)) / 100;
   audio.play().catch(() => {});
 };
 
@@ -43,9 +44,10 @@ interface PomodoroWidgetProps {
   totalSessions:  number;
   soundEnabled?:  boolean;
   sounds?:        PomodoroSounds;
+  volume?:        number;
 }
 
-export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soundEnabled = true, sounds = DEFAULT_SOUNDS }: PomodoroWidgetProps) {
+export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soundEnabled = true, sounds = DEFAULT_SOUNDS, volume = 100 }: PomodoroWidgetProps) {
   const { t } = useTranslation();
   const { user } = useAuth();
 
@@ -109,7 +111,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
     if (seconds === 0 && running) {
       setRunning(false);
       if (phase === "focus") {
-        playChime(sounds.complete, soundEnabled);
+        playChime(sounds.complete, soundEnabled, volume);
         notify(t("pomodoroWidget.focusEndTitle"), t("pomodoroWidget.focusEndBody"));
         if (user && currentSessionId) {
           pomodoroService.end(currentSessionId).catch(() => {});
@@ -119,7 +121,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
         setPhase("idle");
         setDialog("break-prompt");
       } else if (phase === "break") {
-        playChime(sounds.complete, soundEnabled);
+        playChime(sounds.complete, soundEnabled, volume);
         notify(t("pomodoroWidget.breakEndTitle"), t("pomodoroWidget.breakEndBody"));
         setPhase("idle");
         setDialog("next-prompt");
@@ -136,7 +138,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
     setSeconds(focusTotal);
     setRunning(true);
     setDialog(null);
-    playChime(sounds.startFocus, soundEnabled);
+    playChime(sounds.startFocus, soundEnabled, volume);
 
     if (user) {
       try {
@@ -151,7 +153,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
   };
 
   const startBreak = () => {
-    playChime(sounds.startBreak, soundEnabled);
+    playChime(sounds.startBreak, soundEnabled, volume);
     setPhase("break");
     setSeconds(breakTotal);
     setRunning(true);
@@ -161,7 +163,7 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
   const skipToNext = () => { setDialog(null); startFocus(); };
 
   const performReset = () => {
-    playChime(sounds.reset, soundEnabled);
+    playChime(sounds.reset, soundEnabled, volume);
     startingRef.current = false;
     setRunning(false);
     setPhase("idle");
@@ -201,10 +203,10 @@ export function PomodoroWidget({ focusMinutes, breakMinutes, totalSessions, soun
     if (phase === "idle") {
       startFocus();
     } else if (running) {
-      playChime(sounds.pause, soundEnabled);
+      playChime(sounds.pause, soundEnabled, volume);
       setRunning(false);
     } else {
-      playChime(phase === "break" ? sounds.startBreak : sounds.startFocus, soundEnabled);
+      playChime(phase === "break" ? sounds.startBreak : sounds.startFocus, soundEnabled, volume);
       setRunning(true);
     }
   };

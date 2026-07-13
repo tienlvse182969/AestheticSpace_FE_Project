@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../context/AuthContext";
 import { useAccent } from "../../context/AccentContext";
 import { useWorkspaceAutoSave } from "./useWorkspaceAutoSave";
+import { useOnboardingTour }    from "./useOnboardingTour";
 import { roomService }          from "../../../services/room.service";
 import { useClockSettings }    from "./useClockSettings";
 import { usePomodoroSettings, DEFAULT_POMODORO_SOUNDS } from "./usePomodoroSettings";
@@ -16,11 +17,12 @@ import type { BackgroundItem } from "../../components/StudySpace/types";
 import type { LayoutConfig }   from "../../../types/workspace.types";
 import type { UserInfo }       from "../../components/StudySpace/panels/AccountPanel";
 import type { EffectType }     from "../../components/StudySpace/panels/EffectsPanel";
+import type { NavKey as SettingsNavKey } from "../../components/StudySpace/panels/SettingsPanel";
 
 export type ActivePanel =
   | "widget" | "image" | "sticker" | "theme"
   | "ambient" | "effects" | "settings" | "room"
-  | "pomodoro-stats" | "quest" | "create-theme"
+  | "pomodoro-stats" | "quest"
   | null;
 
 export function useStudySpace() {
@@ -40,6 +42,7 @@ export function useStudySpace() {
   /* ── UI state ── */
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [activePanel,    setActivePanel]    = useState<ActivePanel>(null);
+  const [settingsInitialNav, setSettingsInitialNav] = useState<SettingsNavKey | null>(null);
   const [layoutLocked,   setLayoutLocked]   = useState(false);
 const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const [accountOpen,         setAccountOpen]         = useState(false);
@@ -60,6 +63,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const pomodoro = usePomodoroSettings();
   const space    = useSpaceItems();
   const ambient  = useAmbientSound();
+  const tour     = useOnboardingTour();
 
   /* ── Default widget positions (computed once) ── */
   const WIDGET_POSITIONS = useMemo(() => {
@@ -99,6 +103,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       pomodoro.setTotalSes(layout.pomodoroSettings.totalSes);
       if (layout.pomodoroSettings.soundEnabled !== undefined) pomodoro.setSoundEnabled(layout.pomodoroSettings.soundEnabled);
       if (layout.pomodoroSettings.sounds) pomodoro.setSounds({ ...DEFAULT_POMODORO_SOUNDS, ...layout.pomodoroSettings.sounds });
+      if (layout.pomodoroSettings.volume !== undefined) pomodoro.setVolume(layout.pomodoroSettings.volume);
     }
     space.restoreItems({
       activeWidgets:   layout.activeWidgets,
@@ -167,7 +172,8 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     };
     handleRestore({ roomId: created.id, roomName: created.name, bg, layout: emptyLayout });
     setShowFirstRoomModal(false);
-  }, [handleRestore]);
+    tour.maybeAutoStart(user?.userId);
+  }, [handleRestore, tour, user?.userId]);
 
   /* ── Screenshot for thumbnail ── */
   const captureScreenshot = useCallback(async (): Promise<string | null> => {
@@ -203,7 +209,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     },
     pomodoroSettings: {
       focusMin: pomodoro.focusMin, breakMin: pomodoro.breakMin, totalSes: pomodoro.totalSes,
-      soundEnabled: pomodoro.soundEnabled, sounds: pomodoro.sounds,
+      soundEnabled: pomodoro.soundEnabled, sounds: pomodoro.sounds, volume: pomodoro.volume,
     },
     todoItems: space.todoItems,
     accentColor: accent,
@@ -233,6 +239,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     user, currentUser, handleLogout,
     toolbarVisible, setToolbarVisible,
     activePanel, setActivePanel, togglePanel,
+    settingsInitialNav, setSettingsInitialNav,
     layoutLocked, toggleLayoutLock,
     activeEffect, setActiveEffect,
     accountOpen, setAccountOpen,
@@ -249,6 +256,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     saveStatus, saveNow, isRestoring,
     accent, setAccent,
     ambient,
+    tour,
   };
 }
 
