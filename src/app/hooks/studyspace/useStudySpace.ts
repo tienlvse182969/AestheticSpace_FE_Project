@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../context/AuthContext";
 import { useAccent } from "../../context/AccentContext";
 import { useWorkspaceAutoSave } from "./useWorkspaceAutoSave";
+import { useOnboardingTour }    from "./useOnboardingTour";
 import { roomService }          from "../../../services/room.service";
 import { useClockSettings }    from "./useClockSettings";
 import { usePomodoroSettings, DEFAULT_POMODORO_SOUNDS } from "./usePomodoroSettings";
@@ -62,6 +63,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const pomodoro = usePomodoroSettings();
   const space    = useSpaceItems();
   const ambient  = useAmbientSound();
+  const tour     = useOnboardingTour();
 
   /* ── Default widget positions (computed once) ── */
   const WIDGET_POSITIONS = useMemo(() => {
@@ -170,7 +172,8 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     };
     handleRestore({ roomId: created.id, roomName: created.name, bg, layout: emptyLayout });
     setShowFirstRoomModal(false);
-  }, [handleRestore]);
+    tour.maybeAutoStart(user?.userId);
+  }, [handleRestore, tour, user?.userId]);
 
   /* ── Screenshot for thumbnail ── */
   const captureScreenshot = useCallback(async (): Promise<string | null> => {
@@ -253,6 +256,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     saveStatus, saveNow, isRestoring,
     accent, setAccent,
     ambient,
+    tour,
   };
 }
 

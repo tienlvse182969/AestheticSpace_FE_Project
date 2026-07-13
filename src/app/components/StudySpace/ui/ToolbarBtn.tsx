@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Box } from "@chakra-ui/react";
 import { Lock } from "lucide-react";
 
@@ -18,7 +19,10 @@ function getActiveTransform(position: ToolbarPosition) {
   return "scale(1.15) translateY(-2px)";
 }
 
-export function ToolbarBtn({ icon, active, onClick, tooltip, locked = false, position = "bottom" }: ToolbarBtnProps) {
+export const ToolbarBtn = forwardRef<HTMLButtonElement, ToolbarBtnProps>(function ToolbarBtn(
+  { icon, active, onClick, tooltip, locked = false, position = "bottom" },
+  ref,
+) {
   const activeTransform = getActiveTransform(position);
   const dotProps =
     position === "left"  ? { mr: "4px", w: "4px", h: "4px" } :
@@ -30,6 +34,7 @@ export function ToolbarBtn({ icon, active, onClick, tooltip, locked = false, pos
                            "column";
   return (
     <Box
+      ref={ref}
       as="button"
       onClick={onClick}
       display="flex"
@@ -81,4 +86,4 @@ export function ToolbarBtn({ icon, active, onClick, tooltip, locked = false, pos
       )}
     </Box>
   );
-}
+});

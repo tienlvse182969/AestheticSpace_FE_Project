@@ -192,6 +192,7 @@ export function RoomManagerPanel({ currentRoomId, currentBg, onSelect, onClose }
 
   return (
     <MotionBox
+      id="tour-target-room-panel"
       ref={ref as any}
       className="no-capture"
       drag

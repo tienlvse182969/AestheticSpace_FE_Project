@@ -69,6 +69,7 @@ interface AccountPanelProps {
   onClose: () => void;
   onLogout: () => void;
   onHome: () => void;
+  onHelp: () => void;
 }
 
 function getInitials(name: string) {
@@ -171,6 +172,7 @@ export function AccountPanel({
   onClose,
   onLogout,
   onHome,
+  onHelp,
 }: AccountPanelProps) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -351,7 +353,7 @@ export function AccountPanel({
               {/* Help */}
               <Box
                 as="button"
-                onClick={() => onClose()}
+                onClick={() => { onClose(); onHelp(); }}
                 display="flex"
                 alignItems="center"
                 gap={2}
@@ -494,7 +496,7 @@ export function AccountPanel({
               {/* Help */}
               <Box
                 as="button"
-                onClick={() => onClose()}
+                onClick={() => { onClose(); onHelp(); }}
                 display="flex"
                 alignItems="center"
                 gap={2}

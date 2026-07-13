@@ -478,6 +478,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
 
   return (
     <MotionBox
+      id="tour-target-bg-panel"
       ref={ref as any}
       drag
       dragMomentum={false}
