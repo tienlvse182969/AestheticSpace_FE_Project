@@ -734,7 +734,9 @@
     "claimable": "Ready to claim!",
     "claim": "Claim reward",
     "completed": "Completed ✓",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "completedBannerTitle": "Quest completed: {{title}}",
+    "completedBannerDesc": "+{{reward}}₫ — open Quests to claim your reward"
   },
   "firstRoom": {
     "title": "Welcome to your Space!",

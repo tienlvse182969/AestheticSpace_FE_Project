@@ -1,8 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
-import { Bell } from "lucide-react";
+import { Bell, Trophy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 import { useAccent } from "./AccentContext";
 import { notificationService, type NotificationDto } from "../../services/notification.service";
+import { questService, type Quest, type QuestStatus } from "../../services/quest.service";
 
 export interface BannerItem {
   id: string;
@@ -53,6 +55,7 @@ function isCreatorReviewNotification(title: string): boolean {
 const Ctx = createContext<NotificationBannerCtx | null>(null);
 
 export function NotificationBannerProvider({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { accent } = useAccent();
   const accentRef = useRef(accent);
@@ -60,6 +63,7 @@ export function NotificationBannerProvider({ children }: { children: ReactNode }
 
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const seenBannerIdsRef = useRef<Set<string>>(new Set());
+  const questStatusRef = useRef<Map<string, QuestStatus> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const [bannerVolume, setBannerVolumeState] = useState<number>(() => {
@@ -157,8 +161,48 @@ export function NotificationBannerProvider({ children }: { children: ReactNode }
     }
   }, [pushBanner]);
 
+  const fetchAndAnnounceQuests = useCallback(async () => {
+    let quests: Quest[];
+    try {
+      quests = await questService.getQuests();
+    } catch {
+      return;
+    }
+
+    // First fetch after login only establishes the baseline — it never banner-storms
+    // quests that were already claimable before this session started.
+    const prevStatuses = questStatusRef.current;
+    const nextStatuses = new Map<string, QuestStatus>();
+
+    for (const q of quests) {
+      nextStatuses.set(q.id, q.status);
+      if (prevStatuses && prevStatuses.get(q.id) === "active" && q.status === "claimable") {
+        pushBanner({
+          id: `quest_${q.id}`,
+          durationMs: 7000,
+          content: (
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <Trophy size={16} style={{ color: "#facc15", flexShrink: 0, marginTop: 1 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: "rgba(255,255,255,0.92)", fontSize: "0.85rem", fontWeight: 600, lineHeight: 1.35 }}>
+                  {t("quest.completedBannerTitle", { title: q.title })}
+                </div>
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.76rem", lineHeight: 1.45, marginTop: 4 }}>
+                  {t("quest.completedBannerDesc", { reward: q.reward.toLocaleString("vi-VN") })}
+                </div>
+              </div>
+            </div>
+          ),
+        });
+      }
+    }
+
+    questStatusRef.current = nextStatuses;
+  }, [pushBanner, t]);
+
   useEffect(() => {
     seenBannerIdsRef.current = new Set();
+    questStatusRef.current = null;
     if (!user) return;
 
     audioRef.current = new Audio(bannerSound);
@@ -166,10 +210,14 @@ export function NotificationBannerProvider({ children }: { children: ReactNode }
     audioRef.current.load();
 
     fetchAndAnnounce();
-    const interval = window.setInterval(fetchAndAnnounce, POLL_INTERVAL_MS);
+    fetchAndAnnounceQuests();
+    const interval = window.setInterval(() => {
+      fetchAndAnnounce();
+      fetchAndAnnounceQuests();
+    }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.userId, fetchAndAnnounce]);
+  }, [user?.userId, fetchAndAnnounce, fetchAndAnnounceQuests]);
 
   const markCreatorReviewNotificationsRead = useCallback(() => {
     notificationService.getMyNotifications()

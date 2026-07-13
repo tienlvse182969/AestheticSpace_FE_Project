@@ -733,7 +733,9 @@
     "claimable": "Sẵn sàng nhận!",
     "claim": "Nhận thưởng",
     "completed": "Đã hoàn thành ✓",
-    "loading": "Đang tải…"
+    "loading": "Đang tải…",
+    "completedBannerTitle": "Nhiệm vụ hoàn thành: {{title}}",
+    "completedBannerDesc": "+{{reward}}₫ — vào mục Nhiệm vụ để nhận thưởng"
   },
   "firstRoom": {
     "title": "Chào mừng đến với Space của bạn!",
