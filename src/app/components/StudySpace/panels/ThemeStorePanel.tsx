@@ -2173,6 +2173,13 @@ export function ThemeStorePanel({
 
   useEffect(() => { setSourceFilter("all"); }, [activeTab]);
 
+  const handleSidebarTabSelect = useCallback((tab: TabValue) => {
+    setSelectedItem(null);
+    setCreateEditTarget(null);
+    setSelectedMyTheme(null);
+    setActiveTab(tab);
+  }, []);
+
   // Fetch all store items on mount
   useEffect(() => {
     setItemsLoading(true);
@@ -2435,7 +2442,7 @@ export function ThemeStorePanel({
                 borderRadius="7px"
                 border="none"
                 cursor="pointer"
-                onClick={() => setActiveTab(tab.value)}
+                onClick={() => handleSidebarTabSelect(tab.value)}
                 style={{
                   background: active ? "rgba(255,255,255,0.1)" : "transparent",
                   color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
@@ -2480,7 +2487,7 @@ export function ThemeStorePanel({
                 borderRadius="7px"
                 border="none"
                 cursor="pointer"
-                onClick={() => setActiveTab(val)}
+                onClick={() => handleSidebarTabSelect(val)}
                 style={{
                   background: active ? "rgba(255,255,255,0.1)" : "transparent",
                   color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.45)",
@@ -2523,7 +2530,7 @@ export function ThemeStorePanel({
           </Text>
           <ThemeCreatorNavButton
             active={activeTab === "my-themes"}
-            onClick={() => setActiveTab("my-themes")}
+            onClick={() => handleSidebarTabSelect("my-themes")}
           />
         </Box>
 
