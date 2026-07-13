@@ -1,0 +1,170 @@
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { Bell } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { useAccent } from "./AccentContext";
+import { notificationService, type NotificationDto } from "../../services/notification.service";
+
+export interface BannerItem {
+  id: string;
+  content: ReactNode;
+  durationMs: number;
+}
+
+type PushBannerInput = Omit<BannerItem, "durationMs"> & { durationMs?: number };
+
+interface NotificationBannerCtx {
+  banners: BannerItem[];
+  pushBanner: (banner: PushBannerInput) => void;
+  dismissBanner: (id: string) => void;
+  /** Call when the user opens the Creator tab in the Aesthetic Store — clears any pending approve/reject banners for good. */
+  markCreatorReviewNotificationsRead: () => void;
+  /** Banner sound volume, 0–100. */
+  bannerVolume: number;
+  setBannerVolume: (v: number) => void;
+  /** Play the banner sound once at the current volume — used for a live preview in Settings. */
+  previewBannerSound: () => void;
+}
+
+const DEFAULT_DURATION_MS = 6000;
+const POLL_INTERVAL_MS = 25000;
+const VOLUME_STORAGE_KEY = "asfe_banner_volume";
+
+/** Backend sends "Transaction Approved" / "Transaction Rejected" for creator submission review outcomes. */
+function isCreatorReviewNotification(title: string): boolean {
+  return title.startsWith("Transaction ");
+}
+
+const Ctx = createContext<NotificationBannerCtx | null>(null);
+
+export function NotificationBannerProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+  const { accent } = useAccent();
+  const accentRef = useRef(accent);
+  accentRef.current = accent;
+
+  const [banners, setBanners] = useState<BannerItem[]>([]);
+  const seenBannerIdsRef = useRef<Set<string>>(new Set());
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const [bannerVolume, setBannerVolumeState] = useState<number>(() => {
+    const stored = Number(localStorage.getItem(VOLUME_STORAGE_KEY));
+    return Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : 100;
+  });
+
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = bannerVolume / 100;
+  }, [bannerVolume]);
+
+  const setBannerVolume = useCallback((v: number) => {
+    const clamped = Math.max(0, Math.min(100, v));
+    setBannerVolumeState(clamped);
+    localStorage.setItem(VOLUME_STORAGE_KEY, String(clamped));
+  }, []);
+
+  const dismissBanner = useCallback((id: string) => {
+    setBanners((prev) => prev.filter((b) => b.id !== id));
+  }, []);
+
+  const pushBanner = useCallback((banner: PushBannerInput) => {
+    if (seenBannerIdsRef.current.has(banner.id)) return;
+    seenBannerIdsRef.current.add(banner.id);
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+      audioRef.current.play().catch(() => {});
+    }
+    // New banner goes to the front so it renders on top, pushing earlier ones down.
+    setBanners((prev) => [{ ...banner, durationMs: banner.durationMs ?? DEFAULT_DURATION_MS }, ...prev]);
+  }, []);
+
+  const previewBannerSound = useCallback(() => {
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = 0;
+    audioRef.current.play().catch(() => {});
+  }, []);
+
+  const fetchAndAnnounce = useCallback(async () => {
+    let list: NotificationDto[];
+    try {
+      list = await notificationService.getMyNotifications();
+    } catch {
+      return;
+    }
+
+    for (const n of list) {
+      const bannerId = `notif_${n.id}`;
+      if (n.isRead || seenBannerIdsRef.current.has(bannerId)) continue;
+
+      const isCreatorReview = isCreatorReviewNotification(n.title);
+      pushBanner({
+        id: bannerId,
+        durationMs: 7000,
+        content: (
+          <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+            <Bell size={16} style={{ color: accentRef.current, flexShrink: 0, marginTop: 1 }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ color: "rgba(255,255,255,0.92)", fontSize: "0.85rem", fontWeight: 600, lineHeight: 1.35 }}>
+                {n.title}
+              </div>
+              {n.message && (
+                <div style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.76rem", lineHeight: 1.45, marginTop: 4 }}>
+                  {n.message}
+                </div>
+              )}
+            </div>
+          </div>
+        ),
+      });
+
+      // Approve/reject outcomes stay unread — and keep reappearing on every space entry —
+      // until the user checks their theme's status in the Creator tab. Everything else
+      // (e.g. "Asset Published") is a one-time heads-up, so mark it read right away.
+      if (!isCreatorReview) {
+        notificationService.markRead(n.id).catch(() => {});
+      }
+    }
+  }, [pushBanner]);
+
+  useEffect(() => {
+    seenBannerIdsRef.current = new Set();
+    if (!user) return;
+
+    audioRef.current = new Audio("/assets/BannerSound/BannerSound.mp3");
+    audioRef.current.volume = bannerVolume / 100;
+    audioRef.current.load();
+
+    fetchAndAnnounce();
+    const interval = window.setInterval(fetchAndAnnounce, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [user?.userId, fetchAndAnnounce]);
+
+  const markCreatorReviewNotificationsRead = useCallback(() => {
+    notificationService.getMyNotifications()
+      .then((list) => {
+        const unreadReview = list.filter((n) => !n.isRead && isCreatorReviewNotification(n.title));
+        unreadReview.forEach((n) => { notificationService.markRead(n.id).catch(() => {}); });
+      })
+      .catch(() => {});
+  }, []);
+
+  return (
+    <Ctx.Provider
+      value={{
+        banners,
+        pushBanner,
+        dismissBanner,
+        markCreatorReviewNotificationsRead,
+        bannerVolume,
+        setBannerVolume,
+        previewBannerSound,
+      }}
+    >
+      {children}
+    </Ctx.Provider>
+  );
+}
+
+export function useNotificationBanners(): NotificationBannerCtx {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("useNotificationBanners must be used within a NotificationBannerProvider");
+  return ctx;
+}

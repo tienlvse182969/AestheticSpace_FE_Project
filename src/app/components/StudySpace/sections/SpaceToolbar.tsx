@@ -10,9 +10,7 @@ import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
 import { PremiumGateModal, type LockedFeature } from "../ui/PremiumGateModal";
-import { NotificationBell }           from "../ui/NotificationBell";
 import { coinService }                from "../../../../services/coin.service";
-import { notificationService }        from "../../../../services/notification.service";
 import type { StudySpaceCtx }         from "../../../hooks/studyspace/useStudySpace";
 
 const MotionBox = motion.create(Box);
@@ -114,15 +112,6 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
           </MotionBox>
         )}
       </AnimatePresence>
-
-      {/* ── Notification bell ── */}
-      <NotificationBell
-        enabled={!!currentUser}
-        fetchNotifications={notificationService.getMyNotifications}
-        markRead={notificationService.markRead}
-        markAllRead={notificationService.markAllRead}
-        variant="floating"
-      />
 
       {/* ── Account backdrop ── */}
       {accountOpen && (

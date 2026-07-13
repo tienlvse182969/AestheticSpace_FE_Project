@@ -676,7 +676,12 @@
     "toolbarPosition": "Vị trí thanh công cụ",
     "toolbarBottom": "Dưới",
     "toolbarLeft": "Trái",
-    "toolbarRight": "Phải"
+    "toolbarRight": "Phải",
+    "sounds": "Âm thanh",
+    "bannerSound": "Âm thanh thông báo",
+    "bannerSoundDesc": "Âm lượng phát ra khi có banner chào mừng hoặc thông báo mới xuất hiện",
+    "bannerSoundMuted": "Đã tắt tiếng",
+    "testSound": "Nghe thử"
   },
   "premiumGate": {
     "title": "Tính năng Premium",

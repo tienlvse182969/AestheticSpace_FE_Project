@@ -677,7 +677,12 @@
     "toolbarPosition": "Toolbar Position",
     "toolbarBottom": "Bottom",
     "toolbarLeft": "Left",
-    "toolbarRight": "Right"
+    "toolbarRight": "Right",
+    "sounds": "Sounds",
+    "bannerSound": "Banner sound",
+    "bannerSoundDesc": "Volume for the welcome greeting and notification banner chime",
+    "bannerSoundMuted": "Muted",
+    "testSound": "Test sound"
   },
   "premiumGate": {
     "title": "Premium Feature",

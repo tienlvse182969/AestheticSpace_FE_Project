@@ -20,6 +20,7 @@ import {
   type StoreCategory,
 } from "../../../../services/aestheticStore.service";
 import { useAuth } from "../../../../context/AuthContext";
+import { useNotificationBanners } from "../../../context/NotificationBannerContext";
 import { coinService } from "../../../../services/coin.service";
 import {
   userThemeService,
@@ -2115,6 +2116,7 @@ export function ThemeStorePanel({
 }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { markCreatorReviewNotificationsRead } = useNotificationBanners();
   const { x, y, ref } = useCenteredPanel(PANEL_W, PANEL_H, 64);
 
   const canPurchase = user?.accountTier !== "Free";
@@ -2194,7 +2196,8 @@ export function ThemeStorePanel({
   useEffect(() => {
     if (activeTab !== "my-themes") return;
     refreshMyThemes();
-  }, [activeTab, refreshMyThemes]);
+    markCreatorReviewNotificationsRead();
+  }, [activeTab, refreshMyThemes, markCreatorReviewNotificationsRead]);
 
   const handleWithdraw = useCallback(async (id: string) => {
     setWithdrawingId(id);

@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor } from "lucide-react";
+import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor, Volume2, VolumeX } from "lucide-react";
 import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { useAccent } from "../../../context/AccentContext";
 import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
+import { useNotificationBanners } from "../../../context/NotificationBannerContext";
 import { useAuth } from "../../../../context/AuthContext";
 import { AvatarCircle } from "./AccountPanel";
 import { FLAG_VN, FLAG_GB } from "../../ui/FlagIcons";
@@ -28,7 +29,7 @@ const ACCENT_PRESETS = [
 ];
 const PRESET_HEXES = ACCENT_PRESETS.map(p => p.hex);
 
-type NavKey = "display" | "language" | "notifications" | "about" | "account";
+type NavKey = "display" | "language" | "notifications" | "sounds" | "about" | "account";
 
 const NAV_ITEMS: {
   key: NavKey;
@@ -38,6 +39,7 @@ const NAV_ITEMS: {
   { key: "display",       icon: Monitor, color: "#6366f1" },
   { key: "language",      icon: Globe,   color: "#0ea5e9" },
   { key: "notifications", icon: Bell,    color: "#f59e0b" },
+  { key: "sounds",        icon: Volume2, color: "#ec4899" },
   { key: "about",         icon: Info,    color: "#14b8a6" },
 ];
 
@@ -80,6 +82,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const { x, y, ref } = useCenteredPanel(760, 540);
   const { accent, setAccent } = useAccent();
   const { position: toolbarPos, setPosition: setToolbarPos } = useToolbarPosition();
+  const { bannerVolume, setBannerVolume, previewBannerSound } = useNotificationBanners();
   const { user, updateUsername } = useAuth();
   const isCustomAccent = !PRESET_HEXES.includes(accent);
   const [activeNav, setActiveNav] = useState<NavKey>("display");
@@ -157,6 +160,7 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
     display:       t("settings.display"),
     language:      t("settings.language"),
     notifications: t("settings.notifications"),
+    sounds:        t("settings.sounds"),
     about:         t("about.label"),
   };
 
@@ -598,6 +602,74 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           </Flex>
         );
 
+      case "sounds":
+        return (
+          <Box px="14px" py="12px" borderRadius="10px"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+          >
+            <Flex align="center" gap={3} mb="12px">
+              {bannerVolume > 0
+                ? <Volume2 size={15} style={{ color: "rgba(255,255,255,0.4)" }} />
+                : <VolumeX size={15} style={{ color: "rgba(255,255,255,0.4)" }} />
+              }
+              <Box flex={1} minW={0}>
+                <Text style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.82)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                  {t("settings.bannerSound")}
+                </Text>
+                <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2, lineHeight: 1.4 }}>
+                  {t("settings.bannerSoundDesc")}
+                </Text>
+              </Box>
+              <Box
+                as="button"
+                onClick={previewBannerSound}
+                onPointerDown={(e: React.PointerEvent) => e.stopPropagation()}
+                disabled={bannerVolume === 0}
+                style={{
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  color: bannerVolume === 0 ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.7)",
+                  fontSize: "0.74rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  cursor: bannerVolume === 0 ? "not-allowed" : "pointer",
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {t("settings.testSound")}
+              </Box>
+            </Flex>
+
+            <Flex align="center" gap="12px">
+              {bannerVolume > 0
+                ? <Volume2 size={14} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+                : <VolumeX size={14} style={{ color: "rgba(255,255,255,0.35)", flexShrink: 0 }} />
+              }
+              <input
+                className="settings-volume-slider"
+                type="range" min={0} max={100} value={bannerVolume}
+                onPointerDown={(e) => e.stopPropagation()}
+                onChange={(e) => setBannerVolume(Number(e.target.value))}
+                style={{
+                  flex: 1, height: 3, borderRadius: 4,
+                  appearance: "none", WebkitAppearance: "none",
+                  background: `linear-gradient(to right, ${accent} ${bannerVolume}%, rgba(255,255,255,0.15) ${bannerVolume}%)`,
+                  outline: "none", cursor: "pointer",
+                  ["--thumb-color" as string]: accent,
+                } as React.CSSProperties}
+              />
+              <Text style={{
+                fontSize: "0.72rem", color: "rgba(255,255,255,0.4)",
+                fontFamily: "'HarmonyOS Sans', sans-serif", minWidth: 34, textAlign: "right", flexShrink: 0, whiteSpace: "nowrap",
+              }}>
+                {bannerVolume === 0 ? t("settings.bannerSoundMuted") : `${bannerVolume}%`}
+              </Text>
+            </Flex>
+          </Box>
+        );
+
       case "about":
         return (
           <Box>
@@ -726,6 +798,26 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   };
 
   return (
+    <>
+    <style>{`
+      .settings-volume-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 12px; height: 12px;
+        border-radius: 50%;
+        background: var(--thumb-color);
+        box-shadow: 0 0 4px var(--thumb-color);
+        cursor: pointer;
+      }
+      .settings-volume-slider::-moz-range-thumb {
+        width: 12px; height: 12px;
+        border-radius: 50%;
+        border: none;
+        background: var(--thumb-color);
+        box-shadow: 0 0 4px var(--thumb-color);
+        cursor: pointer;
+      }
+    `}</style>
     <MotionBox
       ref={ref as any}
       drag
@@ -883,5 +975,6 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
         {renderContent()}
       </Box>
     </MotionBox>
+    </>
   );
 }
