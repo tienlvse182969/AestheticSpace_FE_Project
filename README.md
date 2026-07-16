@@ -2,6 +2,8 @@
 
 A customizable digital study space: a draggable-widget desk (Pomodoro timer, clock, music player, to-do list, quotes), background/theme/sticker/ambient-sound stores, a creator marketplace for user-submitted themes, quests with coin rewards, and an admin dashboard — all wrapped in a real-time notification/banner system.
 
+This is the frontend repository. The backend API lives at [aesthetic-study-space-backend](https://github.com/TranQuocNam18/aesthetic-study-space-backend).
+
 ## Tech stack
 
 - **React 18** + **TypeScript**, built with **Vite**
