@@ -2,8 +2,6 @@
 
 A customizable digital study space: a draggable-widget desk (Pomodoro timer, clock, music player, to-do list, quotes), background/theme/sticker/ambient-sound stores, a creator marketplace for user-submitted themes, quests with coin rewards, and an admin dashboard — all wrapped in a real-time notification/banner system.
 
-Frontend for **Aesthetic Study Space**. Originally scaffolded from a Figma design ([source](https://www.figma.com/design/5pVPrIraYKuN62dHBiLcrh/Homepage-for-Aesthetic-Study-Space)), now a full React app backed by a separate API.
-
 ## Tech stack
 
 - **React 18** + **TypeScript**, built with **Vite**
