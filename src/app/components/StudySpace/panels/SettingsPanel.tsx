@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor, Volume2, VolumeX, Play, Upload } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor, Volume2, VolumeX, Play, Upload, Wallet, Coins, Zap } from "lucide-react";
 import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
@@ -15,6 +16,7 @@ import { FLAG_VN, FLAG_GB } from "../../ui/FlagIcons";
 import { APP_VERSION } from "../../../../version";
 import { authService } from "../../../../services/auth.service";
 import { paymentService } from "../../../../services/payment.service";
+import { coinService } from "../../../../services/coin.service";
 import type { PomodoroSounds } from "../../../../types/workspace.types";
 
 const MotionBox = motion.create(Box);
@@ -30,7 +32,7 @@ const ACCENT_PRESETS = [
 ];
 const PRESET_HEXES = ACCENT_PRESETS.map(p => p.hex);
 
-export type NavKey = "display" | "language" | "notifications" | "sounds" | "about" | "account";
+export type NavKey = "display" | "language" | "notifications" | "sounds" | "wallet" | "about" | "account";
 
 const NAV_ITEMS: {
   key: NavKey;
@@ -41,6 +43,7 @@ const NAV_ITEMS: {
   { key: "language",      icon: Globe,   color: "#0ea5e9" },
   { key: "notifications", icon: Bell,    color: "#f59e0b" },
   { key: "sounds",        icon: Volume2, color: "#ec4899" },
+  { key: "wallet",        icon: Wallet,  color: "#facc15" },
   { key: "about",         icon: Info,    color: "#14b8a6" },
 ];
 
@@ -249,14 +252,18 @@ interface SettingsPanelProps {
   onPomodoroSoundEnabled: (v: boolean) => void;
   onPomodoroSounds: (v: PomodoroSounds) => void;
   onPomodoroVolume: (v: number) => void;
+  coinBalance?: number;
+  onCoinBalanceChange?: (v: number) => void;
 }
 
 export function SettingsPanel({
   onClose, initialNav,
   pomodoroSoundEnabled, pomodoroSounds, pomodoroVolume,
   onPomodoroSoundEnabled, onPomodoroSounds, onPomodoroVolume,
+  coinBalance, onCoinBalanceChange,
 }: SettingsPanelProps) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { x, y, ref } = useCenteredPanel(760, 540);
   const { accent, setAccent } = useAccent();
   const { position: toolbarPos, setPosition: setToolbarPos } = useToolbarPosition();
@@ -264,6 +271,12 @@ export function SettingsPanel({
   const { user, updateUsername } = useAuth();
   const isCustomAccent = !PRESET_HEXES.includes(accent);
   const [activeNav, setActiveNav] = useState<NavKey>(initialNav ?? "display");
+
+  useEffect(() => {
+    if (activeNav === "wallet" && user) {
+      coinService.getBalance().then(data => onCoinBalanceChange?.(data.balance));
+    }
+  }, [activeNav, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const previewPomodoroVolume = () => {
     if (!pomodoroSounds.startFocus) return;
@@ -346,6 +359,7 @@ export function SettingsPanel({
     language:      t("settings.language"),
     notifications: t("settings.notifications"),
     sounds:        t("settings.sounds"),
+    wallet:        t("settings.walletSection"),
     about:         t("about.label"),
   };
 
@@ -508,10 +522,44 @@ export function SettingsPanel({
               )}
             </Box>
 
-            {/* Top up coins via PAYOS — premium only */}
-            {user?.accountTier?.toLowerCase() === "premium" && <Box
-              position="relative"
+          </Box>
+        );
+
+      case "wallet":
+        if (!user) {
+          return (
+            <Flex direction="column" align="center" justify="center" style={{ height: 200, gap: 8 }}>
+              <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                {t("account.signInPrompt")}
+              </Text>
+            </Flex>
+          );
+        }
+        return (
+          <Box style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {/* Current balance */}
+            <Box p="16px" borderRadius="12px"
+              style={{
+                background: "linear-gradient(135deg, rgba(250,204,21,0.1) 0%, rgba(245,158,11,0.16) 100%)",
+                border: "1px solid rgba(250,204,21,0.3)",
+              }}
             >
+              <Text style={{ fontSize: "0.68rem", color: "rgba(250,204,21,0.75)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                {t("settings.walletBalance").toUpperCase()}
+              </Text>
+              <Flex align="center" gap="8px" mt="6px">
+                <Coins size={20} style={{ color: "#facc15", flexShrink: 0 }} />
+                <Text style={{ fontSize: "1.7rem", fontWeight: 700, color: "#facc15", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1 }}>
+                  {(coinBalance ?? 0).toLocaleString()}
+                </Text>
+                <Text style={{ fontSize: "0.78rem", color: "rgba(250,204,21,0.65)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                  {t("settings.coins")}
+                </Text>
+              </Flex>
+            </Box>
+
+            {/* Top up coins via PAYOS — premium only */}
             <Box p="14px" borderRadius="12px"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
@@ -521,57 +569,88 @@ export function SettingsPanel({
                   {t("settings.topUpCoins").toUpperCase()}
                 </Text>
               </Flex>
-              <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 12 }}>
-                {t("settings.topUpCoinsDesc")}
-              </Text>
-              <Flex wrap="wrap" gap="8px">
-                {[
-                  { coins: 10,  vnd: "10.000",  amountVnd: 10000  },
-                  { coins: 20,  vnd: "20.000",  amountVnd: 20000  },
-                  { coins: 50,  vnd: "50.000",  amountVnd: 50000  },
-                  { coins: 100, vnd: "100.000", amountVnd: 100000 },
-                ].map(({ coins, vnd, amountVnd }) => {
-                  const isLoading = topUpLoading === coins;
-                  const isDisabled = topUpLoading !== null;
-                  return (
-                    <Box
-                      key={coins}
-                      as="button"
-                      onClick={isDisabled ? undefined : () => handleTopUp(coins, amountVnd)}
-                      style={{
-                        flex: "1 1 calc(50% - 4px)",
-                        minWidth: 0,
-                        padding: "10px 12px",
-                        borderRadius: 10,
-                        background: isLoading ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.03)",
-                        border: `1px solid ${isLoading ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.08)"}`,
-                        cursor: isDisabled ? "not-allowed" : "pointer",
-                        opacity: isDisabled && !isLoading ? 0.5 : 1,
-                        textAlign: "left",
-                        transition: "background 0.15s, border-color 0.15s",
-                      }}
-                    >
-                      <Flex align="center" gap={2}>
-                        {isLoading && <LoadingRing size={13} />}
-                        <Box>
-                          <Text style={{ fontSize: "1rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.2 }}>
-                            {coins.toLocaleString()} <span style={{ fontSize: "0.65rem", fontWeight: 400, color: "rgba(255,255,255,0.4)" }}>{t("settings.coins")}</span>
-                          </Text>
-                          <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
-                            {vnd}{t("settings.vnd")}
-                          </Text>
+
+              {user.accountTier?.toLowerCase() === "premium" ? (
+                <>
+                  <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 12 }}>
+                    {t("settings.topUpCoinsDesc")}
+                  </Text>
+                  <Flex wrap="wrap" gap="8px">
+                    {[
+                      { coins: 10,  vnd: "10.000",  amountVnd: 10000  },
+                      { coins: 20,  vnd: "20.000",  amountVnd: 20000  },
+                      { coins: 50,  vnd: "50.000",  amountVnd: 50000  },
+                      { coins: 100, vnd: "100.000", amountVnd: 100000 },
+                    ].map(({ coins, vnd, amountVnd }) => {
+                      const isLoading = topUpLoading === coins;
+                      const isDisabled = topUpLoading !== null;
+                      return (
+                        <Box
+                          key={coins}
+                          as="button"
+                          onClick={isDisabled ? undefined : () => handleTopUp(coins, amountVnd)}
+                          style={{
+                            flex: "1 1 calc(50% - 4px)",
+                            minWidth: 0,
+                            padding: "10px 12px",
+                            borderRadius: 10,
+                            background: isLoading ? "rgba(255,255,255,0.07)" : "rgba(255,255,255,0.03)",
+                            border: `1px solid ${isLoading ? "rgba(255,255,255,0.18)" : "rgba(255,255,255,0.08)"}`,
+                            cursor: isDisabled ? "not-allowed" : "pointer",
+                            opacity: isDisabled && !isLoading ? 0.5 : 1,
+                            textAlign: "left",
+                            transition: "background 0.15s, border-color 0.15s",
+                          }}
+                        >
+                          <Flex align="center" gap={2}>
+                            {isLoading && <LoadingRing size={13} />}
+                            <Box>
+                              <Text style={{ fontSize: "1rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1.2 }}>
+                                {coins.toLocaleString()} <span style={{ fontSize: "0.65rem", fontWeight: 400, color: "rgba(255,255,255,0.4)" }}>{t("settings.coins")}</span>
+                              </Text>
+                              <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
+                                {vnd}{t("settings.vnd")}
+                              </Text>
+                            </Box>
+                          </Flex>
                         </Box>
-                      </Flex>
-                    </Box>
-                  );
-                })}
-              </Flex>
-              {topUpError && (
-                <Text style={{ fontSize: "0.7rem", color: "rgba(248,113,113,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 8 }}>
-                  {t("settings.topUpError")}
-                </Text>
+                      );
+                    })}
+                  </Flex>
+                  {topUpError && (
+                    <Text style={{ fontSize: "0.7rem", color: "rgba(248,113,113,0.8)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 8 }}>
+                      {t("settings.topUpError")}
+                    </Text>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Text style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 12 }}>
+                    {t("settings.topUpPremiumRequired")}
+                  </Text>
+                  <Box
+                    as="button"
+                    onClick={() => { onClose(); navigate("/pricing"); }}
+                    display="flex" alignItems="center" justifyContent="center" gap={2}
+                    style={{
+                      padding: "9px 16px",
+                      borderRadius: 10,
+                      background: "linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.28) 100%)",
+                      border: "1px solid rgba(251,191,36,0.45)",
+                      color: "#fbbf24",
+                      fontSize: "0.82rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    <Zap size={13} style={{ flexShrink: 0 }} />
+                    {t("account.upgradeToPremium")}
+                  </Box>
+                </>
               )}
-            </Box></Box>}
+            </Box>
 
           </Box>
         );

@@ -269,6 +269,8 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onPomodoroSoundEnabled={v => { pomodoro.setSoundEnabled(v); saveNow(); }}
             onPomodoroSounds={v => { pomodoro.setSounds(v); saveNow(); }}
             onPomodoroVolume={v => { pomodoro.setVolume(v); saveNow(); }}
+            coinBalance={coinBalance}
+            onCoinBalanceChange={onCoinBalanceChange}
             onClose={() => { setActivePanel(null); setSettingsInitialNav(null); }}
           />
         )}
