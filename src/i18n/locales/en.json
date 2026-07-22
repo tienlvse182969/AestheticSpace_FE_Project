@@ -352,6 +352,15 @@
       "get": "Get",
       "notEnoughCoins": "Not enough coins"
     },
+    "payment": {
+      "title": "Choose payment method",
+      "coinTitle": "Pay with coins",
+      "balance": "Balance: {{amount}} coins",
+      "needMore": "Need {{amount}} more coins",
+      "qrTitle": "Pay with QR code",
+      "qrSubtitle": "ATM card, Visa, MasterCard, QR Code",
+      "redirecting": "Redirecting…"
+    },
     "trial": {
       "button": "Try 10 min",
       "banner": "Trying",

@@ -352,6 +352,15 @@
       "get": "Nhận",
       "notEnoughCoins": "Không đủ xu"
     },
+    "payment": {
+      "title": "Chọn phương thức thanh toán",
+      "coinTitle": "Thanh toán bằng xu",
+      "balance": "Số dư: {{amount}} xu",
+      "needMore": "Cần thêm {{amount}} xu",
+      "qrTitle": "Thanh toán bằng mã QR",
+      "qrSubtitle": "Thẻ ATM, Visa, MasterCard, QR Code",
+      "redirecting": "Đang chuyển hướng..."
+    },
     "trial": {
       "button": "Dùng thử 10 phút",
       "banner": "Đang dùng thử",

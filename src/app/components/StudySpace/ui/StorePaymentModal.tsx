@@ -1,10 +1,14 @@
+import { useState } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Coins } from "lucide-react";
+import { X, Coins, CreditCard } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { LoadingRing } from "../../ui/LoadingRing";
 import type { StoreItem } from "../../../../services/aestheticStore.service";
+import { paymentService } from "../../../../services/payment.service";
 
 const MotionBox = motion.create(Box);
+
 
 interface Props {
   item: StoreItem;
@@ -23,8 +27,43 @@ export function StorePaymentModal({
   isPayingWithCoins,
   purchaseError,
 }: Props) {
+  const { t } = useTranslation();
+  const [payosProcessing, setPayosProcessing] = useState(false);
+
   const price = item.coinPrice ?? 0;
   const canAffordWithCoins = coinBalance >= price;
+  const hasPayOsOption =
+    item.realMoneyPriceVnd != null && item.realMoneyPriceVnd > 0;
+  const isAnyProcessing = isPayingWithCoins || payosProcessing;
+
+  const handlePayOs = async () => {
+    if (!item.realMoneyPriceVnd) return;
+    setPayosProcessing(true);
+    try {
+      const result = await paymentService.createPayOsPayment({
+        amountVnd: item.realMoneyPriceVnd,
+        returnUrl: `${window.location.origin}/payment/result`,
+        cancelUrl: `${window.location.origin}/payment/result?status=cancelled`,
+        description: `Mua ${item.name}`,
+        purpose: "BuyAsset",
+        storeItemId: item.id,
+      });
+      console.log("[PayOS] create response:", result);
+      const checkoutUrl = result?.checkoutUrl;
+      if (!checkoutUrl) {
+        console.error("[PayOS] checkoutUrl is missing in response", result);
+        setPayosProcessing(false);
+        return;
+      }
+      sessionStorage.setItem("payos_transaction_code", result.transactionCode);
+      sessionStorage.setItem("payos_purpose", "BuyAsset");
+      sessionStorage.setItem("payos_store_item_name", item.name);
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      console.error("[PayOS] createPayOsPayment error:", err);
+      setPayosProcessing(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -38,7 +77,7 @@ export function StorePaymentModal({
         px="16px"
         style={{ background: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)" }}
         onClick={(e: React.MouseEvent) => {
-          if (e.target === e.currentTarget && !isPayingWithCoins) onClose();
+          if (e.target === e.currentTarget && !isAnyProcessing) onClose();
         }}
       >
         <MotionBox
@@ -60,7 +99,7 @@ export function StorePaymentModal({
             }}
           >
             {/* Close */}
-            {!isPayingWithCoins && (
+            {!isAnyProcessing && (
               <Box
                 as="button"
                 position="absolute"
@@ -96,7 +135,7 @@ export function StorePaymentModal({
                 color: "rgba(255,255,255,0.92)",
               }}
             >
-              Chọn phương thức thanh toán
+              {t("themeStore.payment.title")}
             </Text>
             <Text
               mb="20px"
@@ -142,9 +181,9 @@ export function StorePaymentModal({
                 p="14px 16px"
                 borderRadius="14px"
                 border="none"
-                cursor={!canAffordWithCoins || isPayingWithCoins ? "not-allowed" : "pointer"}
+                cursor={!canAffordWithCoins || isAnyProcessing ? "not-allowed" : "pointer"}
                 textAlign="left"
-                onClick={() => canAffordWithCoins && !isPayingWithCoins && onPayWithCoins()}
+                onClick={() => canAffordWithCoins && !isAnyProcessing && onPayWithCoins()}
                 style={{
                   background: canAffordWithCoins
                     ? "rgba(250,204,21,0.05)"
@@ -156,7 +195,7 @@ export function StorePaymentModal({
                   transition: "all 0.18s",
                 }}
                 _hover={
-                  canAffordWithCoins && !isPayingWithCoins
+                  canAffordWithCoins && !isAnyProcessing
                     ? { background: "rgba(250,204,21,0.1)", border: "1px solid rgba(250,204,21,0.35)" } as any
                     : {}
                 }
@@ -198,7 +237,7 @@ export function StorePaymentModal({
                           marginBottom: "3px",
                         }}
                       >
-                        Thanh toán bằng xu
+                        {t("themeStore.payment.coinTitle")}
                       </Text>
                       <Flex align="center" gap="4px">
                         <Coins
@@ -214,7 +253,7 @@ export function StorePaymentModal({
                               : "rgba(255,255,255,0.22)",
                           }}
                         >
-                          Số dư: {coinBalance.toLocaleString("vi-VN")} xu
+                          {t("themeStore.payment.balance", { amount: coinBalance.toLocaleString("vi-VN") })}
                         </Text>
                       </Flex>
                       {!canAffordWithCoins && (
@@ -226,7 +265,7 @@ export function StorePaymentModal({
                             color: "rgba(248,113,113,0.65)",
                           }}
                         >
-                          Cần thêm {(price - coinBalance).toLocaleString("vi-VN")} xu
+                          {t("themeStore.payment.needMore", { amount: (price - coinBalance).toLocaleString("vi-VN") })}
                         </Text>
                       )}
                     </Box>
@@ -249,6 +288,78 @@ export function StorePaymentModal({
                   </Flex>
                 </Flex>
               </Box>
+
+              {/* ── PayOS ── */}
+              {hasPayOsOption && (
+                <Box
+                  as="button"
+                  w="100%"
+                  p="14px 16px"
+                  borderRadius="14px"
+                  border="none"
+                  cursor={isAnyProcessing ? "not-allowed" : "pointer"}
+                  textAlign="left"
+                  onClick={() => !isAnyProcessing && handlePayOs()}
+                  style={{
+                    background: "rgba(99,102,241,0.05)",
+                    border: "1px solid rgba(99,102,241,0.18)",
+                    opacity: payosProcessing ? 0.65 : 1,
+                    transition: "all 0.18s",
+                  }}
+                  _hover={
+                    !isAnyProcessing
+                      ? { background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.38)" } as any
+                      : {}
+                  }
+                >
+                  <Flex align="center" justify="space-between">
+                    <Flex align="center" gap="12px">
+                      {payosProcessing ? (
+                        <LoadingRing size={20} color="rgba(129,140,248,0.9)" trackColor="rgba(129,140,248,0.15)" />
+                      ) : (
+                        <Box
+                          w="38px"
+                          h="38px"
+                          borderRadius="10px"
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="center"
+                          flexShrink={0}
+                          style={{ background: "rgba(99,102,241,0.1)" }}
+                        >
+                          <CreditCard size={18} color="#818cf8" />
+                        </Box>
+                      )}
+                      <Box>
+                        <Text
+                          style={{
+                            fontSize: "0.82rem",
+                            fontFamily: "'HarmonyOS Sans', sans-serif",
+                            fontWeight: 600,
+                            color: "rgba(255,255,255,0.88)",
+                            marginBottom: "3px",
+                          }}
+                        >
+                          {t("themeStore.payment.qrTitle")}
+                        </Text>
+                      </Box>
+                    </Flex>
+                    {!payosProcessing && (
+                      <Text
+                        flexShrink={0}
+                        style={{
+                          fontSize: "0.9rem",
+                          fontFamily: "'HarmonyOS Sans', sans-serif",
+                          fontWeight: 700,
+                          color: "rgba(165,180,252,0.9)",
+                        }}
+                      >
+                        {item.realMoneyPriceVnd!.toLocaleString("vi-VN")}₫
+                      </Text>
+                    )}
+                  </Flex>
+                </Box>
+              )}
             </Flex>
 
           </Box>
