@@ -33,7 +33,10 @@ export function StudySpacePage() {
       >
         <SpaceBackground ctx={ctx} />
         <SpaceWidgets    ctx={ctx} />
-        <NotificationBannerProvider>
+        <NotificationBannerProvider
+          onOpenQuest={() => ctx.setActivePanel("quest")}
+          onOpenCreatorStore={() => { ctx.setThemeStoreInitialTab("my-themes"); ctx.setActivePanel("theme"); }}
+        >
           <SpacePanels     ctx={ctx} coinBalance={coinBalance} onCoinBalanceChange={setCoinBalance} />
           <SpaceToolbar    ctx={ctx} coinBalance={coinBalance} onCoinBalanceReady={setCoinBalance} />
           {ctx.showFirstRoomModal && (

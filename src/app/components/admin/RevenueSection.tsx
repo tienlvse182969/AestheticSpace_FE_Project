@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import { Box, Flex, Text } from "@chakra-ui/react";
-import { DollarSign, Crown, Coins, Package, Calendar } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Box, Flex, Text, Input, Spinner } from "@chakra-ui/react";
+import { DollarSign, Crown, Coins, Package, Calendar, Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { motion } from "motion/react";
 import { useAdminTheme } from "./AdminThemeContext";
 import {
@@ -8,11 +8,42 @@ import {
   type AdminRevenueSummary,
   type AdminRevenueTrend,
 } from "../../../services/admin/analytics.admin.service";
+import {
+  adminPaymentsService,
+  type AdminPaymentTransactionDto,
+  type PaymentProvider,
+  type PaymentStatus,
+  type PaymentPurpose,
+} from "../../../services/admin/payment.admin.service";
 
 const MotionBox = motion.create(Box);
 
 const TREND_DAYS = [30, 90, 180] as const;
 type TrendDay = (typeof TREND_DAYS)[number];
+
+const PAYMENTS_PAGE_SIZE = 15;
+
+const PROVIDER_OPTIONS: (PaymentProvider | "")[] = ["", "VNPay", "SePay", "PayOS"];
+const STATUS_OPTIONS: (PaymentStatus | "")[] = ["", "Pending", "Succeeded", "Failed", "Cancelled"];
+const PURPOSE_OPTIONS: (PaymentPurpose | "")[] = ["", "Subscription", "BuyCoins", "BuyAsset"];
+
+const PURPOSE_LABEL: Record<PaymentPurpose, string> = {
+  Subscription: "Subscription",
+  BuyCoins: "Coin Pack",
+  BuyAsset: "Asset",
+};
+
+const PAYMENT_STATUS_STYLE: Record<PaymentStatus, { color: string; bg: string; border: string }> = {
+  Succeeded: { color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.25)" },
+  Pending:   { color: "#facc15", bg: "rgba(250,204,21,0.1)",  border: "rgba(250,204,21,0.25)" },
+  Failed:    { color: "#f87171", bg: "rgba(248,113,113,0.1)", border: "rgba(248,113,113,0.25)" },
+  Cancelled: { color: "#94a3b8", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)" },
+};
+
+function fmtDateTime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -44,6 +75,20 @@ export function RevenueSection() {
   const [loadingTrend,   setLoadingTrend]   = useState(true);
   const [hoveredBar,     setHoveredBar]     = useState<number | null>(null);
 
+  const [payments,          setPayments]          = useState<AdminPaymentTransactionDto[]>([]);
+  const [paymentsLoading,   setPaymentsLoading]   = useState(true);
+  const [paymentsError,     setPaymentsError]     = useState<string | null>(null);
+  const [paymentsPage,      setPaymentsPage]      = useState(1);
+  const [paymentsTotalPages,setPaymentsTotalPages] = useState(1);
+  const [paymentsTotalCount,setPaymentsTotalCount] = useState(0);
+  const [paymentsHasNext,   setPaymentsHasNext]   = useState(false);
+  const [paymentsHasPrev,   setPaymentsHasPrev]   = useState(false);
+  const [searchInput,       setSearchInput]       = useState("");
+  const [search,            setSearch]            = useState("");
+  const [providerFilter,    setProviderFilter]    = useState<PaymentProvider | "">("");
+  const [statusFilter,      setStatusFilter]      = useState<PaymentStatus | "">("Succeeded");
+  const [purposeFilter,     setPurposeFilter]     = useState<PaymentPurpose | "">("");
+
   // fetch summary once
   useEffect(() => {
     analyticsAdminService
@@ -62,6 +107,40 @@ export function RevenueSection() {
       .catch(() => setTrend([]))
       .finally(() => setLoadingTrend(false));
   }, [selectedDays]);
+
+  // debounce the free-text search box
+  useEffect(() => {
+    const id = setTimeout(() => setSearch(searchInput.trim()), 400);
+    return () => clearTimeout(id);
+  }, [searchInput]);
+
+  // any filter change resets pagination back to page 1
+  useEffect(() => { setPaymentsPage(1); }, [search, providerFilter, statusFilter, purposeFilter]);
+
+  const fetchPayments = useCallback(() => {
+    setPaymentsLoading(true);
+    setPaymentsError(null);
+    adminPaymentsService
+      .getPayments({
+        search:   search || undefined,
+        provider: providerFilter || undefined,
+        status:   statusFilter || undefined,
+        purpose:  purposeFilter || undefined,
+        page:     paymentsPage,
+        pageSize: PAYMENTS_PAGE_SIZE,
+      })
+      .then(result => {
+        setPayments(result.items);
+        setPaymentsTotalPages(result.totalPages);
+        setPaymentsTotalCount(result.totalCount);
+        setPaymentsHasNext(result.hasNext);
+        setPaymentsHasPrev(result.hasPrevious);
+      })
+      .catch(() => setPaymentsError("Failed to load transaction history."))
+      .finally(() => setPaymentsLoading(false));
+  }, [search, providerFilter, statusFilter, purposeFilter, paymentsPage]);
+
+  useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
   // ── derived values ──────────────────────────────────────────────────────────
   const CHART_H = 200; // total container height (px)
@@ -358,6 +437,189 @@ export function RevenueSection() {
             </Flex>
           </>
         )}
+      </Box>
+
+      {/* ── Transaction History ── */}
+      <Box borderRadius="14px" p={6} style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}` }}>
+        <Flex align="center" justify="space-between" mb={5}>
+          <Box>
+            <Text style={{ fontSize: "0.6rem", letterSpacing: "0.12em", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+              TRANSACTION HISTORY
+            </Text>
+            <Text style={{ fontSize: "0.95rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
+              All Payments
+            </Text>
+          </Box>
+          <Box as="button" onClick={() => fetchPayments()}
+            display="flex" alignItems="center" justifyContent="center"
+            w="36px" h="36px" borderRadius="10px" border="none" cursor="pointer" transition="all 0.18s"
+            style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, color: c.textMuted, flexShrink: 0 }}
+            _hover={{ background: c.navActive } as any}>
+            <RefreshCw size={15} />
+          </Box>
+        </Flex>
+
+        {/* Filters */}
+        <Flex align="center" gap={3} mb={4} wrap="wrap">
+          <Box flex={1} minW="220px" position="relative">
+            <Box position="absolute" left="12px" top="50%" transform="translateY(-50%)" pointerEvents="none">
+              <Search size={14} style={{ color: c.textDim }} />
+            </Box>
+            <Input
+              placeholder="Search by username, email, transaction code..."
+              value={searchInput}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value)}
+              style={{
+                background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: "10px",
+                color: c.cardText, fontSize: "0.82rem", paddingLeft: "34px", height: "38px", outline: "none", width: "100%",
+              }}
+              _placeholder={{ color: c.cardTextMuted } as any}
+              _focus={{ borderColor: "rgba(78,124,106,0.6)", boxShadow: "0 0 0 2px rgba(78,124,106,0.15)" } as any}
+            />
+          </Box>
+
+          <select value={providerFilter}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setProviderFilter(e.target.value as PaymentProvider | "")}
+            style={{
+              height: 38, background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: 8,
+              color: c.cardText, fontSize: "0.8rem", padding: "0 10px", outline: "none", minWidth: 130,
+            }}>
+            {PROVIDER_OPTIONS.map(p => (
+              <option key={p || "all"} value={p} style={{ color: "#111", background: "#fff" }}>
+                {p || "All Providers"}
+              </option>
+            ))}
+          </select>
+
+          <select value={statusFilter}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStatusFilter(e.target.value as PaymentStatus | "")}
+            style={{
+              height: 38, background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: 8,
+              color: c.cardText, fontSize: "0.8rem", padding: "0 10px", outline: "none", minWidth: 130,
+            }}>
+            {STATUS_OPTIONS.map(s => (
+              <option key={s || "all"} value={s} style={{ color: "#111", background: "#fff" }}>
+                {s || "All Statuses"}
+              </option>
+            ))}
+          </select>
+
+          <select value={purposeFilter}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setPurposeFilter(e.target.value as PaymentPurpose | "")}
+            style={{
+              height: 38, background: c.cardBg, border: `1px solid ${c.cardBorder}`, borderRadius: 8,
+              color: c.cardText, fontSize: "0.8rem", padding: "0 10px", outline: "none", minWidth: 130,
+            }}>
+            {PURPOSE_OPTIONS.map(p => (
+              <option key={p || "all"} value={p} style={{ color: "#111", background: "#fff" }}>
+                {p ? PURPOSE_LABEL[p] : "All Purposes"}
+              </option>
+            ))}
+          </select>
+        </Flex>
+
+        {/* Table */}
+        <Box borderRadius="12px" overflow="hidden" style={{ border: `1px solid ${c.cardBorder}` }}>
+          <Flex px={4} py={3} style={{ background: c.cardBg, borderBottom: `1px solid ${c.cardBorder}` }}>
+            {["User", "Provider", "Purpose", "Amount", "Status", "Date"].map((h, i) => (
+              <Text key={h} style={{
+                fontSize: "0.65rem", color: c.cardTextMuted, letterSpacing: "0.1em",
+                flex: [2, 1, 1, 1.2, 1, 1.4][i],
+              }}>
+                {h.toUpperCase()}
+              </Text>
+            ))}
+          </Flex>
+
+          {paymentsLoading ? (
+            <Flex align="center" justify="center" py={12} gap={3}>
+              <Spinner size="sm" style={{ color: "#4e7c6a" }} />
+              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>Loading transactions…</Text>
+            </Flex>
+          ) : paymentsError ? (
+            <Flex align="center" justify="center" py={10} direction="column" gap={3}>
+              <Text style={{ fontSize: "0.82rem", color: "#f87171" }}>{paymentsError}</Text>
+              <Box as="button" onClick={() => fetchPayments()} style={{
+                fontSize: "0.78rem", color: "#4e7c6a", background: "transparent",
+                border: "1px solid rgba(78,124,106,0.4)", borderRadius: "8px",
+                padding: "6px 16px", cursor: "pointer",
+              }}>
+                Retry
+              </Box>
+            </Flex>
+          ) : payments.length === 0 ? (
+            <Flex align="center" justify="center" py={10}>
+              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>No transactions found</Text>
+            </Flex>
+          ) : (
+            payments.map((p, i) => {
+              const st = PAYMENT_STATUS_STYLE[p.status];
+              return (
+                <Flex key={p.id} align="center" px={4} py="12px"
+                  style={{ borderBottom: i < payments.length - 1 ? `1px solid ${c.rowDivider}` : "none" }}>
+                  <Box style={{ flex: 2, minWidth: 0 }}>
+                    <Text style={{ fontSize: "0.8rem", color: c.cardText, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {p.username ?? "—"}
+                    </Text>
+                    <Text style={{ fontSize: "0.7rem", color: c.cardTextMuted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {p.email ?? "—"}
+                    </Text>
+                  </Box>
+                  <Text style={{ flex: 1, fontSize: "0.78rem", color: c.cardTextMuted }}>{p.provider}</Text>
+                  <Text style={{ flex: 1, fontSize: "0.78rem", color: c.cardTextMuted }}>{PURPOSE_LABEL[p.purpose]}</Text>
+                  <Text style={{ flex: 1.2, fontSize: "0.8rem", color: c.cardText, fontWeight: 600 }}>{fmtVnd(p.amount)}</Text>
+                  <Box style={{ flex: 1 }}>
+                    <Flex align="center" gap="5px" display="inline-flex" borderRadius="full" px={2} py="2px"
+                      style={{ background: st.bg, border: `1px solid ${st.border}` }}>
+                      <Box w="5px" h="5px" borderRadius="full" flexShrink={0} style={{ background: st.color }} />
+                      <Text style={{ fontSize: "0.65rem", color: st.color }}>{p.status}</Text>
+                    </Flex>
+                  </Box>
+                  <Text style={{ flex: 1.4, fontSize: "0.75rem", color: c.cardTextMuted }}>{fmtDateTime(p.createdAt)}</Text>
+                </Flex>
+              );
+            })
+          )}
+        </Box>
+
+        {/* Footer: count + pagination */}
+        <Flex align="center" justify="space-between" mt={3}>
+          <Text style={{ fontSize: "0.72rem", color: c.cardTextMuted }}>
+            {paymentsLoading ? "Loading…" : `Showing ${payments.length} of ${paymentsTotalCount} transactions`}
+          </Text>
+
+          {paymentsTotalPages > 1 && (
+            <Flex align="center" gap={2}>
+              <Box as="button" onClick={() => paymentsHasPrev && setPaymentsPage(p => p - 1)}
+                display="flex" alignItems="center" justifyContent="center"
+                w="30px" h="30px" borderRadius="8px" border="none"
+                cursor={paymentsHasPrev ? "pointer" : "not-allowed"} transition="all 0.15s"
+                style={{
+                  background: c.cardBg, border: `1px solid ${c.cardBorder}`,
+                  color: paymentsHasPrev ? c.textMuted : c.textSub, opacity: paymentsHasPrev ? 1 : 0.4,
+                }}
+                _hover={paymentsHasPrev ? { background: c.navActive } as any : {}}>
+                <ChevronLeft size={14} />
+              </Box>
+
+              <Text style={{ fontSize: "0.78rem", color: c.textMuted, minWidth: "60px", textAlign: "center" }}>
+                {paymentsPage} / {paymentsTotalPages}
+              </Text>
+
+              <Box as="button" onClick={() => paymentsHasNext && setPaymentsPage(p => p + 1)}
+                display="flex" alignItems="center" justifyContent="center"
+                w="30px" h="30px" borderRadius="8px" border="none"
+                cursor={paymentsHasNext ? "pointer" : "not-allowed"} transition="all 0.15s"
+                style={{
+                  background: c.cardBg, border: `1px solid ${c.cardBorder}`,
+                  color: paymentsHasNext ? c.textMuted : c.textSub, opacity: paymentsHasNext ? 1 : 0.4,
+                }}
+                _hover={paymentsHasNext ? { background: c.navActive } as any : {}}>
+                <ChevronRight size={14} />
+              </Box>
+            </Flex>
+          )}
+        </Flex>
       </Box>
     </Box>
   );

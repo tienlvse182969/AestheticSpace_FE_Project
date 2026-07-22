@@ -42,4 +42,8 @@ export const adminUsersService = {
   addCoins: async (id: string, amount: number): Promise<void> => {
     await api.post(`/admin/users/${id}/add-coins`, { amount });
   },
+
+  deleteUser: async (id: string): Promise<void> => {
+    await api.delete(`/admin/users/${id}`);
+  },
 };

@@ -7,6 +7,8 @@ import {
   AudioWaveform, Settings, Wand2, Layers, BarChart2, Trophy, Sticker,
 } from "lucide-react";
 import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
+import { useNotificationBanners } from "../../../context/NotificationBannerContext";
+import { NotificationBellIcon } from "../ui/NotificationBellIcon";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
 import { PremiumGateModal, type LockedFeature } from "../ui/PremiumGateModal";
@@ -36,6 +38,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
   } = ctx;
 
   const isFree = !!currentUser && currentUser.accountTier?.toLowerCase() !== "premium";
+  const { unreadHistoryCount } = useNotificationBanners();
   const [gateFeature, setGateFeature] = useState<LockedFeature | null>(null);
   const [nearToolbar, setNearToolbar] = useState(false);
   const { position } = useToolbarPosition();
@@ -315,12 +318,13 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                 <ToolbarBtn ref={el => (tourTargetsRef.current.widget = el)} icon={<LayoutGrid size={22} />}      active={activePanel === "widget"} onClick={() => togglePanel("widget")} tooltip={t("space.widgets")} position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.theme = el)} icon={<ShoppingBag size={22} />}     active={activePanel === "theme"}  onClick={() => togglePanel("theme")}  tooltip={t("themeStore.tooltip")} position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.image = el)} icon={<ImageIcon size={22} />}       active={activePanel === "image"}  onClick={() => togglePanel("image")}  tooltip={t("space.backgrounds")} position={position} />
-                <ToolbarBtn ref={el => (tourTargetsRef.current.sticker = el)} icon={<Sticker size={22} />}       active={activePanel === "sticker"} locked={isFree} onClick={() => isFree ? handleLockedClick("sticker") : togglePanel("sticker")} tooltip={t("space.stickers")} position={position} />
-                <ToolbarBtn ref={el => (tourTargetsRef.current.ambient = el)} icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} locked={isFree} onClick={() => isFree ? handleLockedClick("ambient") : togglePanel("ambient")} tooltip={t("space.ambientSounds")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.sticker = el)} icon={<Sticker size={22} />}       active={activePanel === "sticker"} onClick={() => togglePanel("sticker")} tooltip={t("space.stickers")} position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.ambient = el)} icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} onClick={() => togglePanel("ambient")} tooltip={t("space.ambientSounds")} position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.effects = el)} icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.quest = el)} icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current["pomodoro-stats"] = el)} icon={<BarChart2 size={22} />} active={activePanel === "pomodoro-stats"} onClick={() => togglePanel("pomodoro-stats")} tooltip="Phân tích Pomodoro" position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.settings = el)} icon={<Settings size={22} />}  active={activePanel === "settings"}       onClick={() => togglePanel("settings")}       tooltip={t("settings.title")} position={position} />
+                <ToolbarBtn icon={<NotificationBellIcon size={22} unreadCount={unreadHistoryCount} />} active={activePanel === "notification"} badgeCount={unreadHistoryCount} onClick={() => togglePanel("notification")} tooltip={t("notification.tooltip")} position={position} />
 
                 {/* Account avatar button */}
                 <Box

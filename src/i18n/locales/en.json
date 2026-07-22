@@ -4,7 +4,8 @@
     "aboutUs": "About Us",
     "pricing": "Pricing",
     "contact": "Contact",
-    "login": "Login"
+    "login": "Login",
+    "whatsNew": "What's New?"
   },
   "footer": {
     "tagline": "A beautiful, distraction-free environment designed to help you focus, learn, and grow every single day.",
@@ -352,6 +353,15 @@
       "get": "Get",
       "notEnoughCoins": "Not enough coins"
     },
+    "payment": {
+      "title": "Choose payment method",
+      "coinTitle": "Pay with coins",
+      "balance": "Balance: {{amount}} coins",
+      "needMore": "Need {{amount}} more coins",
+      "qrTitle": "Pay with QR code",
+      "qrSubtitle": "ATM card, Visa, MasterCard, QR Code",
+      "redirecting": "Redirecting…"
+    },
     "trial": {
       "button": "Try 10 min",
       "banner": "Trying",
@@ -482,7 +492,8 @@
     "roleDeveloper": "Developer",
     "copyright": "© AESTHETIC GROUP",
     "version": "Version Dev",
-    "openSpace": "Open Study Space →"
+    "openSpace": "Open Study Space →",
+    "whatsNew": "What's New?"
   },
   "pricing": {
     "sectionLabel": "PRICING",
@@ -698,8 +709,11 @@
     "resetPasswordSend": "Send reset email",
     "resetPasswordSent": "Sent! Check your inbox.",
     "resetPasswordError": "Failed to send email. Please try again.",
+    "walletSection": "Coin Wallet",
+    "walletBalance": "Your balance",
     "topUpCoins": "Top Up Coins",
     "topUpCoinsDesc": "Select a coin pack below to pay.",
+    "topUpPremiumRequired": "Topping up coins is available for Premium accounts. Upgrade to buy coins.",
     "topUpError": "Failed to process payment. Please try again.",
     "coins": "coins",
     "vnd": "₫",
@@ -737,6 +751,21 @@
     "loading": "Loading…",
     "completedBannerTitle": "Quest completed: {{title}}",
     "completedBannerDesc": "+{{reward}}₫ — open Quests to claim your reward"
+  },
+  "notification": {
+    "tooltip": "Notifications",
+    "panelTitle": "NOTIFICATIONS",
+    "clearAll": "Clear all",
+    "clearAllConfirm": "Clear all notifications?",
+    "clearAllDesc": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "empty": "No notifications yet",
+    "viewQuest": "View quest",
+    "viewCreator": "View creator studio",
+    "justNow": "Just now",
+    "minutesAgo": "{{n}}m ago",
+    "hoursAgo": "{{n}}h ago",
+    "daysAgo": "{{n}}d ago"
   },
   "firstRoom": {
     "title": "Welcome to your Space!",
@@ -898,10 +927,15 @@
       "actionBan": "Ban",
       "actionUnban": "Unban",
       "actionAddCoins": "Add Coins",
+      "actionDelete": "Delete",
       "addCoinsTitle": "Add Coins",
       "addCoinsLabel": "Amount to add",
       "addCoinsConfirm": "Add",
       "addCoinsCancel": "Cancel",
+      "deleteConfirm": "Delete this user?",
+      "deleteNote": "This action cannot be undone.",
+      "cancel": "Cancel",
+      "delete": "Delete",
       "retry": "Retry",
       "showing": "Showing {{shown}} of {{total}} users"
     },

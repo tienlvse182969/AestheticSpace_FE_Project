@@ -278,8 +278,7 @@ export function AccountPanel({
                   </Text>
                   <Flex align="center" gap="6px" mt="4px">
                     <AccountTierBadge tier={user.accountTier} />
-                    {user.accountTier?.toLowerCase() === "premium" &&
-                      coinBalance !== undefined && (
+                    {coinBalance !== undefined && (
                         <Flex
                           align="center"
                           gap="3px"

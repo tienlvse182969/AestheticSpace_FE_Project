@@ -65,9 +65,10 @@ interface Props {
   onApplyItem?: (item: StoreItem, extras?: ThemeApplyExtras) => void;
   trialItemId?: string;
   initialDetailItemId?: string;
+  initialTab?: TabValue;
 }
 
-type TabValue = "all" | "purchased" | "wishlist" | "my-themes" | StoreCategory;
+export type TabValue = "all" | "purchased" | "wishlist" | "my-themes" | StoreCategory;
 
 const TABS: { value: TabValue; key: string }[] = [
   { value: "all",          key: "themeStore.tabDiscovery" },
@@ -2113,18 +2114,20 @@ export function ThemeStorePanel({
   onApplyItem,
   trialItemId,
   initialDetailItemId,
+  initialTab,
 }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { markCreatorReviewNotificationsRead } = useNotificationBanners();
   const { x, y, ref } = useCenteredPanel(PANEL_W, PANEL_H, 64);
 
-  const canPurchase = user?.accountTier !== "Free";
+  const canBuyItems = true;
+  const canCreateThemes = user?.accountTier !== "Free";
 
   const [items, setItems]               = useState<StoreItem[]>([]);
   const [gateOpen, setGateOpen]         = useState(false);
   const [itemsLoading, setItemsLoading] = useState(true);
-  const [activeTab, setActiveTab]       = useState<TabValue>("all");
+  const [activeTab, setActiveTab]       = useState<TabValue>(initialTab ?? "all");
   const [searchQuery, setSearchQuery]   = useState("");
   const [sourceFilter, setSourceFilter] = useState<"all" | "Official" | "Community">("all");
   const [wishlistIds, setWishlistIds]   = useState<Set<string>>(() => {
@@ -2344,25 +2347,14 @@ export function ThemeStorePanel({
               </Box>
             </Flex>
           </Flex>
-          {canPurchase ? (
-            <Flex align="center" gap="4px" px="8px" py="3px" borderRadius="16px"
-              style={{ background: "rgba(250,204,21,0.07)", border: "1px solid rgba(250,204,21,0.15)" }}
-            >
-              <Coins size={10} color="rgba(250,204,21,0.65)" />
-              <Text style={{ fontSize: "0.68rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(250,204,21,0.65)" }}>
-                {localCoinBalance.toLocaleString("vi-VN")}
-              </Text>
-            </Flex>
-          ) : (
-            <Flex align="center" gap="4px" px="8px" py="3px" borderRadius="16px"
-              style={{ background: "rgba(251,191,36,0.06)", border: "1px solid rgba(251,191,36,0.18)" }}
-            >
-              <Crown size={10} color="rgba(251,191,36,0.5)" />
-              <Text style={{ fontSize: "0.65rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500, color: "rgba(251,191,36,0.5)" }}>
-                Premium
-              </Text>
-            </Flex>
-          )}
+          <Flex align="center" gap="4px" px="8px" py="3px" borderRadius="16px"
+            style={{ background: "rgba(250,204,21,0.07)", border: "1px solid rgba(250,204,21,0.15)" }}
+          >
+            <Coins size={10} color="rgba(250,204,21,0.65)" />
+            <Text style={{ fontSize: "0.68rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600, color: "rgba(250,204,21,0.65)" }}>
+              {localCoinBalance.toLocaleString("vi-VN")}
+            </Text>
+          </Flex>
         </Flex>
       </Box>
 
@@ -2595,7 +2587,7 @@ export function ThemeStorePanel({
                 }
                 isTrialing={selectedItem.id === trialItemId}
                 hasActiveTrial={!!trialItemId}
-                canPurchase={canPurchase}
+                canPurchase={canBuyItems}
                 onLockedBuy={() => setGateOpen(true)}
                 isWishlisted={wishlistIds.has(selectedItem.id)}
                 onToggleWishlist={() => toggleWishlist(selectedItem.id)}
@@ -2627,25 +2619,25 @@ export function ThemeStorePanel({
                 <Box
                   as="button"
                   flexShrink={0}
-                  onClick={canPurchase ? () => { setSelectedMyTheme(null); setCreateEditTarget("new"); } : undefined}
-                  title={!canPurchase ? t("themeStore.creator.upgradeToCreate") : undefined}
+                  onClick={canCreateThemes ? () => { setSelectedMyTheme(null); setCreateEditTarget("new"); } : undefined}
+                  title={!canCreateThemes ? t("themeStore.creator.upgradeToCreate") : undefined}
                   display="flex" alignItems="center" gap="6px"
                   px="12px" py="7px" borderRadius="20px" border="none"
-                  cursor={canPurchase ? "pointer" : "not-allowed"}
+                  cursor={canCreateThemes ? "pointer" : "not-allowed"}
                   style={{
-                    background: canPurchase
+                    background: canCreateThemes
                       ? "linear-gradient(135deg, rgba(78,124,106,0.9) 0%, rgba(16,185,129,0.8) 100%)"
                       : "rgba(255,255,255,0.05)",
-                    color: canPurchase ? "#fff" : "rgba(255,255,255,0.32)",
+                    color: canCreateThemes ? "#fff" : "rgba(255,255,255,0.32)",
                     fontSize: "0.74rem",
                     fontWeight: 600,
                     fontFamily: "'HarmonyOS Sans', sans-serif",
-                    boxShadow: canPurchase ? "0 2px 10px rgba(16,185,129,0.25)" : "none",
+                    boxShadow: canCreateThemes ? "0 2px 10px rgba(16,185,129,0.25)" : "none",
                     transition: "all 0.15s",
                   }}
-                  _hover={canPurchase ? { filter: "brightness(1.1)" } as any : undefined}
+                  _hover={canCreateThemes ? { filter: "brightness(1.1)" } as any : undefined}
                 >
-                  {canPurchase ? <Plus size={14} /> : <Crown size={13} color="#fbbf24" />}
+                  {canCreateThemes ? <Plus size={14} /> : <Crown size={13} color="#fbbf24" />}
                   {t("themeStore.creator.createTitle")}
                 </Box>
               )}

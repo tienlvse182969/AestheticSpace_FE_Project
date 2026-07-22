@@ -1,10 +1,12 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Coins } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { LoadingRing } from "../../ui/LoadingRing";
 import type { StoreItem } from "../../../../services/aestheticStore.service";
 
 const MotionBox = motion.create(Box);
+
 
 interface Props {
   item: StoreItem;
@@ -23,6 +25,8 @@ export function StorePaymentModal({
   isPayingWithCoins,
   purchaseError,
 }: Props) {
+  const { t } = useTranslation();
+
   const price = item.coinPrice ?? 0;
   const canAffordWithCoins = coinBalance >= price;
 
@@ -96,7 +100,7 @@ export function StorePaymentModal({
                 color: "rgba(255,255,255,0.92)",
               }}
             >
-              Chọn phương thức thanh toán
+              {t("themeStore.payment.title")}
             </Text>
             <Text
               mb="20px"
@@ -198,7 +202,7 @@ export function StorePaymentModal({
                           marginBottom: "3px",
                         }}
                       >
-                        Thanh toán bằng xu
+                        {t("themeStore.payment.coinTitle")}
                       </Text>
                       <Flex align="center" gap="4px">
                         <Coins
@@ -214,7 +218,7 @@ export function StorePaymentModal({
                               : "rgba(255,255,255,0.22)",
                           }}
                         >
-                          Số dư: {coinBalance.toLocaleString("vi-VN")} xu
+                          {t("themeStore.payment.balance", { amount: coinBalance.toLocaleString("vi-VN") })}
                         </Text>
                       </Flex>
                       {!canAffordWithCoins && (
@@ -226,7 +230,7 @@ export function StorePaymentModal({
                             color: "rgba(248,113,113,0.65)",
                           }}
                         >
-                          Cần thêm {(price - coinBalance).toLocaleString("vi-VN")} xu
+                          {t("themeStore.payment.needMore", { amount: (price - coinBalance).toLocaleString("vi-VN") })}
                         </Text>
                       )}
                     </Box>

@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor, Volume2, VolumeX, Play, Upload } from "lucide-react";
+import { useNavigate } from "react-router";
+import { Settings, Bell, BellOff, Globe, Check, Pipette, Info, Users, KeyRound, AtSign, CreditCard, Monitor, Volume2, VolumeX, Play, Upload, Wallet, Coins, Sparkles } from "lucide-react";
 import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
@@ -12,9 +13,10 @@ import { useNotificationBanners, BANNER_SOUND_OPTIONS } from "../../../context/N
 import { useAuth } from "../../../../context/AuthContext";
 import { AvatarCircle } from "./AccountPanel";
 import { FLAG_VN, FLAG_GB } from "../../ui/FlagIcons";
-import { APP_VERSION } from "../../../../version";
+import { APP_VERSION, RELEASE_NOTES_URL } from "../../../../version";
 import { authService } from "../../../../services/auth.service";
 import { paymentService } from "../../../../services/payment.service";
+import { coinService } from "../../../../services/coin.service";
 import type { PomodoroSounds } from "../../../../types/workspace.types";
 
 const MotionBox = motion.create(Box);
@@ -30,7 +32,7 @@ const ACCENT_PRESETS = [
 ];
 const PRESET_HEXES = ACCENT_PRESETS.map(p => p.hex);
 
-export type NavKey = "display" | "language" | "notifications" | "sounds" | "about" | "account";
+export type NavKey = "display" | "language" | "notifications" | "sounds" | "wallet" | "about" | "account";
 
 const NAV_ITEMS: {
   key: NavKey;
@@ -41,6 +43,7 @@ const NAV_ITEMS: {
   { key: "language",      icon: Globe,   color: "#0ea5e9" },
   { key: "notifications", icon: Bell,    color: "#f59e0b" },
   { key: "sounds",        icon: Volume2, color: "#ec4899" },
+  { key: "wallet",        icon: Wallet,  color: "#facc15" },
   { key: "about",         icon: Info,    color: "#14b8a6" },
 ];
 
@@ -249,14 +252,18 @@ interface SettingsPanelProps {
   onPomodoroSoundEnabled: (v: boolean) => void;
   onPomodoroSounds: (v: PomodoroSounds) => void;
   onPomodoroVolume: (v: number) => void;
+  coinBalance?: number;
+  onCoinBalanceChange?: (v: number) => void;
 }
 
 export function SettingsPanel({
   onClose, initialNav,
   pomodoroSoundEnabled, pomodoroSounds, pomodoroVolume,
   onPomodoroSoundEnabled, onPomodoroSounds, onPomodoroVolume,
+  coinBalance, onCoinBalanceChange,
 }: SettingsPanelProps) {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const { x, y, ref } = useCenteredPanel(760, 540);
   const { accent, setAccent } = useAccent();
   const { position: toolbarPos, setPosition: setToolbarPos } = useToolbarPosition();
@@ -264,6 +271,12 @@ export function SettingsPanel({
   const { user, updateUsername } = useAuth();
   const isCustomAccent = !PRESET_HEXES.includes(accent);
   const [activeNav, setActiveNav] = useState<NavKey>(initialNav ?? "display");
+
+  useEffect(() => {
+    if (activeNav === "wallet" && user) {
+      coinService.getBalance().then(data => onCoinBalanceChange?.(data.balance));
+    }
+  }, [activeNav, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const previewPomodoroVolume = () => {
     if (!pomodoroSounds.startFocus) return;
@@ -346,6 +359,7 @@ export function SettingsPanel({
     language:      t("settings.language"),
     notifications: t("settings.notifications"),
     sounds:        t("settings.sounds"),
+    wallet:        t("settings.walletSection"),
     about:         t("about.label"),
   };
 
@@ -508,10 +522,44 @@ export function SettingsPanel({
               )}
             </Box>
 
-            {/* Top up coins via PAYOS — premium only */}
-            {user?.accountTier?.toLowerCase() === "premium" && <Box
-              position="relative"
+          </Box>
+        );
+
+      case "wallet":
+        if (!user) {
+          return (
+            <Flex direction="column" align="center" justify="center" style={{ height: 200, gap: 8 }}>
+              <Text style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.45)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                {t("account.signInPrompt")}
+              </Text>
+            </Flex>
+          );
+        }
+        return (
+          <Box style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {/* Current balance */}
+            <Box p="16px" borderRadius="12px"
+              style={{
+                background: "linear-gradient(135deg, rgba(250,204,21,0.1) 0%, rgba(245,158,11,0.16) 100%)",
+                border: "1px solid rgba(250,204,21,0.3)",
+              }}
             >
+              <Text style={{ fontSize: "0.68rem", color: "rgba(250,204,21,0.75)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                {t("settings.walletBalance").toUpperCase()}
+              </Text>
+              <Flex align="center" gap="8px" mt="6px">
+                <Coins size={20} style={{ color: "#facc15", flexShrink: 0 }} />
+                <Text style={{ fontSize: "1.7rem", fontWeight: 700, color: "#facc15", fontFamily: "'HarmonyOS Sans', sans-serif", lineHeight: 1 }}>
+                  {(coinBalance ?? 0).toLocaleString()}
+                </Text>
+                <Text style={{ fontSize: "0.78rem", color: "rgba(250,204,21,0.65)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                  {t("settings.coins")}
+                </Text>
+              </Flex>
+            </Box>
+
+            {/* Top up coins via PAYOS */}
             <Box p="14px" borderRadius="12px"
               style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
             >
@@ -521,6 +569,7 @@ export function SettingsPanel({
                   {t("settings.topUpCoins").toUpperCase()}
                 </Text>
               </Flex>
+
               <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 12 }}>
                 {t("settings.topUpCoinsDesc")}
               </Text>
@@ -571,7 +620,7 @@ export function SettingsPanel({
                   {t("settings.topUpError")}
                 </Text>
               )}
-            </Box></Box>}
+            </Box>
 
           </Box>
         );
@@ -957,6 +1006,18 @@ export function SettingsPanel({
                 <Text style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.5)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                   {t("about.desc")}
                 </Text>
+                <a href={RELEASE_NOTES_URL} style={{ textDecoration: "none" }}>
+                  <Flex align="center" gap="4px" mt="4px" style={{
+                    fontSize: "0.68rem",
+                    color: "rgba(255,255,255,0.85)",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    textDecoration: "underline",
+                    textUnderlineOffset: "2px",
+                    width: "fit-content",
+                  }}>
+                    {t("about.whatsNew")}
+                  </Flex>
+                </a>
               </Box>
             </Box>
 

@@ -4,7 +4,8 @@
     "aboutUs": "Về chúng tôi",
     "pricing": "Bảng giá",
     "contact": "Liên hệ",
-    "login": "Đăng nhập"
+    "login": "Đăng nhập",
+    "whatsNew": "Có gì mới?"
   },
   "footer": {
     "tagline": "Môi trường đẹp, không xao nhãng được thiết kế để giúp bạn tập trung, học hỏi và phát triển mỗi ngày.",
@@ -352,6 +353,15 @@
       "get": "Nhận",
       "notEnoughCoins": "Không đủ xu"
     },
+    "payment": {
+      "title": "Chọn phương thức thanh toán",
+      "coinTitle": "Thanh toán bằng xu",
+      "balance": "Số dư: {{amount}} xu",
+      "needMore": "Cần thêm {{amount}} xu",
+      "qrTitle": "Thanh toán bằng mã QR",
+      "qrSubtitle": "Thẻ ATM, Visa, MasterCard, QR Code",
+      "redirecting": "Đang chuyển hướng..."
+    },
     "trial": {
       "button": "Dùng thử 10 phút",
       "banner": "Đang dùng thử",
@@ -482,7 +492,8 @@
     "roleDeveloper": "Nhà Phát Triển",
     "copyright": "© AESTHETIC GROUP",
     "version": "Phiên bản Dev",
-    "openSpace": "Mở Study Space →"
+    "openSpace": "Mở Study Space →",
+    "whatsNew": "Có gì mới?"
   },
   "pricing": {
     "sectionLabel": "BẢNG GIÁ",
@@ -697,8 +708,11 @@
     "resetPasswordSend": "Gửi email đặt lại",
     "resetPasswordSent": "Đã gửi! Kiểm tra hộp thư của bạn.",
     "resetPasswordError": "Không thể gửi email. Vui lòng thử lại.",
+    "walletSection": "Quản lý ví xu",
+    "walletBalance": "Số dư hiện có",
     "topUpCoins": "Nạp xu",
     "topUpCoinsDesc": "Chọn gói xu bên dưới để thanh toán.",
+    "topUpPremiumRequired": "Nạp xu chỉ dành cho tài khoản Premium. Nâng cấp để mua xu.",
     "topUpError": "Không thể xử lý thanh toán. Vui lòng thử lại.",
     "coins": "xu",
     "vnd": "đ",
@@ -736,6 +750,21 @@
     "loading": "Đang tải…",
     "completedBannerTitle": "Nhiệm vụ hoàn thành: {{title}}",
     "completedBannerDesc": "+{{reward}}₫ — vào mục Nhiệm vụ để nhận thưởng"
+  },
+  "notification": {
+    "tooltip": "Thông báo",
+    "panelTitle": "THÔNG BÁO",
+    "clearAll": "Xóa tất cả",
+    "clearAllConfirm": "Xóa tất cả thông báo?",
+    "clearAllDesc": "Hành động này không thể hoàn tác.",
+    "cancel": "Hủy",
+    "empty": "Không có thông báo nào",
+    "viewQuest": "Xem nhiệm vụ",
+    "viewCreator": "Xem nhà sáng tạo",
+    "justNow": "Vừa xong",
+    "minutesAgo": "{{n}} phút trước",
+    "hoursAgo": "{{n}} giờ trước",
+    "daysAgo": "{{n}} ngày trước"
   },
   "firstRoom": {
     "title": "Chào mừng đến với Space của bạn!",
@@ -897,10 +926,15 @@
       "actionBan": "Cấm",
       "actionUnban": "Bỏ cấm",
       "actionAddCoins": "Cộng Coin",
+      "actionDelete": "Xóa",
       "addCoinsTitle": "Cộng Coin",
       "addCoinsLabel": "Số coin muốn cộng",
       "addCoinsConfirm": "Cộng",
       "addCoinsCancel": "Hủy",
+      "deleteConfirm": "Xóa người dùng này?",
+      "deleteNote": "Hành động này không thể hoàn tác.",
+      "cancel": "Hủy",
+      "delete": "Xóa",
       "retry": "Thử lại",
       "showing": "Hiển thị {{shown}} / {{total}} người dùng"
     },

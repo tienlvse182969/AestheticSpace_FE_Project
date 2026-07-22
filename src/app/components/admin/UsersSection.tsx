@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Flex, Text, Input, Spinner } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, MoreHorizontal, UserX, UserCheck, Coins, X, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
+import { Search, MoreHorizontal, UserX, UserCheck, Coins, Trash2, X, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { adminUsersService, type AdminUserDto } from "../../../services/admin/user.admin.services";
 import { useAdminTheme } from "./AdminThemeContext";
 
@@ -45,6 +45,14 @@ function getStatus(u: AdminUserDto): "active" | "inactive" | "banned" {
   return "active";
 }
 
+const DELETED_EMAIL_RE = /^deleted-[0-9a-f-]{36}@/i;
+
+function isDeletedAccount(u: AdminUserDto): boolean {
+  return !!u.email && DELETED_EMAIL_RE.test(u.email);
+}
+
+const PAGE_SIZE = 20;
+
 const STATUS_STYLE = {
   active:   { color: "#4ade80", bg: "rgba(74,222,128,0.1)",  border: "rgba(74,222,128,0.25)"  },
   inactive: { color: "#94a3b8", bg: "rgba(148,163,184,0.1)", border: "rgba(148,163,184,0.2)" },
@@ -65,14 +73,10 @@ export function UsersSection() {
     return formatDate(iso);
   }, [t]);
 
-  const [users,        setUsers]        = useState<AdminUserDto[]>([]);
+  const [allUsers,     setAllUsers]     = useState<AdminUserDto[]>([]);
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState<string | null>(null);
   const [page,         setPage]         = useState(1);
-  const [totalPages,   setTotalPages]   = useState(1);
-  const [totalCount,   setTotalCount]   = useState(0);
-  const [hasNext,      setHasNext]      = useState(false);
-  const [hasPrev,      setHasPrev]      = useState(false);
   const [query,        setQuery]        = useState("");
   const [openMenu,     setOpenMenu]     = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -80,17 +84,23 @@ export function UsersSection() {
   const [coinTarget,   setCoinTarget]   = useState<AdminUserDto | null>(null);
   const [coinAmount,   setCoinAmount]   = useState("");
   const [coinLoading,  setCoinLoading]  = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<AdminUserDto | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  const fetchUsers = useCallback(async (p: number) => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const result = await adminUsersService.getUsers(p, 20);
-      setUsers(result.items);
-      setTotalPages(result.totalPages);
-      setTotalCount(result.totalCount);
-      setHasNext(result.hasNext);
-      setHasPrev(result.hasPrevious);
+      let items: AdminUserDto[] = [];
+      let p = 1;
+      const fetchPageSize = 100;
+      while (true) {
+        const result = await adminUsersService.getUsers(p, fetchPageSize);
+        items = items.concat(result.items);
+        if (!result.hasNext) break;
+        p += 1;
+      }
+      setAllUsers(items.filter(u => !isDeletedAccount(u)));
     } catch {
       setError(t("admin.users.errorLoad"));
     } finally {
@@ -98,7 +108,10 @@ export function UsersSection() {
     }
   }, [t]);
 
-  useEffect(() => { fetchUsers(page); }, [page, fetchUsers]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+  // Reset to first page when the search query changes
+  useEffect(() => { setPage(1); }, [query]);
 
   // Close action menu when clicking outside
   useEffect(() => {
@@ -117,9 +130,9 @@ export function UsersSection() {
       } else {
         await adminUsersService.banUser(u.id);
       }
-      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, isBanned: !x.isBanned } : x));
+      setAllUsers(prev => prev.map(x => x.id === u.id ? { ...x, isBanned: !x.isBanned } : x));
     } catch {
-      fetchUsers(page);
+      fetchUsers();
     } finally {
       setActionLoading(null);
     }
@@ -132,27 +145,49 @@ export function UsersSection() {
     try {
       const amount = Number(coinAmount);
       await adminUsersService.addCoins(coinTarget.id, amount);
-      setUsers(prev => prev.map(x => x.id === coinTarget.id ? { ...x, coinsBalance: x.coinsBalance + amount } : x));
+      setAllUsers(prev => prev.map(x => x.id === coinTarget.id ? { ...x, coinsBalance: x.coinsBalance + amount } : x));
       setCoinTarget(null);
     } catch {} finally { setCoinLoading(false); }
   };
 
-  const filtered = users.filter(u =>
+  const handleDeleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await adminUsersService.deleteUser(deleteTarget.id);
+      setAllUsers(prev => prev.filter(x => x.id !== deleteTarget.id));
+      setDeleteTarget(null);
+    } catch {
+      fetchUsers();
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const filteredAll = allUsers.filter(u =>
     (u.username ?? "").toLowerCase().includes(query.toLowerCase()) ||
     (u.email    ?? "").toLowerCase().includes(query.toLowerCase())
   );
 
-  const pageBanned   = users.filter(u => u.isBanned).length;
-  const pageActive   = users.filter(u => !u.isBanned && !!u.lastLoginAt).length;
-  const pageInactive = users.filter(u => !u.isBanned && !u.lastLoginAt).length;
-  const pagePremium  = users.filter(u => u.accountTier === "Premium").length;
+  const totalUsersCount = allUsers.length;
+  const totalCount  = filteredAll.length;
+  const totalPages  = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const safePage    = Math.min(page, totalPages);
+  const filtered    = filteredAll.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const hasPrev     = safePage > 1;
+  const hasNext     = safePage < totalPages;
+
+  const pageBanned   = allUsers.filter(u => u.isBanned).length;
+  const pageActive   = allUsers.filter(u => !u.isBanned && !!u.lastLoginAt).length;
+  const pageInactive = allUsers.filter(u => !u.isBanned && !u.lastLoginAt).length;
+  const pagePremium  = allUsers.filter(u => u.accountTier === "Premium").length;
 
   return (
     <Box>
       {/* Stats */}
       <Flex gap={3} mb={5}>
         {([
-          { label: t("admin.users.statTotal"),    value: totalCount,   color: c.cardText },
+          { label: t("admin.users.statTotal"),    value: totalUsersCount, color: c.cardText },
           { label: t("admin.users.statActive"),   value: pageActive,   color: "#4ade80"  },
           { label: t("admin.users.statInactive"), value: pageInactive, color: "#94a3b8"  },
           { label: t("admin.users.statBanned"),   value: pageBanned,   color: "#f87171"  },
@@ -193,7 +228,7 @@ export function UsersSection() {
         </Box>
         <Box
           as="button"
-          onClick={() => fetchUsers(page)}
+          onClick={() => fetchUsers()}
           display="flex" alignItems="center" justifyContent="center"
           w="42px" h="42px" borderRadius="10px" border="none" cursor="pointer" transition="all 0.18s"
           style={{ background: c.cardBg, border: `1px solid ${c.cardBorder}`, color: c.textMuted, flexShrink: 0 }}
@@ -230,7 +265,7 @@ export function UsersSection() {
         ) : error ? (
           <Flex align="center" justify="center" py={12} direction="column" gap={3}>
             <Text style={{ fontSize: "0.85rem", color: "#f87171" }}>{error}</Text>
-            <Box as="button" onClick={() => fetchUsers(page)} style={{
+            <Box as="button" onClick={() => fetchUsers()} style={{
               fontSize: "0.8rem", color: "#4e7c6a", background: "transparent",
               border: "1px solid rgba(78,124,106,0.4)", borderRadius: "8px",
               padding: "6px 16px", cursor: "pointer",
@@ -392,6 +427,18 @@ export function UsersSection() {
                               : <><UserX    size={13} /><Text style={{ fontSize: "0.8rem", color: "#f87171" }}>{t("admin.users.actionBan")}</Text></>
                             }
                           </Box>
+                          <Box
+                            as="button"
+                            w="full" textAlign="left"
+                            onClick={() => { setOpenMenu(null); setDeleteTarget(u); }}
+                            display="flex" alignItems="center" gap={2}
+                            px={4} py="10px" border="none" cursor="pointer" transition="background 0.15s"
+                            style={{ background: "transparent", color: "#f87171" }}
+                            _hover={{ background: "rgba(255,255,255,0.05)" } as any}
+                          >
+                            <Trash2 size={13} />
+                            <Text style={{ fontSize: "0.8rem", color: "#f87171" }}>{t("admin.users.actionDelete")}</Text>
+                          </Box>
                         </Box>
                       )}
                     </>
@@ -430,7 +477,7 @@ export function UsersSection() {
             </Box>
 
             <Text style={{ fontSize: "0.78rem", color: c.textMuted, minWidth: "60px", textAlign: "center" }}>
-              {page} / {totalPages}
+              {safePage} / {totalPages}
             </Text>
 
             <Box
@@ -531,6 +578,60 @@ export function UsersSection() {
                       }}>
                       <Coins size={13} />
                       {coinLoading ? "…" : t("admin.users.addCoinsConfirm")}
+                    </Box>
+                  </Flex>
+                </Box>
+              </MotionBox>
+            </ModalCenter>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Delete confirmation modal */}
+      <AnimatePresence>
+        {deleteTarget && (
+          <>
+            <ModalBackdrop onClose={() => setDeleteTarget(null)} loading={deleteLoading} />
+            <ModalCenter>
+              <MotionBox style={{ width: "340px" }}
+                initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] } as any}>
+                <Box borderRadius="16px" p={6} style={{
+                  background: c.panelBg, backdropFilter: "blur(20px)",
+                  border: `1px solid ${c.panelBorder}`, boxShadow: c.panelShadow,
+                }}>
+                  <Text style={{ fontSize: "0.9rem", color: c.cardText, fontWeight: 600, marginBottom: 6 }}>
+                    {t("admin.users.deleteConfirm")}
+                  </Text>
+                  <Text style={{ fontSize: "0.78rem", color: c.cardTextMuted, marginBottom: 20 }}>
+                    {deleteTarget.username ?? deleteTarget.email ?? "—"} · {t("admin.users.deleteNote")}
+                  </Text>
+                  <Flex justify="flex-end" gap={2}>
+                    <Box as="button" onClick={() => !deleteLoading && setDeleteTarget(null)}
+                      style={{
+                        background:   c.cardBg,
+                        color:        c.textMuted,
+                        fontSize:     "0.82rem",
+                        border:       `1px solid ${c.cardBorder}`,
+                        borderRadius: "8px",
+                        cursor:       "pointer",
+                        padding:      "8px 16px",
+                      }}>
+                      {t("admin.users.cancel")}
+                    </Box>
+                    <Box as="button" onClick={() => !deleteLoading && handleDeleteUser()}
+                      display="flex" alignItems="center" gap={2}
+                      px={4} py="8px" borderRadius="8px" border="none"
+                      cursor={deleteLoading ? "not-allowed" : "pointer"}
+                      style={{
+                        background: "rgba(248,113,113,0.15)",
+                        outline: "1px solid rgba(248,113,113,0.4)",
+                        color: "#f87171",
+                        fontSize: "0.82rem",
+                        opacity: deleteLoading ? 0.6 : 1,
+                      }}>
+                      <Trash2 size={13} />
+                      {deleteLoading ? "…" : t("admin.users.delete")}
                     </Box>
                   </Flex>
                 </Box>
