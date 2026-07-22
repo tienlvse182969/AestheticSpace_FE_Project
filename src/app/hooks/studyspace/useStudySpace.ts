@@ -18,11 +18,12 @@ import type { LayoutConfig }   from "../../../types/workspace.types";
 import type { UserInfo }       from "../../components/StudySpace/panels/AccountPanel";
 import type { EffectType }     from "../../components/StudySpace/panels/EffectsPanel";
 import type { NavKey as SettingsNavKey } from "../../components/StudySpace/panels/SettingsPanel";
+import type { TabValue as ThemeStoreTab } from "../../components/StudySpace/panels/ThemeStorePanel";
 
 export type ActivePanel =
   | "widget" | "image" | "sticker" | "theme"
   | "ambient" | "effects" | "settings" | "room"
-  | "pomodoro-stats" | "quest"
+  | "pomodoro-stats" | "quest" | "notification"
   | null;
 
 export function useStudySpace() {
@@ -43,6 +44,7 @@ export function useStudySpace() {
   const [toolbarVisible, setToolbarVisible] = useState(true);
   const [activePanel,    setActivePanel]    = useState<ActivePanel>(null);
   const [settingsInitialNav, setSettingsInitialNav] = useState<SettingsNavKey | null>(null);
+  const [themeStoreInitialTab, setThemeStoreInitialTab] = useState<ThemeStoreTab | null>(null);
   const [layoutLocked,   setLayoutLocked]   = useState(false);
 const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const [accountOpen,         setAccountOpen]         = useState(false);
@@ -240,6 +242,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     toolbarVisible, setToolbarVisible,
     activePanel, setActivePanel, togglePanel,
     settingsInitialNav, setSettingsInitialNav,
+    themeStoreInitialTab, setThemeStoreInitialTab,
     layoutLocked, toggleLayoutLock,
     activeEffect, setActiveEffect,
     accountOpen, setAccountOpen,

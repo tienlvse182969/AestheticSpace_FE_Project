@@ -741,6 +741,21 @@
     "completedBannerTitle": "Quest completed: {{title}}",
     "completedBannerDesc": "+{{reward}}₫ — open Quests to claim your reward"
   },
+  "notification": {
+    "tooltip": "Notifications",
+    "panelTitle": "NOTIFICATIONS",
+    "clearAll": "Clear all",
+    "clearAllConfirm": "Clear all notifications?",
+    "clearAllDesc": "This action cannot be undone.",
+    "cancel": "Cancel",
+    "empty": "No notifications yet",
+    "viewQuest": "View quest",
+    "viewCreator": "View creator studio",
+    "justNow": "Just now",
+    "minutesAgo": "{{n}}m ago",
+    "hoursAgo": "{{n}}h ago",
+    "daysAgo": "{{n}}d ago"
+  },
   "firstRoom": {
     "title": "Welcome to your Space!",
     "subtitle": "Give your first room a name to get started.",

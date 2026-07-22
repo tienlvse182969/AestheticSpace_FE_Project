@@ -24,7 +24,7 @@ export function WelcomeGreeting() {
   const { user } = useAuth();
   const { accent } = useAccent();
   const greeting = useWelcomeGreeting();
-  const { pushBanner } = useNotificationBanners();
+  const { pushBanner, addHistoryItem } = useNotificationBanners();
   const prevUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -49,9 +49,12 @@ export function WelcomeGreeting() {
 
     const { TimeIcon, PraiseIcon, ReturnIcon } = greeting;
     const accentRgb = hexToRgbStr(accent);
+    // Date-scoped id (not just per-userId) so each day's greeting gets its own history entry
+    // instead of the dedup logic in addHistoryItem silently swallowing every day after the first.
+    const bannerId = `welcome_${user.userId}_${new Date().toDateString()}`;
 
     pushBanner({
-      id: `welcome_${user.userId}`,
+      id: bannerId,
       durationMs: 6000,
       content: (
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
@@ -139,6 +142,14 @@ export function WelcomeGreeting() {
           </div>
         </div>
       ),
+    });
+
+    addHistoryItem({
+      id: bannerId,
+      title: greeting.timeGreeting,
+      message: greeting.returnMessage ?? greeting.praiseMessage ?? "",
+      kind: "welcome",
+      createdAt: new Date().toISOString(),
     });
   }, [user?.userId, greeting.isLoading]);
 

@@ -1,5 +1,5 @@
 import { forwardRef } from "react";
-import { Box } from "@chakra-ui/react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 import { Lock } from "lucide-react";
 
 type ToolbarPosition = "bottom" | "left" | "right";
@@ -11,6 +11,7 @@ interface ToolbarBtnProps {
   tooltip: string;
   locked?: boolean;
   position?: ToolbarPosition;
+  badgeCount?: number;
 }
 
 function getActiveTransform(position: ToolbarPosition) {
@@ -20,7 +21,7 @@ function getActiveTransform(position: ToolbarPosition) {
 }
 
 export const ToolbarBtn = forwardRef<HTMLButtonElement, ToolbarBtnProps>(function ToolbarBtn(
-  { icon, active, onClick, tooltip, locked = false, position = "bottom" },
+  { icon, active, onClick, tooltip, locked = false, position = "bottom", badgeCount = 0 },
   ref,
 ) {
   const activeTransform = getActiveTransform(position);
@@ -83,6 +84,24 @@ export const ToolbarBtn = forwardRef<HTMLButtonElement, ToolbarBtnProps>(functio
         >
           <Lock size={7} style={{ color: "rgba(255,255,255,0.55)" }} />
         </Box>
+      )}
+      {!locked && badgeCount > 0 && (
+        <Flex
+          position="absolute"
+          top="-4px"
+          right="-6px"
+          align="center"
+          justify="center"
+          minW="14px"
+          h="14px"
+          px="3px"
+          borderRadius="full"
+          style={{ background: "#f87171", border: "1.5px solid rgba(10,15,22,0.9)" }}
+        >
+          <Text style={{ fontSize: "0.52rem", fontWeight: 700, color: "white", lineHeight: 1 }}>
+            {badgeCount > 9 ? "9+" : badgeCount}
+          </Text>
+        </Flex>
       )}
     </Box>
   );

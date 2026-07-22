@@ -10,6 +10,7 @@ import { SettingsPanel }         from "../panels/SettingsPanel";
 import { RoomManagerPanel }      from "../panels/RoomManagerPanel";
 import { PomodoroStatsPanel }    from "../panels/PomodoroStatsPanel";
 import { QuestPanel }            from "../panels/QuestPanel";
+import { NotificationHistoryPanel } from "../panels/NotificationHistoryPanel";
 import { TrialBanner }           from "../ui/TrialBanner";
 import { TrialExpiredModal }     from "../ui/TrialExpiredModal";
 import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
@@ -28,6 +29,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
   const {
     activePanel, setActivePanel,
     settingsInitialNav, setSettingsInitialNav,
+    themeStoreInitialTab, setThemeStoreInitialTab,
     currentBg, setCurrentBg,
     activeEffect, setActiveEffect,
     roomId, handleRoomSelect,
@@ -230,7 +232,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
         {activePanel === "theme" && (
           <ThemeStorePanel
             key="theme-panel"
-            onClose={() => { setActivePanel(null); setBuyItemId(undefined); }}
+            onClose={() => { setActivePanel(null); setBuyItemId(undefined); setThemeStoreInitialTab(null); }}
             coinBalance={coinBalance}
             onCoinBalanceChange={onCoinBalanceChange}
             onStartTrial={handleStartTrial}
@@ -238,6 +240,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onApplyItem={handleApplyItem}
             trialItemId={trialItem?.id}
             initialDetailItemId={buyItemId}
+            initialTab={themeStoreInitialTab ?? undefined}
           />
         )}
         {activePanel === "ambient" && (
@@ -295,6 +298,14 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onClose={() => setActivePanel(null)}
             onBalanceChange={onCoinBalanceChange}
             currentCoinBalance={coinBalance}
+          />
+        )}
+        {activePanel === "notification" && (
+          <NotificationHistoryPanel
+            key="notification-panel"
+            onClose={() => setActivePanel(null)}
+            onOpenQuest={() => setActivePanel("quest")}
+            onOpenCreatorStore={() => { setThemeStoreInitialTab("my-themes"); setActivePanel("theme"); }}
           />
         )}
       </AnimatePresence>

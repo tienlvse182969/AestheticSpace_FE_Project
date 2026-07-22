@@ -65,9 +65,10 @@ interface Props {
   onApplyItem?: (item: StoreItem, extras?: ThemeApplyExtras) => void;
   trialItemId?: string;
   initialDetailItemId?: string;
+  initialTab?: TabValue;
 }
 
-type TabValue = "all" | "purchased" | "wishlist" | "my-themes" | StoreCategory;
+export type TabValue = "all" | "purchased" | "wishlist" | "my-themes" | StoreCategory;
 
 const TABS: { value: TabValue; key: string }[] = [
   { value: "all",          key: "themeStore.tabDiscovery" },
@@ -2113,6 +2114,7 @@ export function ThemeStorePanel({
   onApplyItem,
   trialItemId,
   initialDetailItemId,
+  initialTab,
 }: Props) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -2124,7 +2126,7 @@ export function ThemeStorePanel({
   const [items, setItems]               = useState<StoreItem[]>([]);
   const [gateOpen, setGateOpen]         = useState(false);
   const [itemsLoading, setItemsLoading] = useState(true);
-  const [activeTab, setActiveTab]       = useState<TabValue>("all");
+  const [activeTab, setActiveTab]       = useState<TabValue>(initialTab ?? "all");
   const [searchQuery, setSearchQuery]   = useState("");
   const [sourceFilter, setSourceFilter] = useState<"all" | "Official" | "Community">("all");
   const [wishlistIds, setWishlistIds]   = useState<Set<string>>(() => {

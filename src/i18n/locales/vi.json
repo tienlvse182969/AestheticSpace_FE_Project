@@ -740,6 +740,21 @@
     "completedBannerTitle": "Nhiệm vụ hoàn thành: {{title}}",
     "completedBannerDesc": "+{{reward}}₫ — vào mục Nhiệm vụ để nhận thưởng"
   },
+  "notification": {
+    "tooltip": "Thông báo",
+    "panelTitle": "THÔNG BÁO",
+    "clearAll": "Xóa tất cả",
+    "clearAllConfirm": "Xóa tất cả thông báo?",
+    "clearAllDesc": "Hành động này không thể hoàn tác.",
+    "cancel": "Hủy",
+    "empty": "Không có thông báo nào",
+    "viewQuest": "Xem nhiệm vụ",
+    "viewCreator": "Xem nhà sáng tạo",
+    "justNow": "Vừa xong",
+    "minutesAgo": "{{n}} phút trước",
+    "hoursAgo": "{{n}} giờ trước",
+    "daysAgo": "{{n}} ngày trước"
+  },
   "firstRoom": {
     "title": "Chào mừng đến với Space của bạn!",
     "subtitle": "Đặt tên cho phòng đầu tiên để bắt đầu.",

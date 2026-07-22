@@ -7,6 +7,8 @@ import {
   AudioWaveform, Settings, Wand2, Layers, BarChart2, Trophy, Sticker,
 } from "lucide-react";
 import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
+import { useNotificationBanners } from "../../../context/NotificationBannerContext";
+import { NotificationBellIcon } from "../ui/NotificationBellIcon";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
 import { PremiumGateModal, type LockedFeature } from "../ui/PremiumGateModal";
@@ -36,6 +38,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
   } = ctx;
 
   const isFree = !!currentUser && currentUser.accountTier?.toLowerCase() !== "premium";
+  const { unreadHistoryCount } = useNotificationBanners();
   const [gateFeature, setGateFeature] = useState<LockedFeature | null>(null);
   const [nearToolbar, setNearToolbar] = useState(false);
   const { position } = useToolbarPosition();
@@ -321,6 +324,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                 <ToolbarBtn ref={el => (tourTargetsRef.current.quest = el)} icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current["pomodoro-stats"] = el)} icon={<BarChart2 size={22} />} active={activePanel === "pomodoro-stats"} onClick={() => togglePanel("pomodoro-stats")} tooltip="Phân tích Pomodoro" position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.settings = el)} icon={<Settings size={22} />}  active={activePanel === "settings"}       onClick={() => togglePanel("settings")}       tooltip={t("settings.title")} position={position} />
+                <ToolbarBtn icon={<NotificationBellIcon size={22} unreadCount={unreadHistoryCount} />} active={activePanel === "notification"} badgeCount={unreadHistoryCount} onClick={() => togglePanel("notification")} tooltip={t("notification.tooltip")} position={position} />
 
                 {/* Account avatar button */}
                 <Box
