@@ -9,7 +9,6 @@ import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import { BACKGROUNDS } from "../constants";
 import type { BackgroundItem } from "../types";
 import { aestheticStoreService } from "../../../../services/aestheticStore.service";
-import { useAuth } from "../../../../context/AuthContext";
 
 const MotionBox = motion.create(Box);
 
@@ -218,9 +217,6 @@ interface BackgroundPickerPanelProps {
 export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: BackgroundPickerPanelProps) {
   const { t } = useTranslation();
   const { x, y, ref } = useCenteredPanel(604, 580);
-  const { user } = useAuth();
-  const isPremium = user?.accountTier?.toLowerCase() === "premium";
-
   /* ── Search state ── */
   const [inputValue, setInputValue]   = useState("Aesthetic Study");
   const [activeQuery, setActiveQuery] = useState("Aesthetic Study");
@@ -521,7 +517,7 @@ export function BackgroundPickerPanel({ currentBgId, onSelect, onClose }: Backgr
 
         {/* Tabs */}
         <Flex mb={3} gap={1} style={{ borderBottom: "1px solid rgba(255,255,255,0.07)", paddingBottom: "10px" }}>
-          {TABS.filter(tabItem => isPremium || tabItem.id !== "purchased").map(tabItem => (
+          {TABS.map(tabItem => (
             <Box
               key={tabItem.id}
               as="button"

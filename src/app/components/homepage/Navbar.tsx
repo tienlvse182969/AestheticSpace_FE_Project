@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../context/AuthContext";
 import { FLAG_VN, FLAG_GB } from "../ui/FlagIcons";
+import { RELEASE_NOTES_URL } from "../../../version";
 
 const LANGUAGES = [
   { code: "en", label: "English",     flag: FLAG_GB },
@@ -184,6 +185,7 @@ export function Navbar() {
   const navLinks = [
     { key: "about-us", href: "/about-us", label: t("nav.aboutUs"), route: "/about" },
     { key: "pricing",  href: "/pricing",  label: t("nav.pricing"), route: "/pricing" },
+    { key: "whats-new", href: RELEASE_NOTES_URL, label: t("nav.whatsNew"), route: undefined as string | undefined },
   ];
 
   const changeLang = (lang: string) => {

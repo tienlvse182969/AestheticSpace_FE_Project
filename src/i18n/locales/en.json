@@ -4,7 +4,8 @@
     "aboutUs": "About Us",
     "pricing": "Pricing",
     "contact": "Contact",
-    "login": "Login"
+    "login": "Login",
+    "whatsNew": "What's New?"
   },
   "footer": {
     "tagline": "A beautiful, distraction-free environment designed to help you focus, learn, and grow every single day.",
@@ -491,7 +492,8 @@
     "roleDeveloper": "Developer",
     "copyright": "© AESTHETIC GROUP",
     "version": "Version Dev",
-    "openSpace": "Open Study Space →"
+    "openSpace": "Open Study Space →",
+    "whatsNew": "What's New?"
   },
   "pricing": {
     "sectionLabel": "PRICING",

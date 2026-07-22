@@ -4,7 +4,8 @@
     "aboutUs": "Về chúng tôi",
     "pricing": "Bảng giá",
     "contact": "Liên hệ",
-    "login": "Đăng nhập"
+    "login": "Đăng nhập",
+    "whatsNew": "Có gì mới?"
   },
   "footer": {
     "tagline": "Môi trường đẹp, không xao nhãng được thiết kế để giúp bạn tập trung, học hỏi và phát triển mỗi ngày.",
@@ -491,7 +492,8 @@
     "roleDeveloper": "Nhà Phát Triển",
     "copyright": "© AESTHETIC GROUP",
     "version": "Phiên bản Dev",
-    "openSpace": "Mở Study Space →"
+    "openSpace": "Mở Study Space →",
+    "whatsNew": "Có gì mới?"
   },
   "pricing": {
     "sectionLabel": "BẢNG GIÁ",
