@@ -833,8 +833,8 @@
       "newThisMonth": "Mới tháng này",
       "premiumUsers": "Người dùng Premium",
       "totalRevenue": "Tổng doanh thu",
-      "userGrowth": "Tăng trưởng người dùng",
-      "growthSub": "{{days}} ngày qua · {{count}} người dùng mới",
+      "userGrowth": "Lượng truy cập mỗi ngày",
+      "growthSub": "{{days}} ngày qua · {{count}} lượt truy cập",
       "loading": "Đang tải…",
       "noData": "Không có dữ liệu",
       "recentUsers": "Người dùng gần đây",
@@ -845,10 +845,10 @@
       "todosCompleted": "Todo đã hoàn thành",
       "roomsVisited": "Phòng đã truy cập",
       "payments": "Thanh toán",
-      "statTotalNew": "TỔNG MỚI",
+      "statTotalNew": "TỔNG LƯỢT",
       "statPeak": "ĐỈNH ĐIỂM",
       "statAvgDay": "TB / NGÀY",
-      "newUsers": "người dùng mới"
+      "newUsers": "lượt truy cập"
     },
     "missions": {
       "statTotal": "Tổng",
@@ -936,7 +936,12 @@
       "cancel": "Hủy",
       "delete": "Xóa",
       "retry": "Thử lại",
-      "showing": "Hiển thị {{shown}} / {{total}} người dùng"
+      "showing": "Hiển thị {{shown}} / {{total}} người dùng",
+      "exportExcel": "Xuất Excel",
+      "exportDays30": "30 ngày gần nhất",
+      "exportDays90": "90 ngày gần nhất",
+      "exportColDate": "Ngày",
+      "exportColCount": "Người dùng mới"
     },
     "assets": {
       "statTotal": "Tổng",

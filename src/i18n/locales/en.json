@@ -834,8 +834,8 @@
       "newThisMonth": "New This Month",
       "premiumUsers": "Premium Users",
       "totalRevenue": "Total Revenue",
-      "userGrowth": "User Growth",
-      "growthSub": "{{days}} days · {{count}} new users",
+      "userGrowth": "Daily Visits",
+      "growthSub": "{{days}} days · {{count}} visits",
       "loading": "Loading…",
       "noData": "No data",
       "recentUsers": "Recent Users",
@@ -846,10 +846,10 @@
       "todosCompleted": "Todos Completed",
       "roomsVisited": "Rooms Visited",
       "payments": "Payments",
-      "statTotalNew": "TOTAL NEW",
+      "statTotalNew": "TOTAL VISITS",
       "statPeak": "PEAK",
       "statAvgDay": "AVG / DAY",
-      "newUsers": "new users"
+      "newUsers": "visits"
     },
     "missions": {
       "statTotal": "Total",
@@ -937,7 +937,12 @@
       "cancel": "Cancel",
       "delete": "Delete",
       "retry": "Retry",
-      "showing": "Showing {{shown}} of {{total}} users"
+      "showing": "Showing {{shown}} of {{total}} users",
+      "exportExcel": "Export Excel",
+      "exportDays30": "Last 30 days",
+      "exportDays90": "Last 90 days",
+      "exportColDate": "Date",
+      "exportColCount": "New Users"
     },
     "assets": {
       "statTotal": "Total",

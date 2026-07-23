@@ -2,9 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Box, Flex, Text, Input, Spinner } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { Search, MoreHorizontal, UserX, UserCheck, Coins, Trash2, X, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
-import { adminUsersService, type AdminUserDto } from "../../../services/admin/user.admin.services";
+import { Search, MoreHorizontal, UserX, UserCheck, Coins, Trash2, X, ChevronLeft, ChevronRight, RefreshCw, FileSpreadsheet, ChevronDown } from "lucide-react";
+import { adminUsersService, isDeletedAccount, type AdminUserDto } from "../../../services/admin/user.admin.services";
+import { analyticsAdminService } from "../../../services/admin/analytics.admin.service";
 import { useAdminTheme } from "./AdminThemeContext";
+import { DailyVisitsChart, fillMissingDays } from "./DailyVisitsChart";
+import { downloadXlsx } from "../../../utils/exportXlsx";
 
 const MotionBox = motion.create(Box);
 
@@ -45,12 +48,6 @@ function getStatus(u: AdminUserDto): "active" | "inactive" | "banned" {
   return "active";
 }
 
-const DELETED_EMAIL_RE = /^deleted-[0-9a-f-]{36}@/i;
-
-function isDeletedAccount(u: AdminUserDto): boolean {
-  return !!u.email && DELETED_EMAIL_RE.test(u.email);
-}
-
 const PAGE_SIZE = 20;
 
 const STATUS_STYLE = {
@@ -86,20 +83,55 @@ export function UsersSection() {
   const [coinLoading,  setCoinLoading]  = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AdminUserDto | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [exporting,      setExporting]      = useState(false);
+
+  const handleExport = async (days: 30 | 90) => {
+    setExportMenuOpen(false);
+    setExporting(true);
+    try {
+      const data = await analyticsAdminService.getUserGrowth(days);
+      const filled = fillMissingDays(data, days);
+
+      await downloadXlsx(`admin-export-${days}d-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+        {
+          name: "Daily Visits",
+          headers: [t("admin.users.exportColDate"), t("admin.users.exportColCount")],
+          rows: filled.map(d => [d.date, d.count]),
+        },
+        {
+          name: "Users",
+          headers: [
+            t("admin.users.colUser"), t("admin.users.colEmail"), t("admin.users.colPlan"),
+            t("admin.users.colRole"), t("admin.users.colStatus"),
+            t("admin.users.colJoined"), t("admin.users.colLastSeen"),
+          ],
+          rows: allUsers.map(u => {
+            const status = getStatus(u);
+            return [
+              u.username ?? "",
+              u.email ?? "",
+              u.accountTier === "Premium" ? t("admin.users.planPremium") : t("admin.users.planFree"),
+              u.role === "Admin" ? t("admin.users.roleAdmin") : t("admin.users.roleUser"),
+              t(`admin.users.status${status.charAt(0).toUpperCase() + status.slice(1)}`),
+              formatDate(u.createdAt),
+              u.lastLoginAt ? formatDate(u.lastLoginAt) : t("admin.users.lastSeenNever"),
+            ];
+          }),
+        },
+      ]);
+    } catch {
+      // no-op: export failure is non-critical, user can retry
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      let items: AdminUserDto[] = [];
-      let p = 1;
-      const fetchPageSize = 100;
-      while (true) {
-        const result = await adminUsersService.getUsers(p, fetchPageSize);
-        items = items.concat(result.items);
-        if (!result.hasNext) break;
-        p += 1;
-      }
+      const items = await adminUsersService.getAllUsers();
       setAllUsers(items.filter(u => !isDeletedAccount(u)));
     } catch {
       setError(t("admin.users.errorLoad"));
@@ -120,6 +152,14 @@ export function UsersSection() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [openMenu]);
+
+  // Close export menu when clicking outside
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    const handler = () => setExportMenuOpen(false);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [exportMenuOpen]);
 
   const handleToggleBan = async (u: AdminUserDto) => {
     setActionLoading(u.id);
@@ -201,6 +241,9 @@ export function UsersSection() {
         ))}
       </Flex>
 
+      {/* Daily visits chart */}
+      <DailyVisitsChart />
+
       {/* Toolbar */}
       <Flex align="center" gap={3} mb={4}>
         <Box flex={1} position="relative">
@@ -235,6 +278,65 @@ export function UsersSection() {
           _hover={{ background: c.navActive } as any}
         >
           <RefreshCw size={15} />
+        </Box>
+
+        {/* Export to Excel */}
+        <Box position="relative" flexShrink={0}>
+          <Box
+            as="button"
+            onClick={(e: React.MouseEvent) => { e.stopPropagation(); setExportMenuOpen(v => !v); }}
+            display="flex" alignItems="center" gap={2}
+            h="42px" px={4} borderRadius="10px" border="none" cursor={exporting ? "not-allowed" : "pointer"} transition="all 0.18s"
+            style={{
+              background: exportMenuOpen ? c.navActive : c.cardBg,
+              border: `1px solid ${c.cardBorder}`,
+              color: c.textMuted,
+              opacity: exporting ? 0.6 : 1,
+            }}
+            _hover={{ background: c.navActive } as any}
+          >
+            {exporting ? <Spinner size="xs" /> : <FileSpreadsheet size={15} />}
+            <Text style={{ fontSize: "0.82rem", whiteSpace: "nowrap" }}>{t("admin.users.exportExcel")}</Text>
+            <ChevronDown size={13} />
+          </Box>
+
+          {exportMenuOpen && (
+            <Box
+              position="absolute" right={0} top="48px" zIndex={50}
+              borderRadius="10px" overflow="hidden"
+              style={{
+                background:    "rgba(15,22,30,0.96)",
+                backdropFilter:"blur(16px)",
+                border:        "1px solid rgba(255,255,255,0.1)",
+                boxShadow:     "0 12px 40px rgba(0,0,0,0.6)",
+                minWidth:      170,
+              }}
+              onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+            >
+              <Box
+                as="button"
+                w="full" textAlign="left"
+                onClick={() => handleExport(30)}
+                display="flex" alignItems="center" gap={2}
+                px={4} py="10px" border="none" cursor="pointer" transition="background 0.15s"
+                style={{ background: "transparent", color: c.cardText }}
+                _hover={{ background: "rgba(255,255,255,0.05)" } as any}
+              >
+                <Text style={{ fontSize: "0.8rem" }}>{t("admin.users.exportDays30")}</Text>
+              </Box>
+              <Box
+                as="button"
+                w="full" textAlign="left"
+                onClick={() => handleExport(90)}
+                display="flex" alignItems="center" gap={2}
+                px={4} py="10px" border="none" cursor="pointer" transition="background 0.15s"
+                style={{ background: "transparent", color: c.cardText }}
+                _hover={{ background: "rgba(255,255,255,0.05)" } as any}
+              >
+                <Text style={{ fontSize: "0.8rem" }}>{t("admin.users.exportDays90")}</Text>
+              </Box>
+            </Box>
+          )}
         </Box>
       </Flex>
 
