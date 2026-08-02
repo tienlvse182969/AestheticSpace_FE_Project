@@ -751,6 +751,31 @@
     "completedBannerTitle": "Nhiệm vụ hoàn thành: {{title}}",
     "completedBannerDesc": "+{{reward}}₫ — vào mục Nhiệm vụ để nhận thưởng"
   },
+  "luckyDraw": {
+    "tooltip": "Chiếc nón kỳ diệu",
+    "title": "CHIẾC NÓN KỲ DIỆU",
+    "drawsToday": "Lượt quay hôm nay",
+    "spin": "QUAY",
+    "loadError": "Không thể tải dữ liệu vòng quay.",
+    "spinError": "Quay thất bại, vui lòng thử lại.",
+    "noDrawsLeft": "Bạn đã dùng hết lượt quay hôm nay. Quay lại vào ngày mai nhé!",
+    "prizesHeading": "PHẦN THƯỞNG",
+    "prizeLine": "Giải {{label}} ({{coins}} Xu)",
+    "historyHeading": "LỊCH SỬ HÔM NAY",
+    "historyFallback": "Phần thưởng",
+    "coins": "{{count}} Xu",
+    "congrats": "Chúc mừng!",
+    "wonFallback": "Bạn đã trúng thưởng",
+    "closeResult": "Tuyệt vời!",
+    "prizes": {
+      "lucky": "May Mắn",
+      "bronze": "Đồng",
+      "silver": "Bạc",
+      "gold": "Vàng",
+      "jackpot": "Jackpot",
+      "bigJackpot": "Big Jackpot"
+    }
+  },
   "notification": {
     "tooltip": "Thông báo",
     "panelTitle": "THÔNG BÁO",

@@ -752,6 +752,31 @@
     "completedBannerTitle": "Quest completed: {{title}}",
     "completedBannerDesc": "+{{reward}}₫ — open Quests to claim your reward"
   },
+  "luckyDraw": {
+    "tooltip": "Wheel of Fortune",
+    "title": "WHEEL OF FORTUNE",
+    "drawsToday": "Spins today",
+    "spin": "SPIN",
+    "loadError": "Couldn't load the lucky wheel.",
+    "spinError": "Spin failed, please try again.",
+    "noDrawsLeft": "You're out of spins for today. Come back tomorrow!",
+    "prizesHeading": "PRIZES",
+    "prizeLine": "{{label}} Prize ({{coins}} Coins)",
+    "historyHeading": "TODAY'S HISTORY",
+    "historyFallback": "Prize",
+    "coins": "{{count}} Coins",
+    "congrats": "Congratulations!",
+    "wonFallback": "You won a prize",
+    "closeResult": "Awesome!",
+    "prizes": {
+      "lucky": "Lucky",
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold",
+      "jackpot": "Jackpot",
+      "bigJackpot": "Big Jackpot"
+    }
+  },
   "notification": {
     "tooltip": "Notifications",
     "panelTitle": "NOTIFICATIONS",
