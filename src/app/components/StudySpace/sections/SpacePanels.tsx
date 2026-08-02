@@ -24,9 +24,11 @@ interface Props {
   ctx: StudySpaceCtx;
   onCoinBalanceChange?: (newBalance: number) => void;
   coinBalance?: number;
+  luckyDrawRemaining?: number;
+  onLuckyDrawRemainingChange?: (remaining: number) => void;
 }
 
-export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
+export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance, onLuckyDrawRemainingChange }: Props) {
   const {
     activePanel, setActivePanel,
     settingsInitialNav, setSettingsInitialNav,
@@ -306,6 +308,7 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             key="lucky-draw-panel"
             onClose={() => setActivePanel(null)}
             onBalanceChange={onCoinBalanceChange}
+            onRemainingChange={onLuckyDrawRemainingChange}
           />
         )}
         {activePanel === "notification" && (

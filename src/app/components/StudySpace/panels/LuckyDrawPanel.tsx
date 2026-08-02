@@ -45,9 +45,11 @@ const WHEEL_GRADIENT = `conic-gradient(from 0deg, ${PRIZES.map(
 export function LuckyDrawPanel({
   onClose,
   onBalanceChange,
+  onRemainingChange,
 }: {
   onClose: () => void;
   onBalanceChange?: (newBalance: number) => void;
+  onRemainingChange?: (remaining: number) => void;
 }) {
   const { x, y, ref } = useCenteredPanel(PANEL_W, PANEL_H);
   const { user } = useAuth();
@@ -75,10 +77,11 @@ export function LuckyDrawPanel({
         setMaxDraws(status.maxDrawsToday);
         setCanSpin(status.canSpin);
         setHistory(status.drawHistoryToday ?? []);
+        onRemainingChange?.(status.remainingDrawsToday);
       })
       .catch(() => setError(t("luckyDraw.loadError")))
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSpin = useCallback(async () => {
     if (spinning || loading || !canSpin || remainingDraws <= 0) return;
@@ -112,6 +115,7 @@ export function LuckyDrawPanel({
     setRemainingDraws(pendingResult.remainingDrawsToday);
     setCanSpin(pendingResult.remainingDrawsToday > 0);
     onBalanceChange?.(pendingResult.newCoinsBalance);
+    onRemainingChange?.(pendingResult.remainingDrawsToday);
     setHistory((prev) => [
       {
         id: `local-${Date.now()}`,
@@ -122,7 +126,7 @@ export function LuckyDrawPanel({
       ...prev,
     ]);
     setPendingResult(null);
-  }, [spinning, pendingResult, onBalanceChange]);
+  }, [spinning, pendingResult, onBalanceChange, onRemainingChange]);
 
   const spinDisabled = spinning || loading || !canSpin || remainingDraws <= 0;
 
