@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Box, Flex, Text, Input, Spinner } from "@chakra-ui/react";
-import { DollarSign, Crown, Coins, Package, Calendar, Search, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
-import { motion } from "motion/react";
+import { DollarSign, Crown, Coins, Calendar, Search, ChevronLeft, ChevronRight, RefreshCw, FileSpreadsheet, ChevronDown } from "lucide-react";
+import {
+  BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
+} from "recharts";
+import { useTranslation } from "react-i18next";
 import { useAdminTheme } from "./AdminThemeContext";
 import {
   analyticsAdminService,
@@ -15,8 +19,7 @@ import {
   type PaymentStatus,
   type PaymentPurpose,
 } from "../../../services/admin/payment.admin.service";
-
-const MotionBox = motion.create(Box);
+import { downloadXlsx } from "../../../utils/exportXlsx";
 
 const TREND_DAYS = [30, 90, 180] as const;
 type TrendDay = (typeof TREND_DAYS)[number];
@@ -27,10 +30,17 @@ const PROVIDER_OPTIONS: (PaymentProvider | "")[] = ["", "VNPay", "SePay", "PayOS
 const STATUS_OPTIONS: (PaymentStatus | "")[] = ["", "Pending", "Succeeded", "Failed", "Cancelled"];
 const PURPOSE_OPTIONS: (PaymentPurpose | "")[] = ["", "Subscription", "BuyCoins", "BuyAsset"];
 
-const PURPOSE_LABEL: Record<PaymentPurpose, string> = {
-  Subscription: "Subscription",
-  BuyCoins: "Coin Pack",
-  BuyAsset: "Asset",
+const PURPOSE_LABEL_KEY: Record<PaymentPurpose, string> = {
+  Subscription: "admin.revenue.purposeSubscription",
+  BuyCoins: "admin.revenue.purposeCoinPack",
+  BuyAsset: "admin.revenue.purposeAsset",
+};
+
+const STATUS_LABEL_KEY: Record<PaymentStatus, string> = {
+  Succeeded: "admin.revenue.statusSucceeded",
+  Pending: "admin.revenue.statusPending",
+  Failed: "admin.revenue.statusFailed",
+  Cancelled: "admin.revenue.statusCancelled",
 };
 
 const PAYMENT_STATUS_STYLE: Record<PaymentStatus, { color: string; bg: string; border: string }> = {
@@ -63,9 +73,53 @@ function fmtDay(iso: string) {
   return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 
+// backend only returns days that had at least one transaction — fill the rest with 0 so the trend covers the full selected range
+function fillMissingTrend(data: AdminRevenueTrend[], days: number): AdminRevenueTrend[] {
+  const byDate = new Map(data.map(t => [t.date.slice(0, 10), t]));
+  const today = new Date();
+  const filled: AdminRevenueTrend[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    filled.push(byDate.get(key) ?? { date: key, amountVnd: 0, transactions: 0 });
+  }
+  return filled;
+}
+
+type TrendTooltipProps = {
+  active?: boolean;
+  payload?: { payload: AdminRevenueTrend & { displayDate: string } }[];
+  panelBg: string;
+  panelBorder: string;
+  panelShadow: string;
+  textMuted: string;
+};
+
+function TrendTooltip({ active, payload, panelBg, panelBorder, panelShadow, textMuted }: TrendTooltipProps) {
+  const { t } = useTranslation();
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <Box borderRadius="8px" px={3} py={2}
+      style={{ background: panelBg, border: `1px solid ${panelBorder}`, boxShadow: panelShadow, whiteSpace: "nowrap" }}>
+      <Text style={{ fontSize: "0.65rem", color: textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+        {d.date}
+      </Text>
+      <Text style={{ fontSize: "0.8rem", color: "#16a34a", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
+        {fmtVnd(d.amountVnd)}
+      </Text>
+      <Text style={{ fontSize: "0.65rem", color: textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+        {t("admin.revenue.transactionCount", { count: d.transactions })}
+      </Text>
+    </Box>
+  );
+}
+
 // ── component ─────────────────────────────────────────────────────────────────
 
 export function RevenueSection() {
+  const { t } = useTranslation();
   const { c } = useAdminTheme();
 
   const [summary,        setSummary]        = useState<AdminRevenueSummary | null>(null);
@@ -74,6 +128,9 @@ export function RevenueSection() {
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingTrend,   setLoadingTrend]   = useState(true);
   const [hoveredBar,     setHoveredBar]     = useState<number | null>(null);
+
+  const [subscriptionTxCount, setSubscriptionTxCount] = useState(0);
+  const [coinPackTxCount,     setCoinPackTxCount]     = useState(0);
 
   const [payments,          setPayments]          = useState<AdminPaymentTransactionDto[]>([]);
   const [paymentsLoading,   setPaymentsLoading]   = useState(true);
@@ -88,6 +145,60 @@ export function RevenueSection() {
   const [providerFilter,    setProviderFilter]    = useState<PaymentProvider | "">("");
   const [statusFilter,      setStatusFilter]      = useState<PaymentStatus | "">("Succeeded");
   const [purposeFilter,     setPurposeFilter]     = useState<PaymentPurpose | "">("");
+  const [exportMenuOpen,    setExportMenuOpen]    = useState(false);
+  const [exporting,         setExporting]         = useState(false);
+
+  // close export menu when clicking outside
+  useEffect(() => {
+    if (!exportMenuOpen) return;
+    const handler = () => setExportMenuOpen(false);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [exportMenuOpen]);
+
+  const handleExport = async (days: TrendDay) => {
+    setExportMenuOpen(false);
+    setExporting(true);
+    try {
+      const trendData = await analyticsAdminService.getRevenueTrend(days);
+      const filledTrendData = fillMissingTrend(trendData, days);
+      const allPayments = await adminPaymentsService.getAllPayments({
+        search:   search || undefined,
+        provider: providerFilter || undefined,
+        status:   statusFilter || undefined,
+        purpose:  purposeFilter || undefined,
+      });
+
+      await downloadXlsx(`admin-revenue-${days}d-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+        {
+          name: t("admin.revenue.exportSheetTrend"),
+          headers: [t("admin.revenue.exportColDate"), t("admin.revenue.exportColRevenue"), t("admin.revenue.exportColTransactions")],
+          rows: filledTrendData.map(row => [row.date, row.amountVnd, row.transactions]),
+        },
+        {
+          name: t("admin.revenue.exportSheetHistory"),
+          headers: [
+            t("admin.revenue.exportColUser"), t("admin.revenue.exportColEmail"), t("admin.revenue.exportColProvider"),
+            t("admin.revenue.exportColPurpose"), t("admin.revenue.exportColAmount"), t("admin.revenue.exportColStatus"),
+            t("admin.revenue.exportColDate"),
+          ],
+          rows: allPayments.map(p => [
+            p.username ?? "",
+            p.email ?? "",
+            p.provider,
+            t(PURPOSE_LABEL_KEY[p.purpose]),
+            p.amount,
+            t(STATUS_LABEL_KEY[p.status]),
+            fmtDateTime(p.createdAt),
+          ]),
+        },
+      ]);
+    } catch {
+      // no-op: export failure is non-critical, user can retry
+    } finally {
+      setExporting(false);
+    }
+  };
 
   // fetch summary once
   useEffect(() => {
@@ -96,6 +207,18 @@ export function RevenueSection() {
       .then(setSummary)
       .catch(() => {})
       .finally(() => setLoadingSummary(false));
+  }, []);
+
+  // fetch per-purpose transaction counts (succeeded only, matches revenue figures)
+  useEffect(() => {
+    adminPaymentsService
+      .getPayments({ purpose: "Subscription", status: "Succeeded", page: 1, pageSize: 1 })
+      .then(r => setSubscriptionTxCount(r.totalCount))
+      .catch(() => {});
+    adminPaymentsService
+      .getPayments({ purpose: "BuyCoins", status: "Succeeded", page: 1, pageSize: 1 })
+      .then(r => setCoinPackTxCount(r.totalCount))
+      .catch(() => {});
   }, []);
 
   // fetch trend whenever days changes
@@ -136,73 +259,64 @@ export function RevenueSection() {
         setPaymentsHasNext(result.hasNext);
         setPaymentsHasPrev(result.hasPrevious);
       })
-      .catch(() => setPaymentsError("Failed to load transaction history."))
+      .catch(() => setPaymentsError(t("admin.revenue.errorLoad")))
       .finally(() => setPaymentsLoading(false));
-  }, [search, providerFilter, statusFilter, purposeFilter, paymentsPage]);
+  }, [search, providerFilter, statusFilter, purposeFilter, paymentsPage, t]);
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
   // ── derived values ──────────────────────────────────────────────────────────
-  const CHART_H = 200; // total container height (px)
-  const PLOT_H  = 175; // usable bar height (px) — leaves 25px top padding so max bar never hits top
+  const CHART_H = 320; // container height (px)
 
-  const maxVnd    = trend.length ? Math.max(...trend.map(t => t.amountVnd)) : 1;
-  const totalVnd  = trend.reduce((s, t) => s + t.amountVnd, 0);
-  const totalTx   = trend.reduce((s, t) => s + t.transactions, 0);
-  const peakEntry = trend.find(t => t.amountVnd === maxVnd);
-  const avgDaily  = trend.length ? totalVnd / trend.length : 0;
+  const filledTrend = fillMissingTrend(trend, selectedDays);
 
-  // convert a VNĐ value → pixel height (same function used for bars, gridlines AND y-labels)
-  const barPx = (vnd: number) => maxVnd > 0 ? (vnd / maxVnd) * PLOT_H : 0;
+  const maxVnd    = filledTrend.length ? Math.max(...filledTrend.map(t => t.amountVnd)) : 0;
+  const totalVnd  = filledTrend.reduce((s, t) => s + t.amountVnd, 0);
+  const totalTx   = filledTrend.reduce((s, t) => s + t.transactions, 0);
+  const peakEntry = filledTrend.find(t => t.amountVnd === maxVnd);
+  const avgDaily  = filledTrend.length ? totalVnd / filledTrend.length : 0;
 
-  // y-axis: 5 levels from max → 0
-  const yLevels = [maxVnd, maxVnd * 0.75, maxVnd * 0.5, maxVnd * 0.25, 0];
+  const chartData = filledTrend.map(row => ({ ...row, displayDate: fmtDay(row.date) }));
+
+  // 6 evenly spaced Y-axis ticks from 0 up to the highest bar's value
+  const yTicks = Array.from({ length: 6 }, (_, i) => Math.round((maxVnd * i) / 5));
 
   // show ~7 x-labels across however many bars exist
-  const labelEvery = Math.max(1, Math.ceil(trend.length / 7));
+  const xInterval = Math.max(0, Math.ceil(filledTrend.length / 7) - 1);
 
   const dateRangeLabel =
-    trend.length >= 2
-      ? `${fmtDay(trend[0].date)} – ${fmtDay(trend[trend.length - 1].date)}`
+    filledTrend.length >= 2
+      ? `${fmtDay(filledTrend[0].date)} – ${fmtDay(filledTrend[filledTrend.length - 1].date)}`
       : "—";
 
   // ── stat cards config ───────────────────────────────────────────────────────
   const cards = [
     {
-      label: "Total Revenue",
+      label: t("admin.revenue.totalRevenue"),
       value: summary?.totalRevenueVnd,
-      sub:   `${summary?.totalTransactions ?? 0} transactions`,
+      sub:   t("admin.revenue.transactionsCount", { count: summary?.totalTransactions ?? 0 }),
       icon:  DollarSign,
       color: "#16a34a",
       bg:    "rgba(74,222,128,0.1)",
       border:"rgba(74,222,128,0.2)",
     },
     {
-      label: "Subscriptions",
+      label: t("admin.revenue.subscriptions"),
       value: summary?.subscriptionRevenueVnd,
-      sub:   "All time",
+      sub:   t("admin.revenue.transactionsCount", { count: subscriptionTxCount }),
       icon:  Crown,
       color: "#7c3aed",
       bg:    "rgba(167,139,250,0.1)",
       border:"rgba(167,139,250,0.2)",
     },
     {
-      label: "Coin Packs",
+      label: t("admin.revenue.coinPacks"),
       value: summary?.coinPackRevenueVnd,
-      sub:   "All time",
+      sub:   t("admin.revenue.transactionsCount", { count: coinPackTxCount }),
       icon:  Coins,
       color: "#d97706",
       bg:    "rgba(251,191,36,0.1)",
       border:"rgba(251,191,36,0.2)",
-    },
-    {
-      label: "Asset Sales",
-      value: summary?.assetRevenueVnd,
-      sub:   "All time",
-      icon:  Package,
-      color: "#0284c7",
-      bg:    "rgba(56,189,248,0.1)",
-      border:"rgba(56,189,248,0.2)",
     },
   ];
 
@@ -210,7 +324,7 @@ export function RevenueSection() {
   return (
     <Box>
       {/* ── 4 stat cards ── */}
-      <Box display="grid" mb={5} style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+      <Box display="grid" mb={5} style={{ gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
         {cards.map(card => {
           const Icon = card.icon;
           return (
@@ -250,10 +364,10 @@ export function RevenueSection() {
         <Flex align="center" justify="space-between" mb={6}>
           <Box>
             <Text style={{ fontSize: "0.6rem", letterSpacing: "0.12em", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              REVENUE TREND
+              {t("admin.revenue.trendLabel")}
             </Text>
             <Text style={{ fontSize: "0.95rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
-              Daily Revenue (VNĐ)
+              {t("admin.revenue.dailyRevenue")}
             </Text>
           </Box>
           <Flex align="center" gap={3}>
@@ -282,145 +396,130 @@ export function RevenueSection() {
                 </Box>
               ))}
             </Flex>
+
+            {/* Export to Excel */}
+            <Box position="relative" flexShrink={0}>
+              <Box
+                as="button"
+                onClick={(e: React.MouseEvent) => { e.stopPropagation(); setExportMenuOpen(v => !v); }}
+                display="flex" alignItems="center" gap={2}
+                h="30px" px={3} borderRadius="8px" border="none" cursor={exporting ? "not-allowed" : "pointer"} transition="all 0.18s"
+                style={{
+                  background: exportMenuOpen ? c.navActive : "transparent",
+                  border: `1px solid ${c.cardBorder}`,
+                  color: c.textDim,
+                  opacity: exporting ? 0.6 : 1,
+                }}
+                _hover={{ background: c.navActive } as any}
+              >
+                {exporting ? <Spinner size="xs" /> : <FileSpreadsheet size={13} />}
+                <Text style={{ fontSize: "0.68rem", whiteSpace: "nowrap", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.revenue.exportExcel")}</Text>
+                <ChevronDown size={12} />
+              </Box>
+
+              {exportMenuOpen && (
+                <Box
+                  position="absolute" right={0} top="36px" zIndex={50}
+                  borderRadius="10px" overflow="hidden"
+                  style={{
+                    background:    "rgba(15,22,30,0.96)",
+                    backdropFilter:"blur(16px)",
+                    border:        "1px solid rgba(255,255,255,0.1)",
+                    boxShadow:     "0 12px 40px rgba(0,0,0,0.6)",
+                    minWidth:      170,
+                  }}
+                  onMouseDown={(e: React.MouseEvent) => e.stopPropagation()}
+                >
+                  {TREND_DAYS.map(d => (
+                    <Box
+                      key={d}
+                      as="button"
+                      w="full" textAlign="left"
+                      onClick={() => handleExport(d)}
+                      display="flex" alignItems="center" gap={2}
+                      px={4} py="10px" border="none" cursor="pointer" transition="background 0.15s"
+                      style={{ background: "transparent", color: c.cardText }}
+                      _hover={{ background: "rgba(255,255,255,0.05)" } as any}
+                    >
+                      <Text style={{ fontSize: "0.8rem" }}>{t("admin.revenue.lastDays", { days: d })}</Text>
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </Box>
           </Flex>
         </Flex>
 
         {/* Chart body */}
         {loadingTrend ? (
-          <Flex h="200px" align="center" justify="center">
+          <Flex h={`${CHART_H}px`} align="center" justify="center">
             <Text style={{ fontSize: "0.8rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              Loading…
-            </Text>
-          </Flex>
-        ) : trend.length === 0 ? (
-          <Flex h="200px" align="center" justify="center">
-            <Text style={{ fontSize: "0.8rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              No revenue data for this period
+              {t("admin.revenue.loading")}
             </Text>
           </Flex>
         ) : (
           <>
-            <Flex gap={2} style={{ height: CHART_H }}>
-              {/* Y-axis — absolutely positioned so labels align exactly with bars & gridlines */}
-              <Box position="relative" style={{ width: 44, flexShrink: 0, height: "100%" }}>
-                {yLevels.map((v, i) => (
-                  <Text key={i} position="absolute" style={{
-                    right: 6,
-                    bottom: barPx(v),
-                    transform: "translateY(50%)",
-                    fontSize: "0.6rem",
-                    color: c.textDim,
-                    fontFamily: "'HarmonyOS Sans', sans-serif",
-                    lineHeight: 1,
-                    whiteSpace: "nowrap",
-                  }}>
-                    {fmtShort(Math.round(v))}
-                  </Text>
-                ))}
-              </Box>
-
-              {/* Bars area */}
-              <Box flex={1} position="relative" style={{ height: "100%" }}>
-                {/* Gridlines — same barPx positions as Y-axis labels */}
-                {yLevels.map((v, i) => (
-                  <Box key={i} position="absolute" left={0} right={0} style={{
-                    bottom: barPx(v),
-                    borderTop: `1px solid ${c.rowDivider}`,
-                    pointerEvents: "none",
-                  }} />
-                ))}
-
-                {/* Bars */}
-                <Flex align="flex-end" justify="space-around" style={{ height: CHART_H, position: "relative" }}>
-                  {trend.map((entry, i) => {
-                    const h         = barPx(entry.amountVnd);
-                    const isHov     = hoveredBar === i;
-                    const showLabel = i % labelEvery === 0 || i === trend.length - 1;
-
-                    return (
-                      <Flex key={entry.date} direction="column" align="center" justify="flex-end"
-                        style={{ height: "100%", flex: 1, cursor: "pointer" }}
-                        onMouseEnter={() => setHoveredBar(i)}
-                        onMouseLeave={() => setHoveredBar(null)}>
-
-                        {/* Tooltip */}
-                        {isHov && (
-                          <Box position="absolute" borderRadius="8px" px={3} py={2}
-                            style={{
-                              background: c.panelBg,
-                              border: `1px solid ${c.panelBorder}`,
-                              boxShadow: c.panelShadow,
-                              bottom: h + 12,
-                              pointerEvents: "none",
-                              whiteSpace: "nowrap",
-                              zIndex: 10,
-                            }}>
-                            <Text style={{ fontSize: "0.65rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                              {entry.date}
-                            </Text>
-                            <Text style={{ fontSize: "0.8rem", color: "#16a34a", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 600 }}>
-                              {fmtVnd(entry.amountVnd)}
-                            </Text>
-                            <Text style={{ fontSize: "0.65rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                              {entry.transactions} transaction{entry.transactions !== 1 ? "s" : ""}
-                            </Text>
-                          </Box>
-                        )}
-
-                        {/* Bar */}
-                        <MotionBox borderRadius="6px 6px 3px 3px"
-                          style={{
-                            width: "70%",
-                            background: isHov
-                              ? "linear-gradient(to top, #1a3c34, #4ade80)"
-                              : "linear-gradient(to top, rgba(78,124,106,0.6), rgba(78,124,106,0.25))",
-                            border: isHov
-                              ? "1px solid rgba(74,222,128,0.4)"
-                              : "1px solid rgba(78,124,106,0.2)",
-                            transition: "background 0.2s, border 0.2s",
-                          }}
-                          initial={{ height: 0 }}
-                          animate={{ height: h }}
-                          transition={{ duration: 0.45, delay: i * 0.03, ease: "easeOut" } as any}
-                        />
-
-                        {/* X label */}
-                        <Text mt={2} style={{
-                          fontSize: "0.58rem",
-                          color: isHov ? c.text : c.textDim,
-                          fontFamily: "'HarmonyOS Sans', sans-serif",
-                          transition: "color 0.2s",
-                          visibility: showLabel ? "visible" : "hidden",
-                        }}>
-                          {fmtDay(entry.date)}
-                        </Text>
-                      </Flex>
-                    );
-                  })}
-                </Flex>
-              </Box>
-            </Flex>
+            <ResponsiveContainer width="100%" height={CHART_H}>
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                onMouseLeave={() => setHoveredBar(null)}>
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="rgba(78,124,106,0.9)" />
+                    <stop offset="100%" stopColor="rgba(78,124,106,0.35)" />
+                  </linearGradient>
+                  <linearGradient id="revenueGradientActive" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor="#4ade80" />
+                    <stop offset="100%" stopColor="#1a3c34" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={c.rowDivider} vertical={false} />
+                <XAxis dataKey="displayDate" interval={xInterval}
+                  tick={{ fontSize: 10, fill: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}
+                  axisLine={false} tickLine={false} dy={6} />
+                <YAxis allowDecimals={false} domain={[0, maxVnd]} ticks={yTicks}
+                  tickFormatter={v => fmtShort(Number(v))}
+                  tick={{ fontSize: 10, fill: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}
+                  axisLine={false} tickLine={false} width={56} />
+                <Tooltip
+                  content={
+                    <TrendTooltip
+                      panelBg={c.panelBg}
+                      panelBorder={c.panelBorder}
+                      panelShadow={c.panelShadow}
+                      textMuted={c.textMuted}
+                    />
+                  }
+                  cursor={{ fill: "rgba(78,124,106,0.08)" }}
+                />
+                <Bar dataKey="amountVnd" radius={[6, 6, 3, 3]} maxBarSize={48}
+                  onMouseEnter={(_, index) => setHoveredBar(index)}>
+                  {chartData.map((entry, i) => (
+                    <Cell key={entry.date} fill={hoveredBar === i ? "url(#revenueGradientActive)" : "url(#revenueGradient)"} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
 
             {/* Summary row */}
             <Flex gap={6} mt={5} pt={4} style={{ borderTop: `1px solid ${c.rowDivider}` }}>
               {[
                 {
-                  label: "PEAK DAY",
+                  label: t("admin.revenue.peakDay"),
                   value: peakEntry ? `${fmtDay(peakEntry.date)} · ${fmtVnd(peakEntry.amountVnd)}` : "—",
                   color: "#16a34a",
                 },
                 {
-                  label: "AVG DAILY",
+                  label: t("admin.revenue.avgDaily"),
                   value: fmtVnd(Math.round(avgDaily)),
                   color: c.textMuted,
                 },
                 {
-                  label: "PERIOD TOTAL",
+                  label: t("admin.revenue.periodTotal"),
                   value: fmtVnd(totalVnd),
                   color: "#4e7c6a",
                 },
                 {
-                  label: "TRANSACTIONS",
+                  label: t("admin.revenue.transactions"),
                   value: totalTx.toLocaleString(),
                   color: c.textMuted,
                 },
@@ -444,10 +543,10 @@ export function RevenueSection() {
         <Flex align="center" justify="space-between" mb={5}>
           <Box>
             <Text style={{ fontSize: "0.6rem", letterSpacing: "0.12em", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              TRANSACTION HISTORY
+              {t("admin.revenue.transactionHistory")}
             </Text>
             <Text style={{ fontSize: "0.95rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
-              All Payments
+              {t("admin.revenue.allPayments")}
             </Text>
           </Box>
           <Box as="button" onClick={() => fetchPayments()}
@@ -466,7 +565,7 @@ export function RevenueSection() {
               <Search size={14} style={{ color: c.textDim }} />
             </Box>
             <Input
-              placeholder="Search by username, email, transaction code..."
+              placeholder={t("admin.revenue.searchPlaceholder")}
               value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value)}
               style={{
@@ -486,7 +585,7 @@ export function RevenueSection() {
             }}>
             {PROVIDER_OPTIONS.map(p => (
               <option key={p || "all"} value={p} style={{ color: "#111", background: "#fff" }}>
-                {p || "All Providers"}
+                {p || t("admin.revenue.allProviders")}
               </option>
             ))}
           </select>
@@ -499,7 +598,7 @@ export function RevenueSection() {
             }}>
             {STATUS_OPTIONS.map(s => (
               <option key={s || "all"} value={s} style={{ color: "#111", background: "#fff" }}>
-                {s || "All Statuses"}
+                {s ? t(STATUS_LABEL_KEY[s]) : t("admin.revenue.allStatuses")}
               </option>
             ))}
           </select>
@@ -512,7 +611,7 @@ export function RevenueSection() {
             }}>
             {PURPOSE_OPTIONS.map(p => (
               <option key={p || "all"} value={p} style={{ color: "#111", background: "#fff" }}>
-                {p ? PURPOSE_LABEL[p] : "All Purposes"}
+                {p ? t(PURPOSE_LABEL_KEY[p]) : t("admin.revenue.allPurposes")}
               </option>
             ))}
           </select>
@@ -521,7 +620,10 @@ export function RevenueSection() {
         {/* Table */}
         <Box borderRadius="12px" overflow="hidden" style={{ border: `1px solid ${c.cardBorder}` }}>
           <Flex px={4} py={3} style={{ background: c.cardBg, borderBottom: `1px solid ${c.cardBorder}` }}>
-            {["User", "Provider", "Purpose", "Amount", "Status", "Date"].map((h, i) => (
+            {[
+              t("admin.revenue.colUser"), t("admin.revenue.colProvider"), t("admin.revenue.colPurpose"),
+              t("admin.revenue.colAmount"), t("admin.revenue.colStatus"), t("admin.revenue.colDate"),
+            ].map((h, i) => (
               <Text key={h} style={{
                 fontSize: "0.65rem", color: c.cardTextMuted, letterSpacing: "0.1em",
                 flex: [2, 1, 1, 1.2, 1, 1.4][i],
@@ -534,7 +636,7 @@ export function RevenueSection() {
           {paymentsLoading ? (
             <Flex align="center" justify="center" py={12} gap={3}>
               <Spinner size="sm" style={{ color: "#4e7c6a" }} />
-              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>Loading transactions…</Text>
+              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>{t("admin.revenue.loadingTransactions")}</Text>
             </Flex>
           ) : paymentsError ? (
             <Flex align="center" justify="center" py={10} direction="column" gap={3}>
@@ -544,12 +646,12 @@ export function RevenueSection() {
                 border: "1px solid rgba(78,124,106,0.4)", borderRadius: "8px",
                 padding: "6px 16px", cursor: "pointer",
               }}>
-                Retry
+                {t("admin.revenue.retry")}
               </Box>
             </Flex>
           ) : payments.length === 0 ? (
             <Flex align="center" justify="center" py={10}>
-              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>No transactions found</Text>
+              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>{t("admin.revenue.noTransactions")}</Text>
             </Flex>
           ) : (
             payments.map((p, i) => {
@@ -566,13 +668,13 @@ export function RevenueSection() {
                     </Text>
                   </Box>
                   <Text style={{ flex: 1, fontSize: "0.78rem", color: c.cardTextMuted }}>{p.provider}</Text>
-                  <Text style={{ flex: 1, fontSize: "0.78rem", color: c.cardTextMuted }}>{PURPOSE_LABEL[p.purpose]}</Text>
+                  <Text style={{ flex: 1, fontSize: "0.78rem", color: c.cardTextMuted }}>{t(PURPOSE_LABEL_KEY[p.purpose])}</Text>
                   <Text style={{ flex: 1.2, fontSize: "0.8rem", color: c.cardText, fontWeight: 600 }}>{fmtVnd(p.amount)}</Text>
                   <Box style={{ flex: 1 }}>
                     <Flex align="center" gap="5px" display="inline-flex" borderRadius="full" px={2} py="2px"
                       style={{ background: st.bg, border: `1px solid ${st.border}` }}>
                       <Box w="5px" h="5px" borderRadius="full" flexShrink={0} style={{ background: st.color }} />
-                      <Text style={{ fontSize: "0.65rem", color: st.color }}>{p.status}</Text>
+                      <Text style={{ fontSize: "0.65rem", color: st.color }}>{t(STATUS_LABEL_KEY[p.status])}</Text>
                     </Flex>
                   </Box>
                   <Text style={{ flex: 1.4, fontSize: "0.75rem", color: c.cardTextMuted }}>{fmtDateTime(p.createdAt)}</Text>
@@ -585,7 +687,7 @@ export function RevenueSection() {
         {/* Footer: count + pagination */}
         <Flex align="center" justify="space-between" mt={3}>
           <Text style={{ fontSize: "0.72rem", color: c.cardTextMuted }}>
-            {paymentsLoading ? "Loading…" : `Showing ${payments.length} of ${paymentsTotalCount} transactions`}
+            {paymentsLoading ? t("admin.revenue.loading") : t("admin.revenue.showing", { shown: payments.length, total: paymentsTotalCount })}
           </Text>
 
           {paymentsTotalPages > 1 && (

@@ -23,6 +23,12 @@ export interface AdminUserPagedResult {
   hasPrevious: boolean;
 }
 
+const DELETED_EMAIL_RE = /^deleted-[0-9a-f-]{36}@/i;
+
+export function isDeletedAccount(u: AdminUserDto): boolean {
+  return !!u.email && DELETED_EMAIL_RE.test(u.email);
+}
+
 export const adminUsersService = {
   getUsers: async (page = 1, pageSize = 20): Promise<AdminUserPagedResult> => {
     const { data } = await api.get<ApiResponse<AdminUserPagedResult>>(
@@ -45,5 +51,18 @@ export const adminUsersService = {
 
   deleteUser: async (id: string): Promise<void> => {
     await api.delete(`/admin/users/${id}`);
+  },
+
+  getAllUsers: async (): Promise<AdminUserDto[]> => {
+    let items: AdminUserDto[] = [];
+    let page = 1;
+    const pageSize = 100;
+    while (true) {
+      const result = await adminUsersService.getUsers(page, pageSize);
+      items = items.concat(result.items);
+      if (!result.hasNext) break;
+      page += 1;
+    }
+    return items;
   },
 };

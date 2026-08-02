@@ -48,4 +48,17 @@ export const adminPaymentsService = {
     const { data } = await api.get<ApiResponse<AdminPaymentTransactionPagedResult>>("/admin/payments", { params });
     return data.data;
   },
+
+  getAllPayments: async (params: Omit<GetPaymentsParams, "page" | "pageSize"> = {}): Promise<AdminPaymentTransactionDto[]> => {
+    let items: AdminPaymentTransactionDto[] = [];
+    let page = 1;
+    const pageSize = 100;
+    while (true) {
+      const result = await adminPaymentsService.getPayments({ ...params, page, pageSize });
+      items = items.concat(result.items);
+      if (!result.hasNext) break;
+      page += 1;
+    }
+    return items;
+  },
 };
