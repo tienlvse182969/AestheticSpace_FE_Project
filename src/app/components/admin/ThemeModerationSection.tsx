@@ -5,6 +5,7 @@ import {
   Check, X, ChevronLeft, ChevronRight, Image, Volume2, Sparkles,
   Palette, ClipboardList, Play, Pause, Coins, Landmark, Tag,
 } from "lucide-react";
+import { useTranslation, type TFunction } from "react-i18next";
 import {
   adminStoreService,
   AdminStoreItemDto,
@@ -22,10 +23,10 @@ function fmtDate(iso: string): string {
 }
 
 // Plain-text price summary (no icon) — for inline mentions within a sentence.
-function fmtPriceText(item: AdminStoreItemDto): string {
+function fmtPriceText(item: AdminStoreItemDto, t: TFunction): string {
   const coin = item.requestedCoinPrice;
   const vnd = item.requestedRealMoneyPriceVnd;
-  if (coin == null && vnd == null) return "Miễn phí";
+  if (coin == null && vnd == null) return t("admin.moderation.free");
   const parts: string[] = [];
   if (coin != null) parts.push(`${coin.toLocaleString("vi-VN")} coin`);
   if (vnd != null) parts.push(`${vnd.toLocaleString("vi-VN")}đ`);
@@ -34,10 +35,11 @@ function fmtPriceText(item: AdminStoreItemDto): string {
 
 // Icon-based price display — for dedicated price cells/fields (table column, detail meta).
 function PriceDisplay({ item, fontSize, color }: { item: AdminStoreItemDto; fontSize: string; color?: string }) {
+  const { t } = useTranslation();
   const coin = item.requestedCoinPrice;
   const vnd = item.requestedRealMoneyPriceVnd;
   if (coin == null && vnd == null) {
-    return <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>Miễn phí</Text>;
+    return <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.free")}</Text>;
   }
   return (
     <Flex align="center" gap="8px">
@@ -56,13 +58,14 @@ function PriceDisplay({ item, fontSize, color }: { item: AdminStoreItemDto; font
 
 // 3-line bank info display — for dedicated bank-detail sections (detail meta, approve modal).
 function BankInfoDisplay({ item, fontSize, color }: { item: AdminStoreItemDto; fontSize: string; color?: string }) {
+  const { t } = useTranslation();
   if (!item.bankAccountNumber && !item.bankName && !item.bankAccountOwnerName) {
-    return <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>— (dùng thông tin đã lưu)</Text>;
+    return <Text style={{ fontSize, color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.bankInfoSaved")}</Text>;
   }
   const rows: [string, string | null | undefined][] = [
-    ["Chủ TK", item.bankAccountOwnerName],
-    ["Ngân hàng", item.bankName],
-    ["Số TK", item.bankAccountNumber],
+    [t("admin.moderation.bankOwner"), item.bankAccountOwnerName],
+    [t("admin.moderation.bankName"), item.bankName],
+    [t("admin.moderation.bankNumber"), item.bankAccountNumber],
   ];
   return (
     <Flex direction="column" gap="2px">
@@ -84,27 +87,27 @@ function wantsPayInCoins(item: AdminStoreItemDto): boolean {
   return item.requestedCoinPrice != null;
 }
 
-const CAT_META: Record<StoreCategory, { label: string; color: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
-  Theme:        { label: "Theme",         color: "#a78bfa", icon: Palette  },
-  Background:   { label: "Background",    color: "#60a5fa", icon: Image    },
-  Sticker:      { label: "Sticker",       color: "#fb923c", icon: Sparkles },
-  Effect:       { label: "Effect",        color: "#34d399", icon: Palette  },
-  AmbientSound: { label: "Ambient Sound", color: "#f472b6", icon: Volume2  },
+const CAT_META: Record<StoreCategory, { labelKey: string; color: string; icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }> }> = {
+  Theme:        { labelKey: "admin.moderation.categoryTheme",        color: "#a78bfa", icon: Palette  },
+  Background:   { labelKey: "admin.moderation.categoryBackground",   color: "#60a5fa", icon: Image    },
+  Sticker:      { labelKey: "admin.moderation.categorySticker",      color: "#fb923c", icon: Sparkles },
+  Effect:       { labelKey: "admin.moderation.categoryEffect",       color: "#34d399", icon: Palette  },
+  AmbientSound: { labelKey: "admin.moderation.categoryAmbientSound", color: "#f472b6", icon: Volume2  },
 };
 
 type QueueType = "pendingTx" | "pricingPool";
-const QUEUE_TABS: { key: QueueType; label: string }[] = [
-  { key: "pendingTx",   label: "Chờ giao dịch" },
-  { key: "pricingPool", label: "Chờ định giá"  },
+const QUEUE_TABS: { key: QueueType; labelKey: string }[] = [
+  { key: "pendingTx",   labelKey: "admin.moderation.queuePendingTx"   },
+  { key: "pricingPool", labelKey: "admin.moderation.queuePricingPool" },
 ];
 
 type FilterTab = "all" | StoreCategory;
-const CATEGORY_TABS: { key: FilterTab; label: string }[] = [
-  { key: "all",          label: "All"          },
-  { key: "Theme",        label: "Themes"       },
-  { key: "Background",   label: "Backgrounds"  },
-  { key: "Sticker",      label: "Stickers"     },
-  { key: "AmbientSound", label: "Ambient"      },
+const CATEGORY_TABS: { key: FilterTab; labelKey: string }[] = [
+  { key: "all",          labelKey: "admin.moderation.tabAll"          },
+  { key: "Theme",        labelKey: "admin.moderation.tabThemes"       },
+  { key: "Background",   labelKey: "admin.moderation.tabBackgrounds"  },
+  { key: "Sticker",      labelKey: "admin.moderation.tabStickers"     },
+  { key: "AmbientSound", labelKey: "admin.moderation.tabAmbient"      },
 ];
 
 function ModalBackdrop({ onClose, loading }: { onClose: () => void; loading: boolean }) {
@@ -127,6 +130,7 @@ function ModalCenter({ children, zIndex = 310 }: { children: React.ReactNode; zI
 }
 
 export function ThemeModerationSection() {
+  const { t } = useTranslation();
   const { c, isDark } = useAdminTheme();
 
   const inputSt: React.CSSProperties = {
@@ -369,17 +373,17 @@ export function ThemeModerationSection() {
   /* ── Table column config ──────────────────────────────────────────── */
   const columns = queue === "pendingTx"
     ? [
-        { label: "ITEM",         flex: 2.3 },
-        { label: "CATEGORY",     flex: 0.9 },
-        { label: "CREATOR",      flex: 0.9 },
-        { label: "PHƯƠNG THỨC THANH TOÁN", flex: 1.5 },
-        { label: "GIÁ ĐỀ XUẤT",            flex: 1.1 },
+        { label: t("admin.moderation.colItem"),           flex: 2.3 },
+        { label: t("admin.moderation.colCategory"),       flex: 0.9 },
+        { label: t("admin.moderation.colCreator"),        flex: 0.9 },
+        { label: t("admin.moderation.colPaymentMethod"),  flex: 1.5 },
+        { label: t("admin.moderation.colRequestedPrice"), flex: 1.1 },
       ]
     : [
-        { label: "ITEM",      flex: 3   },
-        { label: "CATEGORY",  flex: 1   },
-        { label: "CREATOR",   flex: 1   },
-        { label: "SUBMITTED", flex: 1.5 },
+        { label: t("admin.moderation.colItem"),      flex: 3   },
+        { label: t("admin.moderation.colCategory"),  flex: 1   },
+        { label: t("admin.moderation.colCreator"),   flex: 1   },
+        { label: t("admin.moderation.colSubmitted"), flex: 1.5 },
       ];
 
   /* ── Render ────────────────────────────────────────────────────────── */
@@ -393,7 +397,7 @@ export function ThemeModerationSection() {
             {totalCount}
           </Text>
           <Text style={{ fontSize: "0.68rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            {queue === "pendingTx" ? "Chờ giao dịch" : "Chờ định giá"}
+            {queue === "pendingTx" ? t("admin.moderation.queuePendingTx") : t("admin.moderation.queuePricingPool")}
           </Text>
         </Box>
       </Flex>
@@ -414,7 +418,7 @@ export function ThemeModerationSection() {
               fontFamily: "'HarmonyOS Sans', sans-serif",
               fontWeight: 600,
             }}>
-              {q.label}
+              {t(q.labelKey)}
             </Text>
           </Box>
         ))}
@@ -423,19 +427,19 @@ export function ThemeModerationSection() {
       {/* Category tabs */}
       <Flex gap="2px" mb={5} p="3px" borderRadius="10px" flexWrap="wrap"
         style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}`, width: "fit-content" }}>
-        {CATEGORY_TABS.map(t => (
-          <Box key={t.key} as="button" onClick={() => changeCategory(t.key)}
+        {CATEGORY_TABS.map(tab => (
+          <Box key={tab.key} as="button" onClick={() => changeCategory(tab.key)}
             px={3} py="6px" borderRadius="7px" border="none" cursor="pointer" transition="all 0.15s"
             style={{
-              background: categoryFilter === t.key ? c.navActive : "transparent",
-              outline:    categoryFilter === t.key ? `1px solid ${c.navActiveBorder}` : "1px solid transparent",
+              background: categoryFilter === tab.key ? c.navActive : "transparent",
+              outline:    categoryFilter === tab.key ? `1px solid ${c.navActiveBorder}` : "1px solid transparent",
             }}>
             <Text style={{
               fontSize:   "0.78rem",
-              color:      categoryFilter === t.key ? c.accent : c.textMuted,
+              color:      categoryFilter === tab.key ? c.accent : c.textMuted,
               fontFamily: "'HarmonyOS Sans', sans-serif",
             }}>
-              {t.label}
+              {t(tab.labelKey)}
             </Text>
           </Box>
         ))}
@@ -444,13 +448,13 @@ export function ThemeModerationSection() {
       {/* Table */}
       {loading ? (
         <Flex justify="center" py={14}>
-          <Text style={{ color: c.textMuted, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>Loading…</Text>
+          <Text style={{ color: c.textMuted, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.loading")}</Text>
         </Flex>
       ) : displayItems.length === 0 ? (
         <Flex justify="center" py={14} direction="column" align="center" gap={3}>
           <ClipboardList size={32} style={{ color: c.textDim }} />
           <Text style={{ color: c.textDim, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            {queue === "pendingTx" ? "No pending transactions" : "No items awaiting pricing"}
+            {queue === "pendingTx" ? t("admin.moderation.noPendingTx") : t("admin.moderation.noPricingItems")}
           </Text>
         </Flex>
       ) : (
@@ -461,7 +465,7 @@ export function ThemeModerationSection() {
             {columns.map(col => (
               <Box key={col.label} flex={col.flex}>
                 <Text style={{ fontSize: "0.65rem", color: c.textDim, letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                  {col.label}
+                  {col.label.toUpperCase()}
                 </Text>
               </Box>
             ))}
@@ -516,7 +520,7 @@ export function ThemeModerationSection() {
                   <Box display="inline-flex" borderRadius="full" px="8px" py="2px"
                     style={{ background: `${catMeta.color}18`, border: `1px solid ${catMeta.color}35` }}>
                     <Text style={{ fontSize: "0.65rem", color: catMeta.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {catMeta.label}
+                      {t(catMeta.labelKey)}
                     </Text>
                   </Box>
                 </Box>
@@ -536,14 +540,14 @@ export function ThemeModerationSection() {
                         <Flex align="center" gap="4px">
                           <Coins size={12} color="#facc15" />
                           <Text style={{ fontSize: "0.72rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                            Coin
+                            {t("admin.moderation.coinMethod")}
                           </Text>
                         </Flex>
                       ) : (
                         <Flex align="center" gap="4px">
                           <Landmark size={12} color="#4e7c6a" />
                           <Text style={{ fontSize: "0.72rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                            Chuyển khoản
+                            {t("admin.moderation.bankTransferMethod")}
                           </Text>
                         </Flex>
                       )}
@@ -568,14 +572,14 @@ export function ThemeModerationSection() {
                       <Box as="button"
                         onClick={(e: React.MouseEvent) => { e.stopPropagation(); openApproveTx(item); }}
                         display="flex" alignItems="center" justifyContent="center"
-                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Approve transaction"
+                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title={t("admin.moderation.approveTooltip")}
                         style={{ background: "rgba(74,222,128,0.12)", color: "#16a34a" }}>
                         <Check size={13} />
                       </Box>
                       <Box as="button"
                         onClick={(e: React.MouseEvent) => { e.stopPropagation(); openRejectTx(item); }}
                         display="flex" alignItems="center" justifyContent="center"
-                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Reject transaction"
+                        w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title={t("admin.moderation.rejectTooltip")}
                         style={{ background: "rgba(248,113,113,0.12)", color: "#dc2626" }}>
                         <X size={13} />
                       </Box>
@@ -584,7 +588,7 @@ export function ThemeModerationSection() {
                     <Box as="button"
                       onClick={(e: React.MouseEvent) => { e.stopPropagation(); openPricePublish(item); }}
                       display="flex" alignItems="center" justifyContent="center"
-                      w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Price & publish"
+                      w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title={t("admin.moderation.priceAndPublishTooltip")}
                       style={{ background: "rgba(192,132,252,0.12)", color: "#a855f7" }}>
                       <Coins size={13} />
                     </Box>
@@ -633,7 +637,7 @@ export function ThemeModerationSection() {
                   {/* Header */}
                   <Flex align="center" justify="space-between" mb={4}>
                     <Text style={{ fontSize: "0.9rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {queue === "pendingTx" ? "Buyout Request" : "Pricing Pool Item"}
+                      {queue === "pendingTx" ? t("admin.moderation.buyoutRequest") : t("admin.moderation.pricingPoolItem")}
                     </Text>
                     <Box as="button" onClick={closeDetail} style={closeBtnSt}>
                       <X size={13} />
@@ -649,7 +653,7 @@ export function ThemeModerationSection() {
                     ) : (
                       <Flex w="full" h="full" align="center" justify="center" direction="column" gap={2}>
                         <Palette size={32} style={{ color: c.textDim }} />
-                        <Text style={{ fontSize: "0.75rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>No preview</Text>
+                        <Text style={{ fontSize: "0.75rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.noPreview")}</Text>
                       </Flex>
                     )}
                   </Box>
@@ -667,24 +671,24 @@ export function ThemeModerationSection() {
                   {/* Meta */}
                   <Flex gap={6} mb={5} flexWrap="wrap">
                     <Box>
-                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>CREATOR</Text>
+                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>{t("admin.moderation.creator")}</Text>
                       <Text style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{detailItem.creatorUsername ?? "—"}</Text>
                     </Box>
                     <Box>
-                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>SUBMITTED</Text>
+                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>{t("admin.moderation.submitted")}</Text>
                       <Text style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{fmtDate(detailItem.createdAt)}</Text>
                     </Box>
                     {queue === "pendingTx" && (
                       <>
                         <Box>
-                          <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>GIÁ ĐỀ XUẤT</Text>
+                          <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>{t("admin.moderation.requestedPrice")}</Text>
                           <PriceDisplay item={detailItem} fontSize="0.82rem" color={c.textMuted} />
                         </Box>
                         {!wantsPayInCoins(detailItem) && (
                           <Box>
                             <Flex align="center" gap="4px" mb="2px">
                               <Landmark size={10} style={{ color: c.textDim }} />
-                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>NGÂN HÀNG</Text>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.bankLabel")}</Text>
                             </Flex>
                             <BankInfoDisplay item={detailItem} fontSize="0.82rem" color={c.textMuted} />
                           </Box>
@@ -697,7 +701,7 @@ export function ThemeModerationSection() {
                   {childLoading ? (
                     <Flex py={6} mb={4} borderRadius="9px" align="center" justify="center"
                       style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", border: `1px solid ${c.cardBorder}` }}>
-                      <Text style={{ fontSize: "0.8rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>Loading components…</Text>
+                      <Text style={{ fontSize: "0.8rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.loadingComponents")}</Text>
                     </Flex>
                   ) : childItems.length > 0 ? (() => {
                     const bgs      = childItems.filter(comp => comp.category === "Background");
@@ -709,7 +713,7 @@ export function ThemeModerationSection() {
                         {bgs.length > 0 && (
                           <Box mb={4}>
                             <Flex align="center" gap={2} mb={2}>
-                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>BACKGROUNDS</Text>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.backgroundsLabel")}</Text>
                               <Box px="6px" py="1px" borderRadius="full"
                                 style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)" }}>
                                 <Text style={{ fontSize: "0.6rem", color: "#60a5fa", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{bgs.length}</Text>
@@ -741,7 +745,7 @@ export function ThemeModerationSection() {
                         {stickers.length > 0 && (
                           <Box mb={4}>
                             <Flex align="center" gap={2} mb={2}>
-                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>STICKERS</Text>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.stickersLabel")}</Text>
                               <Box px="6px" py="1px" borderRadius="full"
                                 style={{ background: "rgba(251,146,60,0.12)", border: "1px solid rgba(251,146,60,0.3)" }}>
                                 <Text style={{ fontSize: "0.6rem", color: "#fb923c", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{stickers.length}</Text>
@@ -771,7 +775,7 @@ export function ThemeModerationSection() {
                         {sounds.length > 0 && (
                           <Box mb={2}>
                             <Flex align="center" gap={2} mb={2}>
-                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>AMBIENT SOUNDS</Text>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.moderation.ambientSoundsLabel")}</Text>
                               <Box px="6px" py="1px" borderRadius="full"
                                 style={{ background: "rgba(244,114,182,0.12)", border: "1px solid rgba(244,114,182,0.3)" }}>
                                 <Text style={{ fontSize: "0.6rem", color: "#f472b6", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{sounds.length}</Text>
@@ -790,7 +794,7 @@ export function ThemeModerationSection() {
                                   </Box>
                                   <Box flex={1} minW={0}>
                                     <Text style={{ fontSize: "0.8rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                      {sound.name ?? sound.assetUrl?.split("/").pop() ?? "Sound"}
+                                      {sound.name ?? sound.assetUrl?.split("/").pop() ?? t("admin.storeItems.unnamedSound")}
                                     </Text>
                                     {sound.assetUrl && (
                                       <Text style={{ fontSize: "0.65rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -810,7 +814,7 @@ export function ThemeModerationSection() {
                   {/* Decision */}
                   <Box mb={3} h="1px" style={{ background: c.border }} />
                   <Text mb={3} style={{ fontSize: "0.62rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    {queue === "pendingTx" ? "TRANSACTION DECISION" : "PRICING DECISION"}
+                    {queue === "pendingTx" ? t("admin.moderation.transactionDecision") : t("admin.moderation.pricingDecision")}
                   </Text>
                   {queue === "pendingTx" ? (
                     <Flex gap={2}>
@@ -819,14 +823,14 @@ export function ThemeModerationSection() {
                         flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
                         style={{ background: "rgba(74,222,128,0.12)", outline: "1px solid rgba(74,222,128,0.3)", color: "#16a34a", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                         <Check size={14} />
-                        Approve Transaction
+                        {t("admin.moderation.approveTransaction")}
                       </Box>
                       <Box as="button" onClick={() => openRejectTx(detailItem)}
                         display="flex" alignItems="center" justifyContent="center" gap={2}
                         flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
                         style={{ background: "rgba(248,113,113,0.12)", outline: "1px solid rgba(248,113,113,0.3)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                         <X size={14} />
-                        Reject Transaction
+                        {t("admin.moderation.rejectTransaction")}
                       </Box>
                     </Flex>
                   ) : (
@@ -835,7 +839,7 @@ export function ThemeModerationSection() {
                       w="100%" py="9px" borderRadius="9px" border="none" cursor="pointer"
                       style={{ background: "rgba(192,132,252,0.12)", outline: "1px solid rgba(192,132,252,0.3)", color: "#a855f7", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                       <Tag size={14} />
-                      Price & Publish
+                      {t("admin.moderation.priceAndPublish")}
                     </Box>
                   )}
                 </Box>
@@ -857,25 +861,25 @@ export function ThemeModerationSection() {
                 <Box style={modalBoxSt}>
                   <Flex align="center" justify="space-between" mb={4}>
                     <Text style={{ fontSize: "0.9rem", color: "#16a34a", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      Approve Transaction
+                      {t("admin.moderation.approveTransaction")}
                     </Text>
                     <Box as="button" onClick={() => !approveTxLoading && setApproveTxTarget(null)} style={closeBtnSt}>
                       <X size={13} />
                     </Box>
                   </Flex>
                   <Text mb={4} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Chuyển nhượng: <span style={{ color: c.text }}>{approveTxTarget.name}</span>
-                    {" "}({fmtPriceText(approveTxTarget)})
+                    {t("admin.moderation.transferringLabel")} <span style={{ color: c.text }}>{approveTxTarget.name}</span>
+                    {" "}({fmtPriceText(approveTxTarget, t)})
                   </Text>
                   <Box mb={4} px={3} py="10px" borderRadius="9px"
                     style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)", border: `1px solid ${c.cardBorder}` }}>
                     <Text style={{ fontSize: "0.62rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 6 }}>
-                      PHƯƠNG THỨC CREATOR YÊU CẦU
+                      {t("admin.moderation.requestedMethodLabel")}
                     </Text>
                     <Flex align="center" gap="6px">
                       {wantsPayInCoins(approveTxTarget) ? <Coins size={13} color="#facc15" /> : <Landmark size={13} color="#4e7c6a" />}
                       <Text style={{ fontSize: "0.8rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                        {wantsPayInCoins(approveTxTarget) ? "Coin (cộng thẳng vào ví)" : "Chuyển khoản ngân hàng"}
+                        {wantsPayInCoins(approveTxTarget) ? t("admin.moderation.coinMethodDesc") : t("admin.moderation.bankTransferDesc")}
                       </Text>
                     </Flex>
                     {!wantsPayInCoins(approveTxTarget) && (
@@ -885,20 +889,20 @@ export function ThemeModerationSection() {
                     )}
                   </Box>
                   <Box mb={5}>
-                    <Text as="label" style={labelSt}>GHI CHÚ GIAO DỊCH (tùy chọn)</Text>
+                    <Text as="label" style={labelSt}>{t("admin.moderation.transactionNoteLabel")}</Text>
                     <Box as="textarea" value={transactionNote} rows={3}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setTransactionNote(e.target.value)}
-                      placeholder="Ví dụ: đã chuyển khoản qua Vietcombank, mã GD..."
+                      placeholder={t("admin.moderation.transactionNotePlaceholder")}
                       style={{ ...inputSt, height: "auto", padding: "8px 12px", resize: "vertical" }} />
                   </Box>
                   <Flex justify="flex-end" gap={2}>
-                    <Box as="button" onClick={() => !approveTxLoading && setApproveTxTarget(null)} style={cancelBtnSt}>Cancel</Box>
+                    <Box as="button" onClick={() => !approveTxLoading && setApproveTxTarget(null)} style={cancelBtnSt}>{t("admin.moderation.cancel")}</Box>
                     <Box as="button" onClick={handleApproveTx} disabled={approveTxLoading}
                       display="flex" alignItems="center" gap={2}
                       px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
                       style={{ background: "rgba(74,222,128,0.15)", outline: "1px solid rgba(74,222,128,0.4)", color: "#16a34a", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: approveTxLoading ? 0.6 : 1 }}>
                       <Check size={13} />
-                      {approveTxLoading ? "Đang xử lý…" : "Approve"}
+                      {approveTxLoading ? t("admin.moderation.processing") : t("admin.moderation.approve")}
                     </Box>
                   </Flex>
                 </Box>
@@ -920,30 +924,30 @@ export function ThemeModerationSection() {
                 <Box style={modalBoxSt}>
                   <Flex align="center" justify="space-between" mb={4}>
                     <Text style={{ fontSize: "0.9rem", color: "#dc2626", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      Reject Transaction
+                      {t("admin.moderation.rejectModalTitle")}
                     </Text>
                     <Box as="button" onClick={() => !rejectTxLoading && setRejectTxTarget(null)} style={closeBtnSt}>
                       <X size={13} />
                     </Box>
                   </Flex>
                   <Text mb={4} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Rejecting: <span style={{ color: c.text }}>{rejectTxTarget.name}</span>
+                    {t("admin.moderation.rejectingLabel")} <span style={{ color: c.text }}>{rejectTxTarget.name}</span>
                   </Text>
                   <Box mb={5}>
-                    <Text as="label" style={labelSt}>REJECTION REASON *</Text>
+                    <Text as="label" style={labelSt}>{t("admin.moderation.rejectionReasonLabel")}</Text>
                     <Box as="textarea" value={rejectNote} rows={3}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setRejectNote(e.target.value)}
-                      placeholder="Explain why this submission is rejected…"
+                      placeholder={t("admin.moderation.rejectionReasonPlaceholder")}
                       style={{ ...inputSt, height: "auto", padding: "8px 12px", resize: "vertical" }} />
                   </Box>
                   <Flex justify="flex-end" gap={2}>
-                    <Box as="button" onClick={() => !rejectTxLoading && setRejectTxTarget(null)} style={cancelBtnSt}>Cancel</Box>
+                    <Box as="button" onClick={() => !rejectTxLoading && setRejectTxTarget(null)} style={cancelBtnSt}>{t("admin.moderation.cancel")}</Box>
                     <Box as="button" onClick={handleRejectTx} disabled={rejectTxLoading || !rejectNote.trim()}
                       display="flex" alignItems="center" gap={2}
                       px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
                       style={{ background: "rgba(248,113,113,0.15)", outline: "1px solid rgba(248,113,113,0.4)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: (rejectTxLoading || !rejectNote.trim()) ? 0.45 : 1 }}>
                       <X size={13} />
-                      {rejectTxLoading ? "Rejecting…" : "Reject"}
+                      {rejectTxLoading ? t("admin.moderation.rejecting") : t("admin.moderation.reject")}
                     </Box>
                   </Flex>
                 </Box>
@@ -965,30 +969,30 @@ export function ThemeModerationSection() {
                 <Box style={modalBoxSt}>
                   <Flex align="center" justify="space-between" mb={4}>
                     <Text style={{ fontSize: "0.9rem", color: "#a855f7", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      Price & Publish
+                      {t("admin.moderation.priceModalTitle")}
                     </Text>
                     <Box as="button" onClick={() => !priceLoading && setPriceTarget(null)} style={closeBtnSt}>
                       <X size={13} />
                     </Box>
                   </Flex>
                   <Text mb={4} style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Publishing: <span style={{ color: c.text }}>{priceTarget.name}</span>
+                    {t("admin.moderation.publishingLabel")} <span style={{ color: c.text }}>{priceTarget.name}</span>
                   </Text>
                   <Box mb={4}>
-                    <Text as="label" style={labelSt}>GIÁ BÁN (COIN) *</Text>
+                    <Text as="label" style={labelSt}>{t("admin.moderation.salePriceLabel")}</Text>
                     <Box as="input" value={finalCoinPrice}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFinalCoinPrice(e.target.value.replace(/[^0-9]/g, ""))}
                       placeholder="0"
                       style={inputSt} />
                   </Box>
                   <Flex justify="flex-end" gap={2}>
-                    <Box as="button" onClick={() => !priceLoading && setPriceTarget(null)} style={cancelBtnSt}>Cancel</Box>
+                    <Box as="button" onClick={() => !priceLoading && setPriceTarget(null)} style={cancelBtnSt}>{t("admin.moderation.cancel")}</Box>
                     <Box as="button" onClick={handlePricePublish} disabled={priceLoading || !canConfirmPrice}
                       display="flex" alignItems="center" gap={2}
                       px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
                       style={{ background: "rgba(192,132,252,0.15)", outline: "1px solid rgba(192,132,252,0.4)", color: "#a855f7", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: (priceLoading || !canConfirmPrice) ? 0.45 : 1 }}>
                       <Tag size={13} />
-                      {priceLoading ? "Publishing…" : "Publish"}
+                      {priceLoading ? t("admin.moderation.publishing") : t("admin.moderation.publish")}
                     </Box>
                   </Flex>
                 </Box>

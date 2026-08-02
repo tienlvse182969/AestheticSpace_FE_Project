@@ -528,7 +528,7 @@ export function MissionsSection() {
                       <Text mb="5px" style={{ fontSize: "0.7rem", color: c.cardTextMuted, letterSpacing: "0.06em" }}>
                         {t("admin.missions.fieldTrigger")}
                       </Text>
-                      <Input value={form.triggerKey} placeholder="e.g. pomodoro_complete"
+                      <Input value={form.triggerKey} placeholder={t("admin.missions.fieldTriggerPlaceholder")}
                         onChange={e => setForm(f => ({ ...f, triggerKey: e.target.value }))}
                         style={inputStyle}
                         _placeholder={{ color: c.textSub } as any}

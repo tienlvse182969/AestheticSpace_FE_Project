@@ -5,6 +5,7 @@ import {
   BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from "recharts";
+import { useTranslation } from "react-i18next";
 import { useAdminTheme } from "./AdminThemeContext";
 import {
   analyticsAdminService,
@@ -29,10 +30,17 @@ const PROVIDER_OPTIONS: (PaymentProvider | "")[] = ["", "VNPay", "SePay", "PayOS
 const STATUS_OPTIONS: (PaymentStatus | "")[] = ["", "Pending", "Succeeded", "Failed", "Cancelled"];
 const PURPOSE_OPTIONS: (PaymentPurpose | "")[] = ["", "Subscription", "BuyCoins", "BuyAsset"];
 
-const PURPOSE_LABEL: Record<PaymentPurpose, string> = {
-  Subscription: "Subscription",
-  BuyCoins: "Coin Pack",
-  BuyAsset: "Asset",
+const PURPOSE_LABEL_KEY: Record<PaymentPurpose, string> = {
+  Subscription: "admin.revenue.purposeSubscription",
+  BuyCoins: "admin.revenue.purposeCoinPack",
+  BuyAsset: "admin.revenue.purposeAsset",
+};
+
+const STATUS_LABEL_KEY: Record<PaymentStatus, string> = {
+  Succeeded: "admin.revenue.statusSucceeded",
+  Pending: "admin.revenue.statusPending",
+  Failed: "admin.revenue.statusFailed",
+  Cancelled: "admin.revenue.statusCancelled",
 };
 
 const PAYMENT_STATUS_STYLE: Record<PaymentStatus, { color: string; bg: string; border: string }> = {
@@ -89,6 +97,7 @@ type TrendTooltipProps = {
 };
 
 function TrendTooltip({ active, payload, panelBg, panelBorder, panelShadow, textMuted }: TrendTooltipProps) {
+  const { t } = useTranslation();
   if (!active || !payload?.length) return null;
   const d = payload[0].payload;
   return (
@@ -101,7 +110,7 @@ function TrendTooltip({ active, payload, panelBg, panelBorder, panelShadow, text
         {fmtVnd(d.amountVnd)}
       </Text>
       <Text style={{ fontSize: "0.65rem", color: textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-        {d.transactions} transaction{d.transactions !== 1 ? "s" : ""}
+        {t("admin.revenue.transactionCount", { count: d.transactions })}
       </Text>
     </Box>
   );
@@ -110,6 +119,7 @@ function TrendTooltip({ active, payload, panelBg, panelBorder, panelShadow, text
 // ── component ─────────────────────────────────────────────────────────────────
 
 export function RevenueSection() {
+  const { t } = useTranslation();
   const { c } = useAdminTheme();
 
   const [summary,        setSummary]        = useState<AdminRevenueSummary | null>(null);
@@ -161,20 +171,24 @@ export function RevenueSection() {
 
       await downloadXlsx(`admin-revenue-${days}d-${new Date().toISOString().slice(0, 10)}.xlsx`, [
         {
-          name: "Revenue Trend",
-          headers: ["Date", "Revenue (VND)", "Transactions"],
-          rows: filledTrendData.map(t => [t.date, t.amountVnd, t.transactions]),
+          name: t("admin.revenue.exportSheetTrend"),
+          headers: [t("admin.revenue.exportColDate"), t("admin.revenue.exportColRevenue"), t("admin.revenue.exportColTransactions")],
+          rows: filledTrendData.map(row => [row.date, row.amountVnd, row.transactions]),
         },
         {
-          name: "Transaction History",
-          headers: ["User", "Email", "Provider", "Purpose", "Amount (VND)", "Status", "Date"],
+          name: t("admin.revenue.exportSheetHistory"),
+          headers: [
+            t("admin.revenue.exportColUser"), t("admin.revenue.exportColEmail"), t("admin.revenue.exportColProvider"),
+            t("admin.revenue.exportColPurpose"), t("admin.revenue.exportColAmount"), t("admin.revenue.exportColStatus"),
+            t("admin.revenue.exportColDate"),
+          ],
           rows: allPayments.map(p => [
             p.username ?? "",
             p.email ?? "",
             p.provider,
-            PURPOSE_LABEL[p.purpose],
+            t(PURPOSE_LABEL_KEY[p.purpose]),
             p.amount,
-            p.status,
+            t(STATUS_LABEL_KEY[p.status]),
             fmtDateTime(p.createdAt),
           ]),
         },
@@ -245,9 +259,9 @@ export function RevenueSection() {
         setPaymentsHasNext(result.hasNext);
         setPaymentsHasPrev(result.hasPrevious);
       })
-      .catch(() => setPaymentsError("Failed to load transaction history."))
+      .catch(() => setPaymentsError(t("admin.revenue.errorLoad")))
       .finally(() => setPaymentsLoading(false));
-  }, [search, providerFilter, statusFilter, purposeFilter, paymentsPage]);
+  }, [search, providerFilter, statusFilter, purposeFilter, paymentsPage, t]);
 
   useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
@@ -262,7 +276,7 @@ export function RevenueSection() {
   const peakEntry = filledTrend.find(t => t.amountVnd === maxVnd);
   const avgDaily  = filledTrend.length ? totalVnd / filledTrend.length : 0;
 
-  const chartData = filledTrend.map(t => ({ ...t, displayDate: fmtDay(t.date) }));
+  const chartData = filledTrend.map(row => ({ ...row, displayDate: fmtDay(row.date) }));
 
   // 6 evenly spaced Y-axis ticks from 0 up to the highest bar's value
   const yTicks = Array.from({ length: 6 }, (_, i) => Math.round((maxVnd * i) / 5));
@@ -278,27 +292,27 @@ export function RevenueSection() {
   // ── stat cards config ───────────────────────────────────────────────────────
   const cards = [
     {
-      label: "Total Revenue",
+      label: t("admin.revenue.totalRevenue"),
       value: summary?.totalRevenueVnd,
-      sub:   `${summary?.totalTransactions ?? 0} transactions`,
+      sub:   t("admin.revenue.transactionsCount", { count: summary?.totalTransactions ?? 0 }),
       icon:  DollarSign,
       color: "#16a34a",
       bg:    "rgba(74,222,128,0.1)",
       border:"rgba(74,222,128,0.2)",
     },
     {
-      label: "Subscriptions",
+      label: t("admin.revenue.subscriptions"),
       value: summary?.subscriptionRevenueVnd,
-      sub:   `${subscriptionTxCount} transactions`,
+      sub:   t("admin.revenue.transactionsCount", { count: subscriptionTxCount }),
       icon:  Crown,
       color: "#7c3aed",
       bg:    "rgba(167,139,250,0.1)",
       border:"rgba(167,139,250,0.2)",
     },
     {
-      label: "Coin Packs",
+      label: t("admin.revenue.coinPacks"),
       value: summary?.coinPackRevenueVnd,
-      sub:   `${coinPackTxCount} transactions`,
+      sub:   t("admin.revenue.transactionsCount", { count: coinPackTxCount }),
       icon:  Coins,
       color: "#d97706",
       bg:    "rgba(251,191,36,0.1)",
@@ -350,10 +364,10 @@ export function RevenueSection() {
         <Flex align="center" justify="space-between" mb={6}>
           <Box>
             <Text style={{ fontSize: "0.6rem", letterSpacing: "0.12em", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              REVENUE TREND
+              {t("admin.revenue.trendLabel")}
             </Text>
             <Text style={{ fontSize: "0.95rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
-              Daily Revenue (VNĐ)
+              {t("admin.revenue.dailyRevenue")}
             </Text>
           </Box>
           <Flex align="center" gap={3}>
@@ -399,7 +413,7 @@ export function RevenueSection() {
                 _hover={{ background: c.navActive } as any}
               >
                 {exporting ? <Spinner size="xs" /> : <FileSpreadsheet size={13} />}
-                <Text style={{ fontSize: "0.68rem", whiteSpace: "nowrap", fontFamily: "'HarmonyOS Sans', sans-serif" }}>Export Excel</Text>
+                <Text style={{ fontSize: "0.68rem", whiteSpace: "nowrap", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.revenue.exportExcel")}</Text>
                 <ChevronDown size={12} />
               </Box>
 
@@ -427,7 +441,7 @@ export function RevenueSection() {
                       style={{ background: "transparent", color: c.cardText }}
                       _hover={{ background: "rgba(255,255,255,0.05)" } as any}
                     >
-                      <Text style={{ fontSize: "0.8rem" }}>Last {d} days</Text>
+                      <Text style={{ fontSize: "0.8rem" }}>{t("admin.revenue.lastDays", { days: d })}</Text>
                     </Box>
                   ))}
                 </Box>
@@ -440,7 +454,7 @@ export function RevenueSection() {
         {loadingTrend ? (
           <Flex h={`${CHART_H}px`} align="center" justify="center">
             <Text style={{ fontSize: "0.8rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              Loading…
+              {t("admin.revenue.loading")}
             </Text>
           </Flex>
         ) : (
@@ -490,22 +504,22 @@ export function RevenueSection() {
             <Flex gap={6} mt={5} pt={4} style={{ borderTop: `1px solid ${c.rowDivider}` }}>
               {[
                 {
-                  label: "PEAK DAY",
+                  label: t("admin.revenue.peakDay"),
                   value: peakEntry ? `${fmtDay(peakEntry.date)} · ${fmtVnd(peakEntry.amountVnd)}` : "—",
                   color: "#16a34a",
                 },
                 {
-                  label: "AVG DAILY",
+                  label: t("admin.revenue.avgDaily"),
                   value: fmtVnd(Math.round(avgDaily)),
                   color: c.textMuted,
                 },
                 {
-                  label: "PERIOD TOTAL",
+                  label: t("admin.revenue.periodTotal"),
                   value: fmtVnd(totalVnd),
                   color: "#4e7c6a",
                 },
                 {
-                  label: "TRANSACTIONS",
+                  label: t("admin.revenue.transactions"),
                   value: totalTx.toLocaleString(),
                   color: c.textMuted,
                 },
@@ -529,10 +543,10 @@ export function RevenueSection() {
         <Flex align="center" justify="space-between" mb={5}>
           <Box>
             <Text style={{ fontSize: "0.6rem", letterSpacing: "0.12em", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-              TRANSACTION HISTORY
+              {t("admin.revenue.transactionHistory")}
             </Text>
             <Text style={{ fontSize: "0.95rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 2 }}>
-              All Payments
+              {t("admin.revenue.allPayments")}
             </Text>
           </Box>
           <Box as="button" onClick={() => fetchPayments()}
@@ -551,7 +565,7 @@ export function RevenueSection() {
               <Search size={14} style={{ color: c.textDim }} />
             </Box>
             <Input
-              placeholder="Search by username, email, transaction code..."
+              placeholder={t("admin.revenue.searchPlaceholder")}
               value={searchInput}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchInput(e.target.value)}
               style={{
@@ -571,7 +585,7 @@ export function RevenueSection() {
             }}>
             {PROVIDER_OPTIONS.map(p => (
               <option key={p || "all"} value={p} style={{ color: "#111", background: "#fff" }}>
-                {p || "All Providers"}
+                {p || t("admin.revenue.allProviders")}
               </option>
             ))}
           </select>
@@ -584,7 +598,7 @@ export function RevenueSection() {
             }}>
             {STATUS_OPTIONS.map(s => (
               <option key={s || "all"} value={s} style={{ color: "#111", background: "#fff" }}>
-                {s || "All Statuses"}
+                {s ? t(STATUS_LABEL_KEY[s]) : t("admin.revenue.allStatuses")}
               </option>
             ))}
           </select>
@@ -597,7 +611,7 @@ export function RevenueSection() {
             }}>
             {PURPOSE_OPTIONS.map(p => (
               <option key={p || "all"} value={p} style={{ color: "#111", background: "#fff" }}>
-                {p ? PURPOSE_LABEL[p] : "All Purposes"}
+                {p ? t(PURPOSE_LABEL_KEY[p]) : t("admin.revenue.allPurposes")}
               </option>
             ))}
           </select>
@@ -606,7 +620,10 @@ export function RevenueSection() {
         {/* Table */}
         <Box borderRadius="12px" overflow="hidden" style={{ border: `1px solid ${c.cardBorder}` }}>
           <Flex px={4} py={3} style={{ background: c.cardBg, borderBottom: `1px solid ${c.cardBorder}` }}>
-            {["User", "Provider", "Purpose", "Amount", "Status", "Date"].map((h, i) => (
+            {[
+              t("admin.revenue.colUser"), t("admin.revenue.colProvider"), t("admin.revenue.colPurpose"),
+              t("admin.revenue.colAmount"), t("admin.revenue.colStatus"), t("admin.revenue.colDate"),
+            ].map((h, i) => (
               <Text key={h} style={{
                 fontSize: "0.65rem", color: c.cardTextMuted, letterSpacing: "0.1em",
                 flex: [2, 1, 1, 1.2, 1, 1.4][i],
@@ -619,7 +636,7 @@ export function RevenueSection() {
           {paymentsLoading ? (
             <Flex align="center" justify="center" py={12} gap={3}>
               <Spinner size="sm" style={{ color: "#4e7c6a" }} />
-              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>Loading transactions…</Text>
+              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>{t("admin.revenue.loadingTransactions")}</Text>
             </Flex>
           ) : paymentsError ? (
             <Flex align="center" justify="center" py={10} direction="column" gap={3}>
@@ -629,12 +646,12 @@ export function RevenueSection() {
                 border: "1px solid rgba(78,124,106,0.4)", borderRadius: "8px",
                 padding: "6px 16px", cursor: "pointer",
               }}>
-                Retry
+                {t("admin.revenue.retry")}
               </Box>
             </Flex>
           ) : payments.length === 0 ? (
             <Flex align="center" justify="center" py={10}>
-              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>No transactions found</Text>
+              <Text style={{ fontSize: "0.82rem", color: c.cardTextMuted }}>{t("admin.revenue.noTransactions")}</Text>
             </Flex>
           ) : (
             payments.map((p, i) => {
@@ -651,13 +668,13 @@ export function RevenueSection() {
                     </Text>
                   </Box>
                   <Text style={{ flex: 1, fontSize: "0.78rem", color: c.cardTextMuted }}>{p.provider}</Text>
-                  <Text style={{ flex: 1, fontSize: "0.78rem", color: c.cardTextMuted }}>{PURPOSE_LABEL[p.purpose]}</Text>
+                  <Text style={{ flex: 1, fontSize: "0.78rem", color: c.cardTextMuted }}>{t(PURPOSE_LABEL_KEY[p.purpose])}</Text>
                   <Text style={{ flex: 1.2, fontSize: "0.8rem", color: c.cardText, fontWeight: 600 }}>{fmtVnd(p.amount)}</Text>
                   <Box style={{ flex: 1 }}>
                     <Flex align="center" gap="5px" display="inline-flex" borderRadius="full" px={2} py="2px"
                       style={{ background: st.bg, border: `1px solid ${st.border}` }}>
                       <Box w="5px" h="5px" borderRadius="full" flexShrink={0} style={{ background: st.color }} />
-                      <Text style={{ fontSize: "0.65rem", color: st.color }}>{p.status}</Text>
+                      <Text style={{ fontSize: "0.65rem", color: st.color }}>{t(STATUS_LABEL_KEY[p.status])}</Text>
                     </Flex>
                   </Box>
                   <Text style={{ flex: 1.4, fontSize: "0.75rem", color: c.cardTextMuted }}>{fmtDateTime(p.createdAt)}</Text>
@@ -670,7 +687,7 @@ export function RevenueSection() {
         {/* Footer: count + pagination */}
         <Flex align="center" justify="space-between" mt={3}>
           <Text style={{ fontSize: "0.72rem", color: c.cardTextMuted }}>
-            {paymentsLoading ? "Loading…" : `Showing ${payments.length} of ${paymentsTotalCount} transactions`}
+            {paymentsLoading ? t("admin.revenue.loading") : t("admin.revenue.showing", { shown: payments.length, total: paymentsTotalCount })}
           </Text>
 
           {paymentsTotalPages > 1 && (

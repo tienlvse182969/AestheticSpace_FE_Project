@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import { Plus, Edit2, Trash2, Eye, EyeOff, Check, X, ChevronLeft, ChevronRight, Palette, Image, Sticker, Zap, Volume2, Upload, Music, Play, Pause, Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   adminStoreService,
   AdminStoreItemDto,
@@ -15,32 +16,32 @@ import { useAdminTheme } from "./AdminThemeContext";
 
 const MotionBox = motion.create(Box);
 
-const CATEGORY_META: Record<StoreCategory, { label: string; color: string; icon: React.ComponentType<{ size?: number }> }> = {
-  Theme:        { label: "Theme",         color: "#a78bfa", icon: Palette  },
-  Background:   { label: "Background",    color: "#60a5fa", icon: Image    },
-  Sticker:      { label: "Sticker",       color: "#fb923c", icon: Sticker  },
-  Effect:       { label: "Effect",        color: "#34d399", icon: Zap      },
-  AmbientSound: { label: "Ambient Sound", color: "#f472b6", icon: Volume2  },
+const CATEGORY_META: Record<StoreCategory, { labelKey: string; color: string; icon: React.ComponentType<{ size?: number }> }> = {
+  Theme:        { labelKey: "admin.storeItems.categoryTheme",        color: "#a78bfa", icon: Palette  },
+  Background:   { labelKey: "admin.storeItems.categoryBackground",   color: "#60a5fa", icon: Image    },
+  Sticker:      { labelKey: "admin.storeItems.categorySticker",      color: "#fb923c", icon: Sticker  },
+  Effect:       { labelKey: "admin.storeItems.categoryEffect",       color: "#34d399", icon: Zap      },
+  AmbientSound: { labelKey: "admin.storeItems.categoryAmbientSound", color: "#f472b6", icon: Volume2  },
 };
 
-const STATUS_META: Record<StoreItemStatus, { label: string; color: string; bg: string }> = {
-  AdminCreated:            { label: "Admin",            color: "#94a3b8", bg: "rgba(148,163,184,0.12)" },
-  PendingReview:           { label: "Pending",           color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
-  PendingTransaction:      { label: "Buyout Pending",    color: "#38bdf8", bg: "rgba(56,189,248,0.12)"  },
-  PurchasedPendingPricing: { label: "Pricing Pool",      color: "#c084fc", bg: "rgba(192,132,252,0.12)" },
-  Approved:                { label: "Approved",          color: "#4ade80", bg: "rgba(74,222,128,0.12)"  },
-  Rejected:                { label: "Rejected",          color: "#f87171", bg: "rgba(248,113,113,0.12)" },
+const STATUS_META: Record<StoreItemStatus, { labelKey: string; color: string; bg: string }> = {
+  AdminCreated:            { labelKey: "admin.storeItems.statusAdmin",         color: "#94a3b8", bg: "rgba(148,163,184,0.12)" },
+  PendingReview:           { labelKey: "admin.storeItems.statusPending",       color: "#fbbf24", bg: "rgba(251,191,36,0.12)"  },
+  PendingTransaction:      { labelKey: "admin.storeItems.statusBuyoutPending", color: "#38bdf8", bg: "rgba(56,189,248,0.12)"  },
+  PurchasedPendingPricing: { labelKey: "admin.storeItems.statusPricingPool",   color: "#c084fc", bg: "rgba(192,132,252,0.12)" },
+  Approved:                { labelKey: "admin.storeItems.statusApproved",     color: "#4ade80", bg: "rgba(74,222,128,0.12)"  },
+  Rejected:                { labelKey: "admin.storeItems.statusRejected",     color: "#f87171", bg: "rgba(248,113,113,0.12)" },
 };
 
 type TabType = "all" | StoreCategory;
 
-const TABS: { key: TabType; label: string }[] = [
-  { key: "all",          label: "All"         },
-  { key: "Theme",        label: "Themes"      },
-  { key: "Background",   label: "Backgrounds" },
-  { key: "Sticker",      label: "Stickers"    },
-  { key: "Effect",       label: "Effects"     },
-  { key: "AmbientSound", label: "Ambient"     },
+const TABS: { key: TabType; labelKey: string }[] = [
+  { key: "all",          labelKey: "admin.storeItems.tabAll"          },
+  { key: "Theme",        labelKey: "admin.storeItems.tabThemes"      },
+  { key: "Background",   labelKey: "admin.storeItems.tabBackgrounds" },
+  { key: "Sticker",      labelKey: "admin.storeItems.tabStickers"    },
+  { key: "Effect",       labelKey: "admin.storeItems.tabEffects"     },
+  { key: "AmbientSound", labelKey: "admin.storeItems.tabAmbient"     },
 ];
 
 const EMPTY_FORM = {
@@ -127,6 +128,7 @@ function FileUploadField({ accept, label, value, folder, onChange, onError, exis
   onError: (msg: string) => void;
   existingId?: string;
 }) {
+  const { t } = useTranslation();
   const { c, isDark } = useAdminTheme();
   const [progress, setProgress] = useState<number | null>(null);
   const isImage = accept.startsWith("image");
@@ -145,7 +147,7 @@ function FileUploadField({ accept, label, value, folder, onChange, onError, exis
       const result = await uploadToCloudinary(file, folder, pct => setProgress(pct));
       onChange(result.secure_url);
     } catch (err: any) {
-      onError(err.message ?? "Upload failed");
+      onError(err.message ?? t("admin.storeItems.uploadFailed"));
     } finally {
       setProgress(null);
       e.target.value = "";
@@ -157,7 +159,7 @@ function FileUploadField({ accept, label, value, folder, onChange, onError, exis
       <Text as="label" style={labelSt}>{label}</Text>
       {existingId && !value && (
         <Text style={{ fontSize: "0.68rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4, display: "block" }}>
-          Currently linked · Upload to replace
+          {t("admin.storeItems.currentlyLinked")}
         </Text>
       )}
       {value && isImage && (
@@ -180,7 +182,7 @@ function FileUploadField({ accept, label, value, folder, onChange, onError, exis
         style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}`, color: c.textMuted, opacity: progress !== null ? 0.6 : 1 }}>
         <Upload size={13} />
         <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-          {value ? "Change file" : "Choose file"}
+          {value ? t("admin.storeItems.changeFile") : t("admin.storeItems.chooseFile")}
         </Text>
         <Box as="input" id={inputId} type="file" accept={accept}
           onChange={handleFile} style={{ display: "none" }} />
@@ -202,6 +204,7 @@ function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
   onError: (msg: string) => void;
   max?: number;
 }) {
+  const { t } = useTranslation();
   const { c, isDark } = useAdminTheme();
   const [progress, setProgress] = useState<number | null>(null);
   const inputId = "multi-preview-upload";
@@ -225,7 +228,7 @@ function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
       }
       onChange([...values, ...newUrls]);
     } catch (err: any) {
-      onError(err.message ?? "Upload failed");
+      onError(err.message ?? t("admin.storeItems.uploadFailed"));
     } finally {
       setProgress(null);
       e.target.value = "";
@@ -236,7 +239,7 @@ function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
 
   return (
     <Box mb={3}>
-      <Text as="label" style={labelSt}>PREVIEW IMAGES (Optional · max {max})</Text>
+      <Text as="label" style={labelSt}>{t("admin.storeItems.previewImagesLabel", { max })}</Text>
       {values.length > 0 && (
         <Flex gap="8px" flexWrap="wrap" mb={2}>
           {values.map((url, idx) => (
@@ -263,7 +266,7 @@ function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
           style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}`, color: c.textMuted, opacity: progress !== null ? 0.6 : 1 }}>
           <Upload size={13} />
           <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            Add preview
+            {t("admin.storeItems.addPreview")}
           </Text>
           <input id={inputId} type="file" accept="image/*" multiple
             onChange={handleFiles} style={{ display: "none" }} />
@@ -284,6 +287,7 @@ function MultiImageUpload({ label, values, folder, onChange, onError, existingId
   label: string; values: string[]; folder: string;
   onChange: (urls: string[]) => void; onError: (msg: string) => void; existingId?: string;
 }) {
+  const { t } = useTranslation();
   const { c, isDark } = useAdminTheme();
   const [progress, setProgress] = useState<number | null>(null);
   const uid = `multi-img-${label.replace(/\s+/g,"-").toLowerCase()}`;
@@ -307,7 +311,7 @@ function MultiImageUpload({ label, values, folder, onChange, onError, existingId
       }
       onChange([...values, ...newUrls]);
     } catch (err: any) {
-      onError(err.message ?? "Upload failed");
+      onError(err.message ?? t("admin.storeItems.uploadFailed"));
     } finally { setProgress(null); e.target.value = ""; }
   };
 
@@ -318,7 +322,7 @@ function MultiImageUpload({ label, values, folder, onChange, onError, existingId
       <Text as="label" style={labelSt}>{label}</Text>
       {existingId && values.length === 0 && (
         <Text style={{ fontSize: "0.68rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4, display: "block" }}>
-          1 item currently linked · Upload to replace
+          {t("admin.storeItems.itemLinked")}
         </Text>
       )}
       {values.length > 0 && (
@@ -342,7 +346,7 @@ function MultiImageUpload({ label, values, folder, onChange, onError, existingId
         style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}`, color: c.textMuted, opacity: progress !== null ? 0.6 : 1 }}>
         <Upload size={13} />
         <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-          {values.length === 0 ? "Choose file" : "Add more"}
+          {values.length === 0 ? t("admin.storeItems.chooseFile") : t("admin.storeItems.addMore")}
         </Text>
         <input id={uid} type="file" accept="image/*" multiple onChange={handleFiles} style={{ display: "none" }} />
       </Box>
@@ -361,6 +365,7 @@ function MultiAudioUpload({ label, values, folder, onChange, onError, existingId
   label: string; values: string[]; folder: string;
   onChange: (urls: string[]) => void; onError: (msg: string) => void; existingId?: string;
 }) {
+  const { t } = useTranslation();
   const { c, isDark } = useAdminTheme();
   const [progress, setProgress] = useState<number | null>(null);
   const uid = `multi-aud-${label.replace(/\s+/g,"-").toLowerCase()}`;
@@ -384,7 +389,7 @@ function MultiAudioUpload({ label, values, folder, onChange, onError, existingId
       }
       onChange([...values, ...newUrls]);
     } catch (err: any) {
-      onError(err.message ?? "Upload failed");
+      onError(err.message ?? t("admin.storeItems.uploadFailed"));
     } finally { setProgress(null); e.target.value = ""; }
   };
 
@@ -395,7 +400,7 @@ function MultiAudioUpload({ label, values, folder, onChange, onError, existingId
       <Text as="label" style={labelSt}>{label}</Text>
       {existingId && values.length === 0 && (
         <Text style={{ fontSize: "0.68rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4, display: "block" }}>
-          1 item currently linked · Upload to replace
+          {t("admin.storeItems.itemLinked")}
         </Text>
       )}
       {values.length > 0 && (
@@ -422,7 +427,7 @@ function MultiAudioUpload({ label, values, folder, onChange, onError, existingId
         style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}`, color: c.textMuted, opacity: progress !== null ? 0.6 : 1 }}>
         <Upload size={13} />
         <Text style={{ fontSize: "0.78rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-          {values.length === 0 ? "Choose file" : "Add more"}
+          {values.length === 0 ? t("admin.storeItems.chooseFile") : t("admin.storeItems.addMore")}
         </Text>
         <input id={uid} type="file" accept="audio/*" multiple onChange={handleFiles} style={{ display: "none" }} />
       </Box>
@@ -439,6 +444,7 @@ function MultiAudioUpload({ label, values, folder, onChange, onError, existingId
 /* ── Main section ──────────────────────────────────────────────────────── */
 
 export function ThemesSection() {
+  const { t } = useTranslation();
   const { c, isDark } = useAdminTheme();
 
   /* Derived styles that depend on the theme */
@@ -603,7 +609,7 @@ export function ThemesSection() {
 
   /* ── CRUD ─────────────────────────────────────────────────────────────── */
   const handleFormSave = async () => {
-    if (!form.name.trim()) { setFormError("Name is required."); return; }
+    if (!form.name.trim()) { setFormError(t("admin.storeItems.nameRequired")); return; }
 
     const coinNum = Number(form.coinPrice);
     const vndNum  = Number(form.realMoneyPriceVnd);
@@ -611,7 +617,7 @@ export function ThemesSection() {
     const vndInvalid  = !form.realMoneyPriceVnd.trim() || isNaN(vndNum) || vndNum <= 0;
     if (coinInvalid || vndInvalid) {
       setPriceErrors({ coin: coinInvalid, vnd: vndInvalid });
-      setFormError("Coin Price and VND Price are required and must be greater than 0.");
+      setFormError(t("admin.storeItems.priceRequired"));
       return;
     }
 
@@ -693,7 +699,7 @@ export function ThemesSection() {
       }
       setShowForm(false);
     } catch (e: any) {
-      setFormError(e?.response?.data?.message ?? "Failed to save item.");
+      setFormError(e?.response?.data?.message ?? t("admin.storeItems.saveFailed"));
     } finally {
       setFormLoading(false);
     }
@@ -794,7 +800,7 @@ export function ThemesSection() {
             {displayItems.length}
           </Text>
           <Text style={{ fontSize: "0.68rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            Total Items
+            {t("admin.storeItems.totalItems")}
           </Text>
         </Box>
 
@@ -802,27 +808,27 @@ export function ThemesSection() {
           px={4} py="10px" borderRadius="9px" border="none" cursor="pointer" transition="all 0.2s"
           style={{ background: "rgba(78,124,106,0.18)", outline: "1px solid rgba(78,124,106,0.35)", color: "#4e7c6a" }}>
           <Plus size={15} />
-          <Text style={{ fontSize: "0.82rem", color: "#4e7c6a", fontFamily: "'HarmonyOS Sans', sans-serif" }}>Add Item</Text>
+          <Text style={{ fontSize: "0.82rem", color: "#4e7c6a", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.storeItems.addItem")}</Text>
         </Box>
       </Flex>
 
       {/* Tabs */}
       <Flex gap="2px" mb={5} p="3px" borderRadius="10px" flexWrap="wrap"
         style={{ background: c.chipBg, border: `1px solid ${c.chipBorder}`, width: "fit-content" }}>
-        {TABS.map(t => (
-          <Box key={t.key} as="button" onClick={() => changeTab(t.key)}
+        {TABS.map(tabItem => (
+          <Box key={tabItem.key} as="button" onClick={() => changeTab(tabItem.key)}
             px={3} py="6px" borderRadius="7px" border="none" cursor="pointer" transition="all 0.15s"
             style={{
-              background: tab === t.key ? c.navActive : "transparent",
-              outline:    tab === t.key ? `1px solid ${c.navActiveBorder}` : "1px solid transparent",
+              background: tab === tabItem.key ? c.navActive : "transparent",
+              outline:    tab === tabItem.key ? `1px solid ${c.navActiveBorder}` : "1px solid transparent",
             }}>
             <Flex align="center" gap="5px">
               <Text style={{
                 fontSize:   "0.78rem",
-                color:      tab === t.key ? c.accent : c.textMuted,
+                color:      tab === tabItem.key ? c.accent : c.textMuted,
                 fontFamily: "'HarmonyOS Sans', sans-serif",
               }}>
-                {t.label}
+                {t(tabItem.labelKey)}
               </Text>
             </Flex>
           </Box>
@@ -842,7 +848,7 @@ export function ThemesSection() {
         <input
           value={searchQuery}
           onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
-          placeholder="Search items…"
+          placeholder={t("admin.storeItems.searchPlaceholder")}
           style={{
             flex: 1,
             background: "transparent",
@@ -868,12 +874,12 @@ export function ThemesSection() {
       {/* Table */}
       {loading ? (
         <Flex justify="center" py={14}>
-          <Text style={{ color: c.textMuted, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>Loading…</Text>
+          <Text style={{ color: c.textMuted, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.storeItems.loading")}</Text>
         </Flex>
       ) : pagedItems.length === 0 ? (
         <Flex justify="center" py={14}>
           <Text style={{ color: c.textDim, fontSize: "0.85rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-            No items found
+            {t("admin.storeItems.noItems")}
           </Text>
         </Flex>
       ) : (
@@ -882,15 +888,15 @@ export function ThemesSection() {
           {/* Header */}
           <Flex px={4} py={3} style={{ borderBottom: `1px solid ${c.rowDivider}` }}>
             {[
-              { label: "ITEM",     flex: 3 },
-              { label: "CATEGORY", flex: 1 },
-              { label: "STATUS",   flex: 1 },
-              { label: "PRICE",  flex: 1 },
-              { label: "ACTIVE", flex: 1 },
+              { label: t("admin.storeItems.colItem"),     flex: 3 },
+              { label: t("admin.storeItems.colCategory"), flex: 1 },
+              { label: t("admin.storeItems.colStatus"),   flex: 1 },
+              { label: t("admin.storeItems.colPrice"),    flex: 1 },
+              { label: t("admin.storeItems.colActive"),   flex: 1 },
             ].map(col => (
               <Box key={col.label} flex={col.flex}>
                 <Text style={{ fontSize: "0.65rem", color: c.textDim, letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                  {col.label}
+                  {col.label.toUpperCase()}
                 </Text>
               </Box>
             ))}
@@ -938,7 +944,7 @@ export function ThemesSection() {
                     </Text>
                     {item.isPremium && (
                       <Text style={{ fontSize: "0.62rem", color: "#a78bfa", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                        Premium
+                        {t("admin.storeItems.premiumBadge")}
                       </Text>
                     )}
                   </Box>
@@ -949,7 +955,7 @@ export function ThemesSection() {
                   <Box display="inline-flex" borderRadius="full" px="8px" py="2px"
                     style={{ background: `${catMeta.color}18`, border: `1px solid ${catMeta.color}35` }}>
                     <Text style={{ fontSize: "0.65rem", color: catMeta.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {catMeta.label}
+                      {t(catMeta.labelKey)}
                     </Text>
                   </Box>
                 </Box>
@@ -959,7 +965,7 @@ export function ThemesSection() {
                   <Box display="inline-flex" borderRadius="full" px="8px" py="2px"
                     style={{ background: statusMeta.bg, border: `1px solid ${statusMeta.color}35` }}>
                     <Text style={{ fontSize: "0.65rem", color: statusMeta.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {statusMeta.label}
+                      {t(statusMeta.labelKey)}
                     </Text>
                   </Box>
                 </Box>
@@ -968,7 +974,7 @@ export function ThemesSection() {
                 <Box flex={1}>
                   {item.coinPrice ? (
                     <Text style={{ fontSize: "0.78rem", color: "#d97706", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {item.coinPrice} coins
+                      {t("admin.storeItems.priceCoins", { n: item.coinPrice })}
                     </Text>
                   ) : item.realMoneyPriceVnd ? (
                     <Text style={{ fontSize: "0.78rem", color: "#16a34a", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
@@ -976,7 +982,7 @@ export function ThemesSection() {
                     </Text>
                   ) : (
                     <Text style={{ fontSize: "0.78rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      Free
+                      {t("admin.storeItems.priceFree")}
                     </Text>
                   )}
                 </Box>
@@ -994,20 +1000,20 @@ export function ThemesSection() {
                 <Flex w="96px" justify="flex-end" gap="4px">
                   <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); openEdit(item); }}
                     display="flex" alignItems="center" justifyContent="center"
-                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Edit"
+                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title={t("admin.storeItems.editTooltip")}
                     style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", color: c.textMuted }}>
                     <Edit2 size={12} />
                   </Box>
                   <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); handleToggleActive(item); }}
                     display="flex" alignItems="center" justifyContent="center"
                     w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer"
-                    title={item.isActive ? "Deactivate" : "Activate"}
+                    title={item.isActive ? t("admin.storeItems.deactivateTooltip") : t("admin.storeItems.activateTooltip")}
                     style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", color: item.isActive ? "#22c55e" : "#94a3b8" }}>
                     {item.isActive ? <Eye size={13} /> : <EyeOff size={13} />}
                   </Box>
                   <Box as="button" onClick={(e: React.MouseEvent) => { e.stopPropagation(); setDeleteTarget(item); }}
                     display="flex" alignItems="center" justifyContent="center"
-                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title="Delete"
+                    w="28px" h="28px" borderRadius="7px" border="none" cursor="pointer" title={t("admin.storeItems.deleteTooltip")}
                     style={{ background: "rgba(248,113,113,0.08)", color: "#dc2626" }}>
                     <Trash2 size={12} />
                   </Box>
@@ -1054,7 +1060,7 @@ export function ThemesSection() {
                 <Box style={modalBoxSt}>
                   <Flex align="center" justify="space-between" mb={5}>
                     <Text style={{ fontSize: "0.9rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      {editTarget ? "Edit Item" : "Create Item"}
+                      {editTarget ? t("admin.storeItems.editItemTitle") : t("admin.storeItems.createItemTitle")}
                     </Text>
                     <Box as="button" onClick={() => !formLoading && setShowForm(false)} style={closeBtnSt}>
                       <X size={13} />
@@ -1063,7 +1069,7 @@ export function ThemesSection() {
 
                   {/* Category */}
                   <Box mb={3}>
-                    <Text as="label" style={labelSt}>CATEGORY</Text>
+                    <Text as="label" style={labelSt}>{t("admin.storeItems.labelCategory")}</Text>
                     <Box as="select" value={form.category}
                       onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
                         setForm(f => ({
@@ -1080,7 +1086,7 @@ export function ThemesSection() {
                       }}
                       style={inputSt}>
                       {(Object.keys(CATEGORY_META) as StoreCategory[]).filter(cat => cat !== "Effect").map(cat => (
-                        <option key={cat} value={cat} style={{ color: "#111", background: "#fff" }}>{CATEGORY_META[cat].label}</option>
+                        <option key={cat} value={cat} style={{ color: "#111", background: "#fff" }}>{t(CATEGORY_META[cat].labelKey)}</option>
                       ))}
                     </Box>
                   </Box>
@@ -1088,18 +1094,18 @@ export function ThemesSection() {
 
                   {/* Name */}
                   <Box mb={3}>
-                    <Text as="label" style={labelSt}>NAME *</Text>
+                    <Text as="label" style={labelSt}>{t("admin.storeItems.labelName")}</Text>
                     <Box as="input" value={form.name}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder="Item name" style={inputSt} />
+                      placeholder={t("admin.storeItems.namePlaceholder")} style={inputSt} />
                   </Box>
 
                   {/* Description */}
                   <Box mb={3}>
-                    <Text as="label" style={labelSt}>DESCRIPTION</Text>
+                    <Text as="label" style={labelSt}>{t("admin.storeItems.labelDescription")}</Text>
                     <Box as="textarea" value={form.description} rows={2}
                       onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setForm(f => ({ ...f, description: e.target.value }))}
-                      placeholder="Optional description"
+                      placeholder={t("admin.storeItems.descPlaceholder")}
                       style={{ ...inputSt, height: "auto", padding: "8px 12px", resize: "vertical" }} />
                   </Box>
 
@@ -1108,7 +1114,7 @@ export function ThemesSection() {
                     <>
                       <FileUploadField
                         accept="image/*"
-                        label="THEME THUMBNAIL (Optional)"
+                        label={t("admin.storeItems.labelThemeThumbnail")}
                         value={form.assetUrl}
                         folder="store/themes"
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
@@ -1118,13 +1124,13 @@ export function ThemesSection() {
                         <Flex align="center" gap={2} mb={3} px={3} py={2} borderRadius="8px"
                           style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", border: `1px solid ${c.cardBorder}` }}>
                           <Text style={{ fontSize: "0.75rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                            Loading existing components…
+                            {t("admin.storeItems.loadingComponents")}
                           </Text>
                         </Flex>
                       ) : (
                         <>
                           <MultiImageUpload
-                            label="BACKGROUND IMAGES"
+                            label={t("admin.storeItems.labelBackgroundImages")}
                             values={form.themeBackgroundUrls}
                             folder="store/backgrounds"
                             onChange={(urls) => setForm(f => ({ ...f, themeBackgroundUrls: urls }))}
@@ -1132,7 +1138,7 @@ export function ThemesSection() {
                             existingId={form.themeBackgroundItemId}
                           />
                           <MultiImageUpload
-                            label="STICKER IMAGES"
+                            label={t("admin.storeItems.labelStickerImages")}
                             values={form.themeStickerUrls}
                             folder="store/stickers"
                             onChange={(urls) => setForm(f => ({ ...f, themeStickerUrls: urls }))}
@@ -1140,7 +1146,7 @@ export function ThemesSection() {
                             existingId={form.themeStickerItemId}
                           />
                           <MultiAudioUpload
-                            label="AMBIENT SOUNDS"
+                            label={t("admin.storeItems.labelAmbientSounds")}
                             values={form.themeAmbientUrls}
                             folder="store/ambient"
                             onChange={(urls) => setForm(f => ({ ...f, themeAmbientUrls: urls }))}
@@ -1159,7 +1165,7 @@ export function ThemesSection() {
                     <>
                       <FileUploadField
                         accept="image/*"
-                        label="BACKGROUND IMAGE"
+                        label={t("admin.storeItems.labelBackgroundImage")}
                         value={form.assetUrl}
                         folder="store/backgrounds"
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
@@ -1175,7 +1181,7 @@ export function ThemesSection() {
                     <>
                       <FileUploadField
                         accept="image/*"
-                        label="STICKER IMAGE"
+                        label={t("admin.storeItems.labelStickerImage")}
                         value={form.assetUrl}
                         folder="store/stickers"
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
@@ -1191,7 +1197,7 @@ export function ThemesSection() {
                     <>
                       <FileUploadField
                         accept="audio/*"
-                        label="AUDIO FILE"
+                        label={t("admin.storeItems.labelAudioFile")}
                         value={form.assetUrl}
                         folder="store/ambient"
                         onChange={(url) => setForm(f => ({ ...f, assetUrl: url }))}
@@ -1207,40 +1213,40 @@ export function ThemesSection() {
                   ) : (
                     /* Effect */
                     <Box mb={3}>
-                      <Text as="label" style={labelSt}>ASSET URL</Text>
+                      <Text as="label" style={labelSt}>{t("admin.storeItems.labelAssetUrl")}</Text>
                       <Box as="input" value={form.assetUrl}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm(f => ({ ...f, assetUrl: e.target.value }))}
-                        placeholder="https://..." style={inputSt} />
+                        placeholder={t("admin.storeItems.assetUrlPlaceholder")} style={inputSt} />
                     </Box>
                   )}
 
                   {/* Prices */}
                   <Flex gap={3} mb={3}>
                     <Box flex={1}>
-                      <Text as="label" style={{ ...labelSt, color: priceErrors.coin ? "#dc2626" : labelSt.color }}>COIN PRICE *</Text>
+                      <Text as="label" style={{ ...labelSt, color: priceErrors.coin ? "#dc2626" : labelSt.color }}>{t("admin.storeItems.labelCoinPrice")}</Text>
                       <Box as="input" {...{ type: "number", min: 0 }} value={form.coinPrice}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           setForm(f => ({ ...f, coinPrice: e.target.value }));
                           if (priceErrors.coin) setPriceErrors(p => ({ ...p, coin: false }));
                         }}
-                        placeholder="e.g. 50"
+                        placeholder={t("admin.storeItems.coinPricePlaceholder")}
                         style={{ ...inputSt, border: priceErrors.coin ? "1px solid #dc2626" : inputSt.border }} />
                     </Box>
                     <Box flex={1}>
-                      <Text as="label" style={{ ...labelSt, color: priceErrors.vnd ? "#dc2626" : labelSt.color }}>VND PRICE *</Text>
+                      <Text as="label" style={{ ...labelSt, color: priceErrors.vnd ? "#dc2626" : labelSt.color }}>{t("admin.storeItems.labelVndPrice")}</Text>
                       <Box as="input" {...{ type: "number", min: 0 }} value={form.realMoneyPriceVnd}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                           setForm(f => ({ ...f, realMoneyPriceVnd: e.target.value }));
                           if (priceErrors.vnd) setPriceErrors(p => ({ ...p, vnd: false }));
                         }}
-                        placeholder="e.g. 29000"
+                        placeholder={t("admin.storeItems.vndPricePlaceholder")}
                         style={{ ...inputSt, border: priceErrors.vnd ? "1px solid #dc2626" : inputSt.border }} />
                     </Box>
                   </Flex>
 
                   {/* Toggles */}
                   <Flex gap={5} mb={5}>
-                    <Toggle value={form.isActive} onChange={() => setForm(f => ({ ...f, isActive: !f.isActive }))} label="Active" textColor={c.textMuted} />
+                    <Toggle value={form.isActive} onChange={() => setForm(f => ({ ...f, isActive: !f.isActive }))} label={t("admin.storeItems.activeToggle")} textColor={c.textMuted} />
                   </Flex>
 
                   {formError && (
@@ -1251,7 +1257,7 @@ export function ThemesSection() {
 
                   <Flex justify="flex-end" gap={2} pt={4} style={{ borderTop: `1px solid ${c.border}` }}>
                     <Box as="button" onClick={() => !formLoading && setShowForm(false)} style={cancelBtnSt}>
-                      Cancel
+                      {t("admin.storeItems.cancel")}
                     </Box>
                     <Box as="button" onClick={handleFormSave} disabled={formLoading}
                       display="flex" alignItems="center" gap={2}
@@ -1262,7 +1268,7 @@ export function ThemesSection() {
                         opacity: formLoading ? 0.6 : 1,
                       }}>
                       <Check size={13} />
-                      {formLoading ? "Saving…" : editTarget ? "Save Changes" : "Create"}
+                      {formLoading ? t("admin.storeItems.saving") : editTarget ? t("admin.storeItems.saveChanges") : t("admin.storeItems.create")}
                     </Box>
                   </Flex>
                 </Box>
@@ -1285,7 +1291,7 @@ export function ThemesSection() {
                   {/* Header */}
                   <Flex align="center" justify="space-between" mb={4}>
                     <Text style={{ fontSize: "0.9rem", color: c.text, fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      Store Item
+                      {t("admin.storeItems.detailTitle")}
                     </Text>
                     <Box as="button" onClick={closeDetail} style={closeBtnSt}><X size={13} /></Box>
                   </Flex>
@@ -1310,7 +1316,7 @@ export function ThemesSection() {
                         ) : (
                           <Flex w="full" h="full" align="center" justify="center" direction="column" gap={2}>
                             <Palette size={32} style={{ color: c.textDim }} />
-                            <Text style={{ fontSize: "0.75rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>No preview</Text>
+                            <Text style={{ fontSize: "0.75rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.storeItems.noPreview")}</Text>
                           </Flex>
                         )}
                       </Box>
@@ -1325,13 +1331,13 @@ export function ThemesSection() {
                     {(() => { const cm = CATEGORY_META[detailItem.category]; return (
                       <Box px="7px" py="1px" borderRadius="full"
                         style={{ background: `${cm.color}18`, border: `1px solid ${cm.color}35` }}>
-                        <Text style={{ fontSize: "0.6rem", color: cm.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{cm.label}</Text>
+                        <Text style={{ fontSize: "0.6rem", color: cm.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t(cm.labelKey)}</Text>
                       </Box>
                     ); })()}
                     {(() => { const sm = STATUS_META[detailItem.status]; return (
                       <Box px="7px" py="1px" borderRadius="full"
                         style={{ background: sm.bg, border: `1px solid ${sm.color}35` }}>
-                        <Text style={{ fontSize: "0.6rem", color: sm.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{sm.label}</Text>
+                        <Text style={{ fontSize: "0.6rem", color: sm.color, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t(sm.labelKey)}</Text>
                       </Box>
                     ); })()}
                   </Flex>
@@ -1345,18 +1351,18 @@ export function ThemesSection() {
                   <Flex gap={6} mb={4} flexWrap="wrap">
                     {detailItem.creatorUsername && (
                       <Box>
-                        <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>CREATOR</Text>
+                        <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>{t("admin.storeItems.creator")}</Text>
                         <Text style={{ fontSize: "0.82rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{detailItem.creatorUsername}</Text>
                       </Box>
                     )}
                     <Box>
-                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>PRICE</Text>
+                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 2 }}>{t("admin.storeItems.price")}</Text>
                       <Text style={{ fontSize: "0.82rem", color: detailItem.coinPrice ? "#d97706" : c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                        {detailItem.coinPrice ? `${detailItem.coinPrice} coins` : detailItem.realMoneyPriceVnd ? `${detailItem.realMoneyPriceVnd.toLocaleString()}đ` : "Free"}
+                        {detailItem.coinPrice ? t("admin.storeItems.priceCoins", { n: detailItem.coinPrice }) : detailItem.realMoneyPriceVnd ? `${detailItem.realMoneyPriceVnd.toLocaleString()}đ` : t("admin.storeItems.priceFree")}
                       </Text>
                     </Box>
                     <Box>
-                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4 }}>ACTIVE</Text>
+                      <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 4 }}>{t("admin.storeItems.active")}</Text>
                       <Box w="8px" h="8px" borderRadius="full"
                         style={{ background: detailItem.isActive ? "#22c55e" : "#94a3b8", boxShadow: detailItem.isActive ? "0 0 5px #22c55e" : "none" }} />
                     </Box>
@@ -1367,7 +1373,7 @@ export function ThemesSection() {
                     <Box mb={4} px={3} py="11px" borderRadius="10px"
                       style={{ background: isDark ? "rgba(244,114,182,0.06)" : "rgba(244,114,182,0.05)", border: "1px solid rgba(244,114,182,0.2)" }}>
                       <Text mb={2} style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                        AUDIO PREVIEW
+                        {t("admin.storeItems.audioPreview")}
                       </Text>
                       <Flex align="center" gap={3}>
                         <Box as="button"
@@ -1399,7 +1405,7 @@ export function ThemesSection() {
                   {childLoading ? (
                     <Flex py={6} mb={4} borderRadius="9px" align="center" justify="center"
                       style={{ background: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)", border: `1px solid ${c.cardBorder}` }}>
-                      <Text style={{ fontSize: "0.8rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>Loading components…</Text>
+                      <Text style={{ fontSize: "0.8rem", color: c.textMuted, fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.storeItems.loadingComponentsShort")}</Text>
                     </Flex>
                   ) : childItems.length > 0 ? (() => {
                     const bgs      = childItems.filter(comp => comp.category === "Background");
@@ -1410,7 +1416,7 @@ export function ThemesSection() {
                         {bgs.length > 0 && (
                           <Box mb={4}>
                             <Flex align="center" gap={2} mb={2}>
-                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>BACKGROUNDS</Text>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.storeItems.backgroundsLabel")}</Text>
                               <Box px="6px" py="1px" borderRadius="full" style={{ background: "rgba(96,165,250,0.12)", border: "1px solid rgba(96,165,250,0.3)" }}>
                                 <Text style={{ fontSize: "0.6rem", color: "#60a5fa", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{bgs.length}</Text>
                               </Box>
@@ -1432,7 +1438,7 @@ export function ThemesSection() {
                         {stickers.length > 0 && (
                           <Box mb={4}>
                             <Flex align="center" gap={2} mb={2}>
-                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>STICKERS</Text>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.storeItems.stickersLabel")}</Text>
                               <Box px="6px" py="1px" borderRadius="full" style={{ background: "rgba(251,146,60,0.12)", border: "1px solid rgba(251,146,60,0.3)" }}>
                                 <Text style={{ fontSize: "0.6rem", color: "#fb923c", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{stickers.length}</Text>
                               </Box>
@@ -1452,7 +1458,7 @@ export function ThemesSection() {
                         {sounds.length > 0 && (
                           <Box mb={2}>
                             <Flex align="center" gap={2} mb={2}>
-                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>AMBIENT SOUNDS</Text>
+                              <Text style={{ fontSize: "0.6rem", color: c.textDim, letterSpacing: "0.08em", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("admin.storeItems.ambientSoundsLabel")}</Text>
                               <Box px="6px" py="1px" borderRadius="full" style={{ background: "rgba(244,114,182,0.12)", border: "1px solid rgba(244,114,182,0.3)" }}>
                                 <Text style={{ fontSize: "0.6rem", color: "#f472b6", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{sounds.length}</Text>
                               </Box>
@@ -1469,7 +1475,7 @@ export function ThemesSection() {
                                   </Box>
                                   <Box flex={1} minW={0}>
                                     <Text style={{ fontSize: "0.8rem", color: c.text, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                      {sound.name ?? sound.assetUrl?.split("/").pop() ?? "Sound"}
+                                      {sound.name ?? sound.assetUrl?.split("/").pop() ?? t("admin.storeItems.unnamedSound")}
                                     </Text>
                                     {sound.assetUrl && (
                                       <Text style={{ fontSize: "0.65rem", color: c.textDim, fontFamily: "'HarmonyOS Sans', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1492,18 +1498,18 @@ export function ThemesSection() {
                     <Box as="button" onClick={() => { closeDetail(); openEdit(detailItem); }}
                       display="flex" alignItems="center" justifyContent="center" gap={2} flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
                       style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)", outline: `1px solid ${c.cardBorder}`, color: c.textMuted, fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      <Edit2 size={14} /> Edit
+                      <Edit2 size={14} /> {t("admin.storeItems.edit")}
                     </Box>
                     <Box as="button" onClick={() => { closeDetail(); handleToggleActive(detailItem); }}
                       display="flex" alignItems="center" justifyContent="center" gap={2} flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
                       style={{ background: detailItem.isActive ? "rgba(148,163,184,0.08)" : "rgba(34,197,94,0.1)", outline: `1px solid ${detailItem.isActive ? c.cardBorder : "rgba(34,197,94,0.3)"}`, color: detailItem.isActive ? "#94a3b8" : "#22c55e", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
                       {detailItem.isActive ? <EyeOff size={14} /> : <Eye size={14} />}
-                      {detailItem.isActive ? "Deactivate" : "Activate"}
+                      {detailItem.isActive ? t("admin.storeItems.deactivate") : t("admin.storeItems.activate")}
                     </Box>
                     <Box as="button" onClick={() => { closeDetail(); setDeleteTarget(detailItem); }}
                       display="flex" alignItems="center" justifyContent="center" gap={2} flex={1} py="9px" borderRadius="9px" border="none" cursor="pointer"
                       style={{ background: "rgba(248,113,113,0.08)", outline: "1px solid rgba(248,113,113,0.25)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                      <Trash2 size={14} /> Delete
+                      <Trash2 size={14} /> {t("admin.storeItems.delete")}
                     </Box>
                   </Flex>
                 </Box>
@@ -1524,21 +1530,19 @@ export function ThemesSection() {
                 transition={{ duration: 0.18, ease: [0.4,0,0.2,1] } as any}>
                 <Box style={modalBoxSt}>
                   <Text mb={2} style={{ fontSize: "0.9rem", color: "#dc2626", fontWeight: 600, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Delete Item
+                    {t("admin.storeItems.deleteItemTitle")}
                   </Text>
                   <Text mb={5} style={{ fontSize: "0.82rem", color: c.textMuted, lineHeight: 1.6, fontFamily: "'HarmonyOS Sans', sans-serif" }}>
-                    Are you sure you want to delete{" "}
-                    <span style={{ color: c.text }}>{deleteTarget.name}</span>?
-                    This cannot be undone.
+                    {t("admin.storeItems.deleteConfirmBody", { name: deleteTarget.name })}
                   </Text>
                   <Flex justify="flex-end" gap={2}>
-                    <Box as="button" onClick={() => !deleteLoading && setDeleteTarget(null)} style={cancelBtnSt}>Cancel</Box>
+                    <Box as="button" onClick={() => !deleteLoading && setDeleteTarget(null)} style={cancelBtnSt}>{t("admin.storeItems.cancel")}</Box>
                     <Box as="button" onClick={handleDelete} disabled={deleteLoading}
                       display="flex" alignItems="center" gap={2}
                       px={4} py="8px" borderRadius="8px" border="none" cursor="pointer"
                       style={{ background: "rgba(248,113,113,0.15)", outline: "1px solid rgba(248,113,113,0.4)", color: "#dc2626", fontSize: "0.82rem", fontFamily: "'HarmonyOS Sans', sans-serif", opacity: deleteLoading ? 0.6 : 1 }}>
                       <Trash2 size={13} />
-                      {deleteLoading ? "Deleting…" : "Delete"}
+                      {deleteLoading ? t("admin.storeItems.deleting") : t("admin.storeItems.delete")}
                     </Box>
                   </Flex>
                 </Box>
