@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Coins } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { LoadingRing } from "../../ui/LoadingRing";
-import type { StoreItem } from "../../../../services/aestheticStore.service";
+import { getPremiumDiscountedPrice, type StoreItem } from "../../../../services/aestheticStore.service";
 
 const MotionBox = motion.create(Box);
 
@@ -15,6 +15,7 @@ interface Props {
   onPayWithCoins: () => void;
   isPayingWithCoins: boolean;
   purchaseError: string | null;
+  isPremiumUser?: boolean;
 }
 
 export function StorePaymentModal({
@@ -24,10 +25,13 @@ export function StorePaymentModal({
   onPayWithCoins,
   isPayingWithCoins,
   purchaseError,
+  isPremiumUser,
 }: Props) {
   const { t } = useTranslation();
 
-  const price = item.coinPrice ?? 0;
+  const originalPrice = item.coinPrice ?? 0;
+  const hasDiscount = !!isPremiumUser && originalPrice > 0;
+  const price = hasDiscount ? getPremiumDiscountedPrice(originalPrice) : originalPrice;
   const canAffordWithCoins = coinBalance >= price;
 
   return (
@@ -235,11 +239,24 @@ export function StorePaymentModal({
                       )}
                     </Box>
                   </Flex>
-                  <Flex align="center" gap="4px" flexShrink={0}>
+                  <Flex align="center" gap="6px" flexShrink={0}>
                     <Coins
                       size={13}
                       color={canAffordWithCoins ? "#facc15" : "rgba(255,255,255,0.18)"}
                     />
+                    {hasDiscount && (
+                      <Text
+                        style={{
+                          fontSize: "0.76rem",
+                          fontFamily: "'HarmonyOS Sans', sans-serif",
+                          fontWeight: 500,
+                          color: "rgba(255,255,255,0.35)",
+                          textDecoration: "line-through",
+                        }}
+                      >
+                        {originalPrice.toLocaleString("vi-VN")}
+                      </Text>
+                    )}
                     <Text
                       style={{
                         fontSize: "0.95rem",

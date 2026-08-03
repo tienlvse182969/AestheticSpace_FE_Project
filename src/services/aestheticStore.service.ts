@@ -40,6 +40,12 @@ export interface StorePurchaseResult {
   remainingCoins: number;
 }
 
+export const PREMIUM_DISCOUNT_RATE = 0.15;
+
+export function getPremiumDiscountedPrice(price: number): number {
+  return Math.ceil(price * (1 - PREMIUM_DISCOUNT_RATE));
+}
+
 interface PagedData<T> {
   items: T[];
   page: number;
