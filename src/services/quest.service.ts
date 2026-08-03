@@ -79,6 +79,12 @@ function mapStatus(isCompleted: boolean, isClaimed: boolean): QuestStatus {
   return "active";
 }
 
+export const PREMIUM_REWARD_MULTIPLIER = 1.5;
+
+export function getPremiumBonusReward(reward: number): number {
+  return Math.ceil(reward * PREMIUM_REWARD_MULTIPLIER);
+}
+
 function mapMissionToQuest(m: MissionWithProgressDto): Quest {
   return {
     id: m.id,

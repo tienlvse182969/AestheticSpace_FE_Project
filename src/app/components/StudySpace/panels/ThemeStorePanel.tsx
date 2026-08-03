@@ -16,6 +16,7 @@ import { CreateThemePanel } from "./CreateThemePanel";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
 import {
   aestheticStoreService,
+  getPremiumDiscountedPrice,
   type StoreItem,
   type StoreCategory,
 } from "../../../../services/aestheticStore.service";
@@ -128,16 +129,20 @@ function StoreCard({
   item,
   t,
   isTrialing,
+  isPremiumUser,
   onClick,
 }: {
   item: StoreItem;
   t: (k: string) => string;
   isTrialing?: boolean;
+  isPremiumUser?: boolean;
   onClick: () => void;
 }) {
   const color = typeColor(item.category);
   const isOwned = item.isOwned === true;
   const price = item.coinPrice;
+  const hasDiscount = !isOwned && isPremiumUser && price != null && price > 0;
+  const discountedPrice = hasDiscount ? getPremiumDiscountedPrice(price!) : null;
 
   return (
     <Box
@@ -267,9 +272,22 @@ function StoreCard({
         >
           {item.name}
         </Text>
-        <Flex align="center" gap="4px">
+        <Flex align="center" gap="4px" wrap="wrap">
           {!isOwned && price != null && price > 0 && (
             <Coins size={11} color="#facc15" />
+          )}
+          {hasDiscount && (
+            <Text
+              style={{
+                fontSize: "0.68rem",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                fontWeight: 500,
+                color: "rgba(255,255,255,0.35)",
+                textDecoration: "line-through",
+              }}
+            >
+              {price!.toLocaleString("vi-VN")}
+            </Text>
           )}
           <Text
             style={{
@@ -287,6 +305,8 @@ function StoreCard({
               ? t("themeStore.purchased")
               : price == null || price === 0
               ? t("themeStore.free")
+              : hasDiscount
+              ? discountedPrice!.toLocaleString("vi-VN")
               : price.toLocaleString("vi-VN")}
           </Text>
         </Flex>
@@ -314,6 +334,7 @@ function ItemDetailView({
   onToggleWishlist,
   onApplyItem,
   allItems,
+  isPremiumUser,
 }: {
   item: StoreItem;
   t: (k: string, opts?: Record<string, unknown>) => string;
@@ -331,12 +352,15 @@ function ItemDetailView({
   allItems?: StoreItem[];
   onToggleWishlist?: () => void;
   onApplyItem?: (item: StoreItem, extras?: ThemeApplyExtras) => void;
+  isPremiumUser?: boolean;
 }) {
   const color = typeColor(item.category);
   const isOwned = item.isOwned === true;
   const price = item.coinPrice;
   const isFree = price == null || price === 0;
   const canBuy = canPurchase !== false;
+  const hasDiscount = isPremiumUser && !isFree;
+  const discountedPrice = hasDiscount ? getPremiumDiscountedPrice(price!) : null;
 
   const previewImgs: string[] = (() => {
     if (!item.previewUrl) return [];
@@ -1022,8 +1046,13 @@ function ItemDetailView({
                     ) : (
                       <>
                         <Coins size={13} color="rgba(250,204,21,0.9)" />
+                        {hasDiscount && (
+                          <Text style={{ fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500, color: "rgba(255,255,255,0.45)", textDecoration: "line-through" }}>
+                            {price.toLocaleString("vi-VN")}
+                          </Text>
+                        )}
                         <Text style={{ fontSize: "0.88rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "rgba(250,204,21,0.95)" }}>
-                          {price.toLocaleString("vi-VN")}
+                          {hasDiscount ? discountedPrice!.toLocaleString("vi-VN") : price.toLocaleString("vi-VN")}
                         </Text>
                       </>
                     )}
@@ -1249,10 +1278,12 @@ const slideTransition = { type: "spring", stiffness: 320, damping: 30, mass: 0.8
 function FeaturedCarousel({
   items,
   t,
+  isPremiumUser,
   onItemClick,
 }: {
   items: StoreItem[];
   t: (k: string) => string;
+  isPremiumUser?: boolean;
   onItemClick: (item: StoreItem) => void;
 }) {
   const [idx, setIdx] = useState(0);
@@ -1273,6 +1304,8 @@ function FeaturedCarousel({
   if (!item) return null;
 
   const price = item.coinPrice;
+  const hasDiscount = isPremiumUser && price != null && price > 0;
+  const discountedPrice = hasDiscount ? getPremiumDiscountedPrice(price!) : null;
 
   return (
     <Box mb="10px">
@@ -1312,8 +1345,17 @@ function FeaturedCarousel({
                   </Text>
                   <Flex align="center" gap="4px">
                     <Coins size={11} color="#facc15" />
+                    {hasDiscount && (
+                      <Text style={{ fontSize: "0.68rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 500, color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>
+                        {price!.toLocaleString("vi-VN")}
+                      </Text>
+                    )}
                     <Text style={{ fontSize: "0.8rem", fontFamily: "'HarmonyOS Sans', sans-serif", fontWeight: 700, color: "#facc15" }}>
-                      {price == null || price === 0 ? t("themeStore.free") : price.toLocaleString("vi-VN")}
+                      {price == null || price === 0
+                        ? t("themeStore.free")
+                        : hasDiscount
+                        ? discountedPrice!.toLocaleString("vi-VN")
+                        : price.toLocaleString("vi-VN")}
                     </Text>
                   </Flex>
                 </Flex>
@@ -2123,6 +2165,7 @@ export function ThemeStorePanel({
 
   const canBuyItems = true;
   const canCreateThemes = user?.accountTier !== "Free";
+  const isPremiumUser = user?.accountTier?.toLowerCase() === "premium";
 
   const [items, setItems]               = useState<StoreItem[]>([]);
   const [gateOpen, setGateOpen]         = useState(false);
@@ -2593,6 +2636,7 @@ export function ThemeStorePanel({
                 onToggleWishlist={() => toggleWishlist(selectedItem.id)}
                 onApplyItem={onApplyItem}
                 allItems={items}
+                isPremiumUser={isPremiumUser}
               />
             )}
           </AnimatePresence>
@@ -2736,6 +2780,7 @@ export function ThemeStorePanel({
               <FeaturedCarousel
                 items={featuredItems}
                 t={t}
+                isPremiumUser={isPremiumUser}
                 onItemClick={(item) => { setSelectedItem(item); setPurchaseError(null); }}
               />
             )}
@@ -2814,6 +2859,7 @@ export function ThemeStorePanel({
                       item={item}
                       t={t}
                       isTrialing={item.id === trialItemId}
+                      isPremiumUser={isPremiumUser}
                       onClick={() => { setSelectedItem(item); setPurchaseError(null); }}
                     />
                   ))}
@@ -2833,6 +2879,7 @@ export function ThemeStorePanel({
           onPayWithCoins={() => { setPaymentModalOpen(false); handleBuy(); }}
           isPayingWithCoins={purchasing}
           purchaseError={purchaseError}
+          isPremiumUser={isPremiumUser}
         />
       )}
 

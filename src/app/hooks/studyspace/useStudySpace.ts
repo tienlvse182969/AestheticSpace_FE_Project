@@ -23,7 +23,7 @@ import type { TabValue as ThemeStoreTab } from "../../components/StudySpace/pane
 export type ActivePanel =
   | "widget" | "image" | "sticker" | "theme"
   | "ambient" | "effects" | "settings" | "room"
-  | "pomodoro-stats" | "quest" | "notification"
+  | "pomodoro-stats" | "quest" | "lucky-draw" | "notification"
   | null;
 
 export function useStudySpace() {

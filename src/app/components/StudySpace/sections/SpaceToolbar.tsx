@@ -9,11 +9,13 @@ import {
 import { useToolbarPosition } from "../../../context/ToolbarPositionContext";
 import { useNotificationBanners } from "../../../context/NotificationBannerContext";
 import { NotificationBellIcon } from "../ui/NotificationBellIcon";
+import { LuckyDrawGiftIcon }    from "../ui/LuckyDrawGiftIcon";
 import { AccountPanel, AvatarCircle } from "../panels/AccountPanel";
 import { ToolbarBtn }                 from "../ui/ToolbarBtn";
 import { PremiumGateModal, type LockedFeature } from "../ui/PremiumGateModal";
 import { OnboardingTour }             from "../ui/OnboardingTour";
 import { coinService }                from "../../../../services/coin.service";
+import { luckyDrawService }           from "../../../../services/luckyDraw.service";
 import type { StudySpaceCtx }         from "../../../hooks/studyspace/useStudySpace";
 import type { TourStepId }            from "../../../hooks/studyspace/useOnboardingTour";
 
@@ -23,9 +25,11 @@ interface Props {
   ctx: StudySpaceCtx;
   coinBalance?: number;
   onCoinBalanceReady?: (balance: number) => void;
+  luckyDrawRemaining?: number;
+  onLuckyDrawRemainingReady?: (remaining: number) => void;
 }
 
-export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
+export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady, luckyDrawRemaining, onLuckyDrawRemainingReady }: Props) {
   const {
     navigate, t,
     currentUser, handleLogout,
@@ -105,6 +109,7 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
   useEffect(() => {
     if (currentUser) {
       coinService.getBalance().then((data) => onCoinBalanceReady?.(data.balance));
+      luckyDrawService.getStatus().then((data) => onLuckyDrawRemainingReady?.(data.remainingDrawsToday));
     }
   }, [currentUser]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -321,7 +326,15 @@ export function SpaceToolbar({ ctx, coinBalance, onCoinBalanceReady }: Props) {
                 <ToolbarBtn ref={el => (tourTargetsRef.current.sticker = el)} icon={<Sticker size={22} />}       active={activePanel === "sticker"} onClick={() => togglePanel("sticker")} tooltip={t("space.stickers")} position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.ambient = el)} icon={<AudioWaveform size={22} />} active={activePanel === "ambient"} onClick={() => togglePanel("ambient")} tooltip={t("space.ambientSounds")} position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.effects = el)} icon={<Wand2 size={22} />}         active={activePanel === "effects"} locked={isFree} onClick={() => isFree ? handleLockedClick("effects") : togglePanel("effects")} tooltip={t("effects.title")} position={position} />
-                <ToolbarBtn ref={el => (tourTargetsRef.current.quest = el)} icon={<Trophy size={22} />}        active={activePanel === "quest"}   locked={isFree} onClick={() => isFree ? handleLockedClick("quest")   : togglePanel("quest")}   tooltip="Nhiệm vụ" position={position} />
+                <ToolbarBtn ref={el => (tourTargetsRef.current.quest = el)} icon={<Trophy size={22} />}        active={activePanel === "quest"}   onClick={() => togglePanel("quest")}   tooltip="Nhiệm vụ" position={position} />
+                <ToolbarBtn
+                  icon={<LuckyDrawGiftIcon size={22} remainingDraws={luckyDrawRemaining ?? 0} />}
+                  active={activePanel === "lucky-draw"}
+                  badgeCount={luckyDrawRemaining ?? 0}
+                  onClick={() => togglePanel("lucky-draw")}
+                  tooltip={t("luckyDraw.tooltip")}
+                  position={position}
+                />
                 <ToolbarBtn ref={el => (tourTargetsRef.current["pomodoro-stats"] = el)} icon={<BarChart2 size={22} />} active={activePanel === "pomodoro-stats"} onClick={() => togglePanel("pomodoro-stats")} tooltip="Phân tích Pomodoro" position={position} />
                 <ToolbarBtn ref={el => (tourTargetsRef.current.settings = el)} icon={<Settings size={22} />}  active={activePanel === "settings"}       onClick={() => togglePanel("settings")}       tooltip={t("settings.title")} position={position} />
                 <ToolbarBtn icon={<NotificationBellIcon size={22} unreadCount={unreadHistoryCount} />} active={activePanel === "notification"} badgeCount={unreadHistoryCount} onClick={() => togglePanel("notification")} tooltip={t("notification.tooltip")} position={position} />

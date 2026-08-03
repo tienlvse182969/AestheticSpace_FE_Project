@@ -1,18 +1,17 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { Crown, Zap, Sparkles, AudioWaveform, Wand2, Trophy, ShoppingBag } from "lucide-react";
+import { Crown, Zap, Sparkles, AudioWaveform, Wand2, ShoppingBag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 const MotionBox = motion.create(Box);
 
-export type LockedFeature = "sticker" | "ambient" | "effects" | "quest" | "store";
+export type LockedFeature = "sticker" | "ambient" | "effects" | "store";
 
 const FEATURE_ICONS: Record<LockedFeature, React.ReactNode> = {
   sticker:  <Sparkles size={22} style={{ color: "#a78bfa" }} />,
   ambient:  <AudioWaveform size={22} style={{ color: "#60a5fa" }} />,
   effects:  <Wand2 size={22} style={{ color: "#f472b6" }} />,
-  quest:    <Trophy size={22} style={{ color: "#fbbf24" }} />,
   store:    <ShoppingBag size={22} style={{ color: "#34d399" }} />,
 };
 

@@ -15,6 +15,7 @@ import { NotificationBannerProvider } from "../context/NotificationBannerContext
 export function StudySpacePage() {
   const ctx = useStudySpace();
   const [coinBalance, setCoinBalance] = useState<number | undefined>(undefined);
+  const [luckyDrawRemaining, setLuckyDrawRemaining] = useState<number | undefined>(undefined);
   const location = useLocation();
 
   useEffect(() => {
@@ -37,8 +38,8 @@ export function StudySpacePage() {
           onOpenQuest={() => ctx.setActivePanel("quest")}
           onOpenCreatorStore={() => { ctx.setThemeStoreInitialTab("my-themes"); ctx.setActivePanel("theme"); }}
         >
-          <SpacePanels     ctx={ctx} coinBalance={coinBalance} onCoinBalanceChange={setCoinBalance} />
-          <SpaceToolbar    ctx={ctx} coinBalance={coinBalance} onCoinBalanceReady={setCoinBalance} />
+          <SpacePanels     ctx={ctx} coinBalance={coinBalance} onCoinBalanceChange={setCoinBalance} luckyDrawRemaining={luckyDrawRemaining} onLuckyDrawRemainingChange={setLuckyDrawRemaining} />
+          <SpaceToolbar    ctx={ctx} coinBalance={coinBalance} onCoinBalanceReady={setCoinBalance} luckyDrawRemaining={luckyDrawRemaining} onLuckyDrawRemainingReady={setLuckyDrawRemaining} />
           {ctx.showFirstRoomModal && (
             <FirstRoomModal onConfirm={ctx.handleFirstRoomCreate} />
           )}

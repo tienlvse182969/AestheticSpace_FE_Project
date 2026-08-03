@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { LoadingRing } from "../../ui/LoadingRing";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
-import { questService, type Quest, type QuestCategory } from "../../../../services/quest.service";
+import { questService, getPremiumBonusReward, type Quest, type QuestCategory } from "../../../../services/quest.service";
 import { coinService } from "../../../../services/coin.service";
 import { useAuth } from "../../../../context/AuthContext";
 
@@ -50,15 +50,19 @@ function QuestCard({
   quest,
   onClaim,
   claiming,
+  isPremiumUser,
 }: {
   quest: Quest;
   onClaim: (id: string) => void;
   claiming: boolean;
+  isPremiumUser?: boolean;
 }) {
   const { t } = useTranslation();
   const isClaimed = quest.status === "claimed";
   const isClaimable = quest.status === "claimable";
   const isActive = quest.status === "active";
+  const hasBonus = !isClaimed && isPremiumUser && quest.reward > 0;
+  const bonusReward = hasBonus ? getPremiumBonusReward(quest.reward) : null;
 
   const barColor = isClaimed
     ? "rgba(255,255,255,0.2)"
@@ -120,23 +124,37 @@ function QuestCard({
             </Text>
 
             {/* Reward badge */}
-            <Flex
-              align="center"
-              gap="3px"
-              flexShrink={0}
-              style={{
-                padding: "2px 7px",
-                borderRadius: "20px",
-                fontSize: "0.68rem",
-                fontFamily: "'HarmonyOS Sans', sans-serif",
-                fontWeight: 600,
-                background: isClaimed ? "rgba(255,255,255,0.06)" : "rgba(250,204,21,0.12)",
-                border: isClaimed ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(250,204,21,0.3)",
-                color: isClaimed ? "rgba(255,255,255,0.3)" : "#facc15",
-              }}
-            >
-              <Coins size={9} />
-              {quest.reward.toLocaleString("vi-VN")}₫
+            <Flex align="center" gap="4px" flexShrink={0} wrap="wrap" justify="flex-end">
+              {hasBonus && (
+                <Text
+                  style={{
+                    fontSize: "0.62rem",
+                    fontFamily: "'HarmonyOS Sans', sans-serif",
+                    fontWeight: 500,
+                    color: "rgba(255,255,255,0.35)",
+                    textDecoration: "line-through",
+                  }}
+                >
+                  {quest.reward.toLocaleString("vi-VN")}₫
+                </Text>
+              )}
+              <Flex
+                align="center"
+                gap="3px"
+                style={{
+                  padding: "2px 7px",
+                  borderRadius: "20px",
+                  fontSize: "0.68rem",
+                  fontFamily: "'HarmonyOS Sans', sans-serif",
+                  fontWeight: 600,
+                  background: isClaimed ? "rgba(255,255,255,0.06)" : "rgba(250,204,21,0.12)",
+                  border: isClaimed ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(250,204,21,0.3)",
+                  color: isClaimed ? "rgba(255,255,255,0.3)" : "#facc15",
+                }}
+              >
+                <Coins size={9} />
+                {hasBonus ? bonusReward!.toLocaleString("vi-VN") : quest.reward.toLocaleString("vi-VN")}₫
+              </Flex>
             </Flex>
           </Flex>
 
@@ -235,6 +253,7 @@ export function QuestPanel({
   const { x, y, ref } = useCenteredPanel(PANEL_W, PANEL_H);
   const { user } = useAuth();
   const { t } = useTranslation();
+  const isPremiumUser = user?.accountTier?.toLowerCase() === "premium";
 
   const [tab, setTab] = useState<QuestCategory>("daily");
   const [quests, setQuests] = useState<Quest[]>([]);
@@ -403,6 +422,7 @@ export function QuestPanel({
                 quest={quest}
                 onClaim={handleClaim}
                 claiming={claimingId === quest.id}
+                isPremiumUser={isPremiumUser}
               />
             ))}
           </Flex>

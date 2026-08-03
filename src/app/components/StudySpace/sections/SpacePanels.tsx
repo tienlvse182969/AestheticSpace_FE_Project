@@ -10,6 +10,7 @@ import { SettingsPanel }         from "../panels/SettingsPanel";
 import { RoomManagerPanel }      from "../panels/RoomManagerPanel";
 import { PomodoroStatsPanel }    from "../panels/PomodoroStatsPanel";
 import { QuestPanel }            from "../panels/QuestPanel";
+import { LuckyDrawPanel }        from "../panels/LuckyDrawPanel";
 import { NotificationHistoryPanel } from "../panels/NotificationHistoryPanel";
 import { TrialBanner }           from "../ui/TrialBanner";
 import { TrialExpiredModal }     from "../ui/TrialExpiredModal";
@@ -23,9 +24,11 @@ interface Props {
   ctx: StudySpaceCtx;
   onCoinBalanceChange?: (newBalance: number) => void;
   coinBalance?: number;
+  luckyDrawRemaining?: number;
+  onLuckyDrawRemainingChange?: (remaining: number) => void;
 }
 
-export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
+export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance, onLuckyDrawRemainingChange }: Props) {
   const {
     activePanel, setActivePanel,
     settingsInitialNav, setSettingsInitialNav,
@@ -298,6 +301,14 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance }: Props) {
             onClose={() => setActivePanel(null)}
             onBalanceChange={onCoinBalanceChange}
             currentCoinBalance={coinBalance}
+          />
+        )}
+        {activePanel === "lucky-draw" && (
+          <LuckyDrawPanel
+            key="lucky-draw-panel"
+            onClose={() => setActivePanel(null)}
+            onBalanceChange={onCoinBalanceChange}
+            onRemainingChange={onLuckyDrawRemainingChange}
           />
         )}
         {activePanel === "notification" && (
