@@ -28,6 +28,7 @@ interface WorkspaceSaveParams {
   roomName: string | null;
   currentBg: BackgroundItem | null;
   activeEffect: string | null;
+  weatherSyncEnabled?: boolean;
   activeWidgets: Set<string>;
   widgetPositions: Record<string, { x: number; y: number }>;
   placedStickers: PlacedSticker[];
@@ -56,6 +57,7 @@ export function useWorkspaceAutoSave({
   roomName,
   currentBg,
   activeEffect,
+  weatherSyncEnabled,
   activeWidgets,
   widgetPositions,
   placedStickers,
@@ -77,13 +79,13 @@ export function useWorkspaceAutoSave({
 
   // Always-current refs so saveNow captures latest state at call time
   const stateRef = useRef({
-    roomId, roomName, currentBg, activeEffect, activeWidgets,
+    roomId, roomName, currentBg, activeEffect, weatherSyncEnabled, activeWidgets,
     widgetPositions, placedStickers, stickyNotes,
     clockSettings, pomodoroSettings, todoItems, accentColor, musicState,
   });
   useEffect(() => {
     stateRef.current = {
-      roomId, roomName, currentBg, activeEffect, activeWidgets,
+      roomId, roomName, currentBg, activeEffect, weatherSyncEnabled, activeWidgets,
       widgetPositions, placedStickers, stickyNotes,
       clockSettings, pomodoroSettings, todoItems, accentColor, musicState,
     };
@@ -161,6 +163,7 @@ export function useWorkspaceAutoSave({
       try {
         const layout: LayoutConfig = {
           activeEffect: s.activeEffect,
+          weatherSyncEnabled: s.weatherSyncEnabled,
           activeWidgets: Array.from(s.activeWidgets),
           currentBg: s.currentBg
             ? { id: s.currentBg.id, url: s.currentBg.url, thumb: s.currentBg.thumb, label: s.currentBg.label }

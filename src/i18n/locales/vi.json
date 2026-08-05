@@ -523,7 +523,7 @@
       "popularBadge": "Phổ biến nhất",
       "currentBadge": "Gói của bạn",
       "desc": "Mở khoá toàn bộ tiềm năng sáng tạo với kho nội dung độc quyền.",
-      "priceAmount": "130.000₫",
+      "priceAmount": "100.000₫",
       "priceUnit": "/ tháng",
       "trialHighlight": "Dùng thử 5 ngày miễn phí cho tài khoản mới",
       "currentPlanText": "Bạn đang sử dụng gói này",
@@ -544,7 +544,7 @@
     "footer": "Thanh toán qua PayOS · Huỷ bất cứ lúc nào · Không tính phí ẩn",
     "modal": {
       "title": "Chọn phương thức thanh toán",
-      "subtitle": "130.000₫ / tháng · Gia hạn tự động",
+      "subtitle": "100.000₫ / tháng · Gia hạn tự động",
       "payosDesc": "Thẻ ATM, Visa, MasterCard, QR Code",
       "redirect": "Chuyển hướng"
     },
@@ -830,7 +830,13 @@
     "confetti": "Giấy vụn",
     "active": "đang bật",
     "noEffect": "Chưa có hiệu ứng — chọn một loại bên trên",
-    "clearEffect": "Tắt hiệu ứng"
+    "clearEffect": "Tắt hiệu ứng",
+    "weather": "Theo thời tiết",
+    "weatherDescription": "Tự động đổi hiệu ứng theo thời tiết thực tại vị trí của bạn",
+    "weatherLocating": "Đang xác định vị trí…",
+    "weatherLocationDenied": "Không lấy được vị trí. Vui lòng cấp quyền định vị cho trình duyệt.",
+    "weatherLocationUnavailable": "Không thể xác định vị trí của bạn lúc này.",
+    "weatherFetchFailed": "Không thể tải dữ liệu thời tiết. Sẽ thử lại sau."
   },
   "admin": {
     "nav": {
