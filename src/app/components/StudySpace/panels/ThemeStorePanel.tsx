@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from "react";
 import { Box, Flex, Text, Input } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -29,6 +29,7 @@ import {
   type ThemeInlineComponent,
   type ThemeSubmissionStatus,
 } from "../../../../services/userTheme.service";
+import { cldOptimize } from "../../../../utils/cloudinaryImage";
 
 const MotionBox = motion.create(Box);
 
@@ -125,7 +126,7 @@ function typeLabel(category: StoreCategory, t: (k: string) => string): string {
 
 // ── StoreCard ──────────────────────────────────────────────────────────────
 
-function StoreCard({
+const StoreCard = memo(function StoreCard({
   item,
   t,
   isTrialing,
@@ -168,11 +169,15 @@ function StoreCard({
       {/* Thumbnail */}
       <Box position="relative" overflow="hidden" style={{ aspectRatio: "5/3" }}>
         <img
-          src={item.category === "AmbientSound" ? getFirstPreviewImg(item) : (item.assetUrl ?? PLACEHOLDER_IMG)}
+          src={cldOptimize(
+            item.category === "AmbientSound" ? getFirstPreviewImg(item) : (item.assetUrl ?? PLACEHOLDER_IMG),
+            { width: 340, height: 204, crop: "fill" },
+          )}
           alt={item.name}
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           draggable={false}
           loading="lazy"
+          decoding="async"
         />
         {/* Gradient overlay */}
         <Box
@@ -313,7 +318,7 @@ function StoreCard({
       </Box>
     </Box>
   );
-}
+});
 
 // ── ItemDetailView ─────────────────────────────────────────────────────────
 
@@ -362,14 +367,14 @@ function ItemDetailView({
   const hasDiscount = isPremiumUser && !isFree;
   const discountedPrice = hasDiscount ? getPremiumDiscountedPrice(price!) : null;
 
-  const previewImgs: string[] = (() => {
+  const previewImgs: string[] = useMemo(() => {
     if (!item.previewUrl) return [];
     try {
       const p = JSON.parse(item.previewUrl);
       if (Array.isArray(p)) return p.filter(Boolean);
     } catch {}
     return [item.previewUrl];
-  })();
+  }, [item.previewUrl]);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [compLightboxUrl, setCompLightboxUrl] = useState<string | null>(null);
 
@@ -472,10 +477,14 @@ function ItemDetailView({
         {/* Main image */}
         <Box position="relative" flexShrink={0} style={{ aspectRatio: "16/7", overflow: "hidden" }}>
           <img
-            src={item.category === "AmbientSound" ? getFirstPreviewImg(item) : (item.assetUrl ?? PLACEHOLDER_IMG)}
+            src={cldOptimize(
+              item.category === "AmbientSound" ? getFirstPreviewImg(item) : (item.assetUrl ?? PLACEHOLDER_IMG),
+              { width: 900, height: 400, crop: "fill" },
+            )}
             alt={item.name}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
             draggable={false}
+            decoding="async"
           />
           <Box
             position="absolute"
@@ -661,10 +670,12 @@ function ItemDetailView({
                     _hover={{ transform: "scale(1.02)", boxShadow: "0 6px 28px rgba(0,0,0,0.6)" } as any}
                   >
                     <img
-                      src={url}
+                      src={cldOptimize(url, { width: 440, height: 276, crop: "fill" })}
                       alt={`preview-${i + 1}`}
                       style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                       draggable={false}
+                      loading="lazy"
+                      decoding="async"
                     />
                   </Box>
                 ))}
@@ -758,10 +769,12 @@ function ItemDetailView({
                       _hover={{ opacity: 0.82 } as any}
                     >
                       <img
-                        src={bgItem.assetUrl}
+                        src={cldOptimize(bgItem.assetUrl, { width: 280, height: 168, crop: "fill" })}
                         alt="background"
                         style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         draggable={false}
+                        loading="lazy"
+                        decoding="async"
                       />
                     </Box>
                   </Box>
@@ -782,10 +795,12 @@ function ItemDetailView({
                       _hover={{ opacity: 0.82 } as any}
                     >
                       <img
-                        src={stickerItem.assetUrl}
+                        src={cldOptimize(stickerItem.assetUrl, { width: 144, height: 144, crop: "limit" })}
                         alt="sticker"
                         style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }}
                         draggable={false}
+                        loading="lazy"
+                        decoding="async"
                       />
                     </Box>
                   </Box>
@@ -1123,7 +1138,7 @@ function ItemDetailView({
             >
               <Box style={{ maxWidth: "min(900px, 92vw)", maxHeight: "80vh", pointerEvents: "auto" }}>
                 <img
-                  src={previewImgs[lightboxIdx]}
+                  src={cldOptimize(previewImgs[lightboxIdx], { width: 1600, crop: "limit" })}
                   alt={`preview-${lightboxIdx + 1}`}
                   style={{
                     display: "block",
@@ -1239,7 +1254,7 @@ function ItemDetailView({
             >
               <Box style={{ maxWidth: "min(900px, 92vw)", maxHeight: "80vh", pointerEvents: "auto" }}>
                 <img
-                  src={compLightboxUrl}
+                  src={cldOptimize(compLightboxUrl, { width: 1600, crop: "limit" })}
                   alt="preview"
                   style={{ display: "block", maxWidth: "100%", maxHeight: "80vh", borderRadius: "14px", boxShadow: "0 24px 80px rgba(0,0,0,0.7)", objectFit: "contain" }}
                   draggable={false}
@@ -1325,10 +1340,11 @@ function FeaturedCarousel({
             onClick={() => onItemClick(item)}
           >
             <img
-              src={item.assetUrl ?? PLACEHOLDER_IMG}
+              src={cldOptimize(item.assetUrl ?? PLACEHOLDER_IMG, { width: 860, height: 300, crop: "fill" })}
               alt={item.name}
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               draggable={false}
+              decoding="async"
             />
             <Box position="absolute" inset={0} style={{ background: "linear-gradient(90deg, rgba(5,8,14,0.92) 0%, rgba(5,8,14,0.55) 55%, rgba(5,8,14,0.1) 100%)" }} />
             <Box position="absolute" bottom={0} left={0} right={0} h="50px" style={{ background: "linear-gradient(transparent, rgba(5,8,14,0.75))" }} />
@@ -1448,7 +1464,7 @@ const STATUS_CONFIG: Record<ThemeSubmissionStatus, { labelKey: string; color: st
   AdminCreated:            { labelKey: "themeStore.creator.status.adminCreated",             color: "#a78bfa", bg: "rgba(167,139,250,0.1)", border: "rgba(167,139,250,0.28)", icon: Check },
 };
 
-function MyThemeCard({
+const MyThemeCard = memo(function MyThemeCard({
   theme,
   withdrawing,
   onWithdraw,
@@ -1497,10 +1513,12 @@ function MyThemeCard({
         >
           {theme.assetUrl ? (
             <img
-              src={theme.assetUrl}
+              src={cldOptimize(theme.assetUrl, { width: 144, height: 96, crop: "fill" })}
               alt={theme.name}
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               draggable={false}
+              loading="lazy"
+              decoding="async"
             />
           ) : (
             <Flex w="100%" h="100%" align="center" justify="center">
@@ -1627,7 +1645,7 @@ function MyThemeCard({
       )}
     </Box>
   );
-}
+});
 
 // ── MyThemeDetailView ─────────────────────────────────────────────────────
 
@@ -1706,10 +1724,11 @@ function MyThemeDetailView({
         <Box flexShrink={0} position="relative" style={{ height: 160, overflow: "hidden" }}>
           {(theme.previewUrl || theme.assetUrl) ? (
             <img
-              src={theme.previewUrl ?? theme.assetUrl ?? ""}
+              src={cldOptimize(theme.previewUrl ?? theme.assetUrl ?? "", { width: 900, height: 320, crop: "fill" })}
               alt={theme.name}
               style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
               draggable={false}
+              decoding="async"
             />
           ) : (
             <Flex w="100%" h="100%" align="center" justify="center"
@@ -1817,7 +1836,7 @@ function MyThemeDetailView({
                           background: "rgba(96,165,250,0.05)",
                         }}>
                         {item.assetUrl
-                          ? <img src={item.assetUrl} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                          ? <img src={cldOptimize(item.assetUrl, { width: 280, height: 168, crop: "fill" })} alt="" draggable={false} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                           : <Flex w="100%" h="100%" align="center" justify="center"><ImageIcon size={16} color="rgba(96,165,250,0.3)" /></Flex>
                         }
                         {bgItems.length > 1 && (
@@ -1848,7 +1867,7 @@ function MyThemeDetailView({
                       <Box key={item.id} borderRadius="8px" overflow="hidden" flexShrink={0}
                         style={{ width: 72, height: 72, border: "1px solid rgba(251,146,60,0.3)", background: "rgba(255,255,255,0.03)" }}>
                         {item.assetUrl
-                          ? <img src={item.assetUrl} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                          ? <img src={cldOptimize(item.assetUrl, { width: 144, height: 144, crop: "limit" })} alt="" draggable={false} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
                           : <Flex w="100%" h="100%" align="center" justify="center"><Sticker size={16} color="rgba(251,146,60,0.3)" /></Flex>
                         }
                       </Box>

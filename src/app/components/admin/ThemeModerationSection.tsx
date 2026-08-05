@@ -15,6 +15,7 @@ import {
   PricePublishBody,
 } from "../../../services/admin/store.admin.service";
 import { useAdminTheme } from "./AdminThemeContext";
+import { cldOptimize } from "../../../utils/cloudinaryImage";
 
 const MotionBox = motion.create(Box);
 
@@ -487,7 +488,8 @@ export function ThemeModerationSection() {
                   <Box w="40px" h="40px" borderRadius="9px" flexShrink={0} overflow="hidden"
                     style={{ background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", border: `1px solid ${c.cardBorder}` }}>
                     {item.assetUrl && item.category !== "AmbientSound" ? (
-                      <Box as="img" src={item.assetUrl}
+                      <Box as="img" src={cldOptimize(item.assetUrl, { width: 80, height: 80, crop: "fill" })}
+                        loading="lazy" decoding="async"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                       <Flex w="full" h="full" align="center" justify="center">
@@ -648,7 +650,8 @@ export function ThemeModerationSection() {
                   <Box mb={4} borderRadius="10px" overflow="hidden" h="180px"
                     style={{ background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)", border: `1px solid ${c.cardBorder}` }}>
                     {(detailItem.previewUrl || detailItem.assetUrl) ? (
-                      <Box as="img" src={detailItem.previewUrl || detailItem.assetUrl || ""}
+                      <Box as="img" src={cldOptimize(detailItem.previewUrl || detailItem.assetUrl || "", { width: 700, height: 360, crop: "fill" })}
+                        decoding="async"
                         style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
                       <Flex w="full" h="full" align="center" justify="center" direction="column" gap={2}>
@@ -726,7 +729,8 @@ export function ThemeModerationSection() {
                                     style={{ border: `1px solid ${c.cardBorder}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)" }}>
                                     <Box w="140px" h="84px">
                                       {bg.assetUrl ? (
-                                        <Box as="img" src={bg.assetUrl}
+                                        <Box as="img" src={cldOptimize(bg.assetUrl, { width: 280, height: 168, crop: "fill" })}
+                                          loading="lazy" decoding="async"
                                           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                                       ) : (
                                         <Flex w="full" h="full" align="center" justify="center">
@@ -757,7 +761,8 @@ export function ThemeModerationSection() {
                                   style={{ border: `1px solid ${c.cardBorder}`, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)" }}>
                                   <Box w="80px" h="80px">
                                     {sticker.assetUrl ? (
-                                      <Box as="img" src={sticker.assetUrl}
+                                      <Box as="img" src={cldOptimize(sticker.assetUrl, { width: 160, height: 160, crop: "limit" })}
+                                        loading="lazy" decoding="async"
                                         style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
                                     ) : (
                                       <Flex w="full" h="full" align="center" justify="center">

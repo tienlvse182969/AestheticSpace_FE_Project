@@ -12,6 +12,7 @@ import {
   CreateStoreItemBody,
 } from "../../../services/admin/store.admin.service";
 import { uploadToCloudinary } from "../../../services/cloudinary.service";
+import { cldOptimize } from "../../../utils/cloudinaryImage";
 import { useAdminTheme } from "./AdminThemeContext";
 
 const MotionBox = motion.create(Box);
@@ -165,7 +166,7 @@ function FileUploadField({ accept, label, value, folder, onChange, onError, exis
       {value && isImage && (
         <Box mb={2} w="80px" h="56px" borderRadius="8px" overflow="hidden"
           style={{ border: `1px solid ${c.cardBorder}` }}>
-          <Box as="img" src={value} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <Box as="img" src={cldOptimize(value, { width: 160, height: 112, crop: "fill" })} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </Box>
       )}
       {value && !isImage && (
@@ -245,7 +246,7 @@ function MultiPreviewUpload({ values, onChange, onError, max = 5 }: {
           {values.map((url, idx) => (
             <Box key={idx} position="relative" w="80px" h="56px" borderRadius="8px" overflow="hidden"
               style={{ border: `1px solid ${c.cardBorder}`, flexShrink: 0 }}>
-              <Box as="img" src={url} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Box as="img" src={cldOptimize(url, { width: 160, height: 112, crop: "fill" })} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               <Box
                 as="button"
                 onClick={() => remove(idx)}
@@ -330,7 +331,7 @@ function MultiImageUpload({ label, values, folder, onChange, onError, existingId
           {values.map((url, idx) => (
             <Box key={idx} position="relative" w="80px" h="56px" borderRadius="8px" overflow="hidden"
               style={{ border: `1px solid ${c.cardBorder}`, flexShrink: 0 }}>
-              <Box as="img" {...{ src: url }} style={{ width: "100%", height: "100%", objectFit: "cover" as const }} />
+              <Box as="img" {...{ src: cldOptimize(url, { width: 160, height: 112, crop: "fill" }) }} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" as const }} />
               <Box as="button" onClick={() => remove(idx)}
                 position="absolute" top="2px" right="2px" w="16px" h="16px" borderRadius="full"
                 border="none" cursor="pointer" display="flex" alignItems="center" justifyContent="center"
@@ -922,7 +923,8 @@ export function ThemesSection() {
                         ? parsePreviewUrls(item.previewUrl)[0] ?? null
                         : item.assetUrl ?? null;
                       return thumbSrc ? (
-                        <Box as="img" {...{ src: thumbSrc }}
+                        <Box as="img" {...{ src: cldOptimize(thumbSrc, { width: 72, height: 72, crop: "fill" }) }}
+                          loading="lazy" decoding="async"
                           style={{ width: "100%", height: "100%", objectFit: "cover" as const }} />
                       ) : (
                         <Flex w="full" h="full" align="center" justify="center">
@@ -1311,7 +1313,8 @@ export function ThemesSection() {
                             : isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
                         }}>
                         {heroSrc ? (
-                          <Box as="img" {...{ src: heroSrc }}
+                          <Box as="img" {...{ src: cldOptimize(heroSrc, isSticker ? { width: 360, height: 360, crop: "limit" } : { width: 700, height: 360, crop: "fill" }) }}
+                            decoding="async"
                             style={{ width: "100%", height: "100%", objectFit: isSticker ? "contain" as const : "cover" as const, padding: isSticker ? "12px" : undefined }} />
                         ) : (
                           <Flex w="full" h="full" align="center" justify="center" direction="column" gap={2}>
@@ -1427,7 +1430,7 @@ export function ThemesSection() {
                                   <Box key={bg.id} borderRadius="9px" overflow="hidden" w="140px" h="84px"
                                     style={{ border: `1px solid ${c.cardBorder}`, flexShrink: 0, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)" }}>
                                     {bg.assetUrl
-                                      ? <Box as="img" {...{ src: bg.assetUrl }} style={{ width: "100%", height: "100%", objectFit: "cover" as const, display: "block" }} />
+                                      ? <Box as="img" {...{ src: cldOptimize(bg.assetUrl, { width: 280, height: 168, crop: "fill" }) }} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "cover" as const, display: "block" }} />
                                       : <Flex w="full" h="full" align="center" justify="center"><Image size={20} style={{ color: "#60a5fa" }} /></Flex>}
                                   </Box>
                                 ))}
@@ -1448,7 +1451,7 @@ export function ThemesSection() {
                                 <Box key={s.id} borderRadius="9px" overflow="hidden" w="80px" h="80px"
                                   style={{ border: `1px solid ${c.cardBorder}`, flexShrink: 0, background: isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)" }}>
                                   {s.assetUrl
-                                    ? <Box as="img" {...{ src: s.assetUrl }} style={{ width: "100%", height: "100%", objectFit: "contain" as const, display: "block" }} />
+                                    ? <Box as="img" {...{ src: cldOptimize(s.assetUrl, { width: 160, height: 160, crop: "limit" }) }} loading="lazy" decoding="async" style={{ width: "100%", height: "100%", objectFit: "contain" as const, display: "block" }} />
                                     : <Flex w="full" h="full" align="center" justify="center"><Sparkles size={18} style={{ color: "#fb923c" }} /></Flex>}
                                 </Box>
                               ))}
