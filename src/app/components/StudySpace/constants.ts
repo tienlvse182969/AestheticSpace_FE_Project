@@ -1,4 +1,4 @@
-import { Music, Timer, ListTodo, Clock, Quote } from "lucide-react";
+import { Music, Timer, ListTodo, Clock, Quote, Wind, Image, Pencil } from "lucide-react";
 import type { WidgetId, BackgroundItem } from "./types";
 import stickerEarth from "figma:asset/523a81dd5cd4987e575a61010e8cccaceb341c59.png";
 import stickerCat from "figma:asset/973e0a524173206b28b229b8fba5daec05767974.png";
@@ -142,6 +142,7 @@ export const WIDGET_DEFS: {
   desc: string;
   icon: React.ComponentType<{ size?: number; color?: string }>;
   color: string;
+  isPremium?: boolean;
 }[] = [
   {
     id: "music",
@@ -177,6 +178,30 @@ export const WIDGET_DEFS: {
     desc: "Daily inspiration, refreshable anytime",
     icon: Quote,
     color: "#2dd4bf",
+  },
+  {
+    id: "photoFrame",
+    label: "Photo Frame",
+    desc: "A rotating slideshow of your own photos",
+    icon: Image,
+    color: "#fb923c",
+    isPremium: true,
+  },
+  {
+    id: "doodle",
+    label: "Doodle Pad",
+    desc: "A tiny canvas to sketch and scribble",
+    icon: Pencil,
+    color: "#f472b6",
+    isPremium: true,
+  },
+  {
+    id: "wellness",
+    label: "Wellness",
+    desc: "Guided breathing & water/eye-rest reminders",
+    icon: Wind,
+    color: "#67e8f9",
+    isPremium: true,
   },
 ];
 

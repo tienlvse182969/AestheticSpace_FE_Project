@@ -1,4 +1,6 @@
-export type WidgetId = "music" | "pomodoro" | "todo" | "clock" | "quote";
+export type WidgetId =
+  | "music" | "pomodoro" | "todo" | "clock" | "quote"
+  | "wellness" | "photoFrame" | "doodle" | "googleCalendar";
 
 export type ClockMode     = "digital" | "analog";
 export type DigitalLayout = "horizontal" | "vertical";
@@ -35,4 +37,21 @@ export interface StickyNote {
   y: number;
   w?: number;
   h?: number;
+}
+
+export interface WorldClockItem {
+  id: string;
+  label: string;
+  timezone: string; // IANA timezone id, e.g. "Asia/Tokyo"
+  x: number;
+  y: number;
+}
+
+export interface DeadlineItem {
+  id: string;
+  title: string;
+  targetAt: string; // ISO datetime
+  color?: string;
+  x: number;
+  y: number;
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, useDragControls } from "motion/react";
-import { Trash2, Plus, StickyNote, LayoutGrid } from "lucide-react";
+import { Trash2, Plus, StickyNote, LayoutGrid, Crown, Clock, Hourglass } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { WIDGET_DEFS } from "../constants";
@@ -20,6 +20,12 @@ interface WidgetPickerPanelProps {
   onAddStickyNote: () => void;
   onDropWidget?: (id: WidgetId, x: number, y: number) => void;
   onDropStickyNote?: (x: number, y: number) => void;
+  onAddWorldClock?: () => void;
+  onDropWorldClock?: (x: number, y: number) => void;
+  onAddDeadline?: () => void;
+  onDropDeadline?: (x: number, y: number) => void;
+  isFree?: boolean;
+  onLockedClick?: (label: string) => void;
   onClose: () => void;
 }
 
@@ -179,18 +185,98 @@ function StickyThumbnail() {
   );
 }
 
+function WellnessThumbnail() {
+  const cx = 80, cy = 48;
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 160 96" preserveAspectRatio="xMidYMid meet">
+      <rect width="160" height="96" fill="rgba(103,232,249,0.06)" />
+      <circle cx={cx} cy={cy} r="30" fill="none" stroke="rgba(103,232,249,0.18)" strokeWidth="1.5" />
+      <circle cx={cx} cy={cy} r="20" fill="rgba(103,232,249,0.12)" stroke="rgba(103,232,249,0.35)" strokeWidth="1.5" />
+      <circle cx={cx} cy={cy} r="10" fill="rgba(103,232,249,0.22)" />
+    </svg>
+  );
+}
+
+function PhotoFrameThumbnail() {
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 160 96" preserveAspectRatio="xMidYMid meet">
+      <rect width="160" height="96" fill="rgba(251,146,60,0.06)" />
+      <rect x="26" y="16" width="108" height="64" rx="6" fill="none" stroke="rgba(251,146,60,0.35)" strokeWidth="2" />
+      <circle cx="50" cy="38" r="7" fill="rgba(251,146,60,0.4)" />
+      <path d="M32 72 L62 46 L84 64 L102 48 L128 72 Z" fill="rgba(251,146,60,0.25)" />
+    </svg>
+  );
+}
+
+function DoodleThumbnail() {
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 160 96" preserveAspectRatio="xMidYMid meet">
+      <rect width="160" height="96" fill="rgba(244,114,182,0.06)" />
+      <path d="M22 70 C 45 20, 65 78, 80 40 S 120 15, 138 55" fill="none" stroke="rgba(244,114,182,0.55)" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function GoogleCalendarThumbnail() {
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 160 96" preserveAspectRatio="xMidYMid meet">
+      <rect width="160" height="96" fill="rgba(129,140,248,0.06)" />
+      <rect x="34" y="20" width="92" height="56" rx="6" fill="none" stroke="rgba(129,140,248,0.4)" strokeWidth="2" />
+      <line x1="34" y1="36" x2="126" y2="36" stroke="rgba(129,140,248,0.4)" strokeWidth="2" />
+      {[0, 1, 2].map(row => (
+        <g key={row}>
+          {[0, 1, 2, 3].map(col => (
+            <circle key={col} cx={48 + col * 20} cy={50 + row * 12} r="2.5" fill="rgba(129,140,248,0.35)" />
+          ))}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+function DeadlineCardThumbnail() {
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 160 96" preserveAspectRatio="xMidYMid meet">
+      <rect width="160" height="96" fill="rgba(248,113,113,0.06)" />
+      <path d="M60 22 H100 M60 74 H100 M64 22 C64 40, 96 40, 96 48 C96 56, 64 56, 64 74 M96 22 C96 40, 64 40, 64 48 C64 56, 96 56, 96 74"
+        fill="none" stroke="rgba(248,113,113,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function WorldClockThumbnail() {
+  const clocks = [{ x: 32, hh: "09:41" }, { x: 82, hh: "22:15" }, { x: 132, hh: "15:03" }];
+  return (
+    <svg width="100%" height="100%" viewBox="0 0 160 96" preserveAspectRatio="xMidYMid meet">
+      <rect width="160" height="96" fill="rgba(129,140,248,0.06)" />
+      {clocks.map((c, i) => (
+        <g key={i} transform={`translate(${c.x}, 48)`}>
+          <circle r="18" fill="none" stroke="rgba(129,140,248,0.3)" strokeWidth="1.5" />
+          <text y="4" textAnchor="middle" fontSize="9" fill="rgba(129,140,248,0.75)" fontFamily="'HarmonyOS Sans', sans-serif">{c.hh}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 const THUMBNAIL_MAP: Record<string, React.FC> = {
-  music:    MusicThumbnail,
-  pomodoro: PomodoroThumbnail,
-  todo:     TodoThumbnail,
-  clock:    ClockThumbnail,
-  quote:    QuoteThumbnail,
-  sticky:   StickyThumbnail,
+  music:          MusicThumbnail,
+  pomodoro:       PomodoroThumbnail,
+  todo:           TodoThumbnail,
+  clock:          ClockThumbnail,
+  quote:          QuoteThumbnail,
+  sticky:         StickyThumbnail,
+  wellness:       WellnessThumbnail,
+  photoFrame:     PhotoFrameThumbnail,
+  doodle:         DoodleThumbnail,
+  googleCalendar: GoogleCalendarThumbnail,
+  worldClock:     WorldClockThumbnail,
+  deadline:       DeadlineCardThumbnail,
 };
 
 /* ── Main component ──────────────────────────────────────────────────────── */
 
-export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, onDropWidget, onDropStickyNote, onClose }: WidgetPickerPanelProps) {
+export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, onDropWidget, onDropStickyNote, onAddWorldClock, onDropWorldClock, onAddDeadline, onDropDeadline, isFree, onLockedClick, onClose }: WidgetPickerPanelProps) {
   const { t } = useTranslation();
   const sw = typeof window !== "undefined" ? window.innerWidth  : 1440;
 
@@ -207,7 +293,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
   const dragControls = useDragControls();
 
   type DraggingWidget = typeof WIDGET_DEFS[0];
-  type DraggingItem = DraggingWidget | "sticky";
+  type DraggingItem = DraggingWidget | "sticky" | "worldClock" | "deadline";
   const [draggingItem, setDraggingItem] = useState<DraggingItem | null>(null);
   const [ghostPos, setGhostPos] = useState({ x: 0, y: 0 });
 
@@ -225,6 +311,10 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
         if (outside) {
           if (draggingItem === "sticky") {
             onDropStickyNote?.(Math.round(e.clientX - 108), Math.round(e.clientY - 20));
+          } else if (draggingItem === "worldClock") {
+            onDropWorldClock?.(Math.round(e.clientX - 85), Math.round(e.clientY - 20));
+          } else if (draggingItem === "deadline") {
+            onDropDeadline?.(Math.round(e.clientX - 88), Math.round(e.clientY - 20));
           } else {
             const w = WIDGET_WIDTHS[draggingItem.id] ?? 240;
             onDropWidget?.(draggingItem.id, Math.round(e.clientX - w / 2), Math.round(e.clientY - 20));
@@ -242,7 +332,178 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
       document.removeEventListener("pointerup", onUp);
       document.body.style.cursor = "";
     };
-  }, [draggingItem, ref, onDropWidget, onDropStickyNote]);
+  }, [draggingItem, ref, onDropWidget, onDropStickyNote, onDropWorldClock, onDropDeadline]);
+
+  const renderMobileRow = (w: typeof WIDGET_DEFS[0]) => {
+    const isAdded = activeWidgets.has(w.id);
+    const Icon = w.icon;
+    const isLocked = !!w.isPremium && !!isFree;
+    const label = t(`widgetPicker.${w.id}`, w.label);
+    const desc = t(`widgetPicker.${w.id}Desc`, w.desc);
+    return (
+      <Flex key={w.id} align="center" gap={3} px={3} py={3} borderRadius="10px" style={{
+        background: isLocked ? "rgba(255,255,255,0.015)" : isAdded ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
+        border: isLocked ? "1px solid rgba(255,255,255,0.05)" : isAdded ? `1px solid ${w.color}30` : "1px solid rgba(255,255,255,0.07)",
+        transition: "all 0.2s",
+        opacity: isLocked ? 0.7 : 1,
+      }}>
+        <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
+          style={{ background: `${w.color}18`, border: `1px solid ${w.color}30` }}>
+          <Icon size={16} color={w.color} />
+        </Flex>
+        <Box flex={1} minW={0}>
+          <Text style={{ fontSize: "0.84rem", color: "rgba(255,255,255,0.88)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{label}</Text>
+          <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: "1px" }}>{desc}</Text>
+        </Box>
+        <Box
+          as="button"
+          onClick={isLocked ? () => onLockedClick?.(label) : () => onToggle(w.id)}
+          display="flex" alignItems="center" justifyContent="center" gap={1}
+          border="none" cursor="pointer" flexShrink={0}
+          style={{
+            padding: "4px 10px", borderRadius: "20px",
+            fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+            transition: "all 0.18s",
+            background: isLocked ? "rgba(251,191,36,0.12)" : isAdded ? "rgba(239,68,68,0.1)" : `${w.color}20`,
+            color: isLocked ? "#fbbf24" : isAdded ? "rgba(239,68,68,0.8)" : w.color,
+            border: isLocked ? "1px solid rgba(251,191,36,0.3)" : isAdded ? "1px solid rgba(239,68,68,0.25)" : `1px solid ${w.color}40`,
+          }}
+        >
+          {isLocked ? t("widgetPicker.premium") : isAdded ? <><Trash2 size={10} /><span style={{ marginLeft: 3 }}>{t("widgetPicker.remove")}</span></> : <><Plus size={10} /><span style={{ marginLeft: 3 }}>{t("widgetPicker.addToSpace")}</span></>}
+        </Box>
+      </Flex>
+    );
+  };
+
+  const renderDesktopCard = (w: typeof WIDGET_DEFS[0]) => {
+    const isAdded = activeWidgets.has(w.id);
+    const Thumb = THUMBNAIL_MAP[w.id];
+    const isLocked = !!w.isPremium && !!isFree;
+    const label = t(`widgetPicker.${w.id}`, w.label);
+    const desc = t(`widgetPicker.${w.id}Desc`, w.desc);
+    return (
+      <div key={w.id} style={{
+        borderRadius: "12px",
+        overflow: "hidden",
+        border: isLocked ? "1px solid rgba(251,191,36,0.18)" : isAdded ? `1px solid ${w.color}40` : "1px solid rgba(255,255,255,0.08)",
+        background: isLocked ? "rgba(251,191,36,0.03)" : isAdded ? `${w.color}0a` : "rgba(255,255,255,0.03)",
+        transition: "all 0.2s",
+        display: "flex",
+        flexDirection: "column",
+        opacity: isLocked ? 0.85 : 1,
+      }}>
+        {/* Thumbnail area — drag handle to drop onto canvas */}
+        <div
+          onPointerDown={(e) => {
+            if (isLocked) { onLockedClick?.(label); return; }
+            e.preventDefault();
+            setDraggingItem(w);
+            setGhostPos({ x: e.clientX, y: e.clientY });
+          }}
+          style={{
+            width: "100%",
+            height: "100px",
+            overflow: "hidden",
+            position: "relative",
+            background: `linear-gradient(145deg, ${w.color}0d 0%, rgba(12,18,22,0.5) 100%)`,
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            cursor: isLocked ? "pointer" : "grab",
+          }}
+        >
+          {Thumb && <Thumb />}
+          {/* Premium badge */}
+          {isLocked && (
+            <div style={{
+              position: "absolute",
+              top: 7,
+              right: 7,
+              display: "flex",
+              alignItems: "center",
+              gap: 3,
+              background: "rgba(251,191,36,0.16)",
+              borderRadius: "20px",
+              padding: "2px 7px",
+              fontSize: "0.58rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              color: "#fbbf24",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              border: "1px solid rgba(251,191,36,0.35)",
+            }}>
+              <Crown size={9} />
+              {t("widgetPicker.premium")}
+            </div>
+          )}
+          {/* Active badge */}
+          {!isLocked && isAdded && (
+            <div style={{
+              position: "absolute",
+              top: 7,
+              right: 7,
+              background: `${w.color}cc`,
+              borderRadius: "20px",
+              padding: "2px 7px",
+              fontSize: "0.58rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              color: "#0c1216",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+            }}>
+              {t("widgetPicker.added")}
+            </div>
+          )}
+        </div>
+
+        {/* Info + action */}
+        <div style={{ padding: "10px 11px 11px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+          <div>
+            <div style={{
+              fontSize: "0.8rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              color: "rgba(255,255,255,0.88)",
+              marginBottom: "2px",
+            }}>
+              {label}
+            </div>
+            <div style={{
+              fontSize: "0.65rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              color: "rgba(255,255,255,0.32)",
+              lineHeight: 1.45,
+            }}>
+              {desc}
+            </div>
+          </div>
+
+          <button
+            onClick={isLocked ? () => onLockedClick?.(label) : () => onToggle(w.id)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 5,
+              width: "100%",
+              padding: "6px 0",
+              borderRadius: "8px",
+              fontSize: "0.72rem",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              cursor: "pointer",
+              transition: "all 0.18s",
+              background: isLocked ? "rgba(251,191,36,0.12)" : isAdded ? "rgba(239,68,68,0.12)" : `${w.color}1a`,
+              color: isLocked ? "#fbbf24" : isAdded ? "rgba(239,68,68,0.85)" : w.color,
+              border: isLocked ? "1px solid rgba(251,191,36,0.3)" : isAdded ? "1px solid rgba(239,68,68,0.28)" : `1px solid ${w.color}38`,
+            }}
+          >
+            {isLocked
+              ? <><Crown size={11} /> {t("widgetPicker.premium")}</>
+              : isAdded
+                ? <><Trash2 size={11} /> {t("widgetPicker.remove")}</>
+                : <><Plus size={11} /> {t("widgetPicker.addToSpace")}</>}
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -305,46 +566,46 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
         {/* ── Grid (desktop) / List (mobile) ──────────────────────────── */}
         {isMobile ? (
           /* ── Mobile: list ── */
-          <Flex direction="column" gap={2} mt={3}>
-            {WIDGET_DEFS.map((w) => {
-              const isAdded = activeWidgets.has(w.id);
-              const Icon = w.icon;
-              const isSoon = false;
-              return (
-                <Flex key={w.id} align="center" gap={3} px={3} py={3} borderRadius="10px" style={{
-                  background: isSoon ? "rgba(255,255,255,0.015)" : isAdded ? "rgba(255,255,255,0.06)" : "rgba(255,255,255,0.03)",
-                  border: isSoon ? "1px solid rgba(255,255,255,0.05)" : isAdded ? `1px solid ${w.color}30` : "1px solid rgba(255,255,255,0.07)",
-                  transition: "all 0.2s",
-                  opacity: isSoon ? 0.55 : 1,
-                }}>
-                  <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
-                    style={{ background: `${w.color}18`, border: `1px solid ${w.color}30` }}>
-                    <Icon size={16} color={w.color} />
-                  </Flex>
-                  <Box flex={1} minW={0}>
-                    <Text style={{ fontSize: "0.84rem", color: "rgba(255,255,255,0.88)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{w.label}</Text>
-                    <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.35)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: "1px" }}>{w.desc}</Text>
-                  </Box>
-                  <Box
-                    as="button"
-                    onClick={isSoon ? undefined : () => onToggle(w.id)}
-                    display="flex" alignItems="center" justifyContent="center" gap={1}
-                    border="none" cursor={isSoon ? "default" : "pointer"} flexShrink={0}
-                    style={{
-                      padding: "4px 10px", borderRadius: "20px",
-                      fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif",
-                      transition: "all 0.18s",
-                      background: isSoon ? "rgba(255,255,255,0.06)" : isAdded ? "rgba(239,68,68,0.1)" : `${w.color}20`,
-                      color: isSoon ? "rgba(255,255,255,0.3)" : isAdded ? "rgba(239,68,68,0.8)" : w.color,
-                      border: isSoon ? "1px solid rgba(255,255,255,0.08)" : isAdded ? "1px solid rgba(239,68,68,0.25)" : `1px solid ${w.color}40`,
-                    }}
-                  >
-                    {isSoon ? t("widgetPicker.soon") : isAdded ? <><Trash2 size={10} /><span style={{ marginLeft: 3 }}>{t("widgetPicker.remove")}</span></> : <><Plus size={10} /><span style={{ marginLeft: 3 }}>{t("widgetPicker.addToSpace")}</span></>}
-                  </Box>
+          <>
+            <Flex direction="column" gap={2} mt={3}>
+              {WIDGET_DEFS.slice(0, 5).map(renderMobileRow)}
+            </Flex>
+
+            {/* Mobile sticky list row */}
+            <Flex align="center" gap={3} px={3} py={3} borderRadius="10px" mt={2} style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}>
+              <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
+                style={{ background: "rgba(254,240,138,0.12)", border: "1px solid rgba(254,240,138,0.25)" }}>
+                <StickyNote size={16} color="#fde047" />
+              </Flex>
+              <Box flex={1} minW={0}>
+                <Text style={{ fontSize: "0.84rem", color: "rgba(255,255,255,0.88)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("widgetPicker.stickyNotes")}</Text>
+                <Flex gap="4px" mt="4px" align="center">
+                  {STICKY_COLORS.map(c => (
+                    <Box key={c.id} w="7px" h="7px" borderRadius="50%" style={{ background: c.swatch, flexShrink: 0 }} />
+                  ))}
+                  <Text style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif", marginLeft: 3 }}>{t("widgetPicker.unlimited")}</Text>
                 </Flex>
-              );
-            })}
-          </Flex>
+              </Box>
+              <Box as="button" onClick={onAddStickyNote}
+                display="flex" alignItems="center" justifyContent="center" gap={1}
+                border="none" cursor="pointer" flexShrink={0}
+                style={{
+                  padding: "4px 10px", borderRadius: "20px",
+                  fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+                  background: "rgba(254,240,138,0.12)", color: "#fde047",
+                  border: "1px solid rgba(254,224,71,0.28)", transition: "all 0.18s",
+                }}>
+                <Plus size={10} /><span style={{ marginLeft: 3 }}>{t("widgetPicker.addNote")}</span>
+              </Box>
+            </Flex>
+
+            <Flex direction="column" gap={2} mt={2}>
+              {WIDGET_DEFS.slice(5).map(renderMobileRow)}
+            </Flex>
+          </>
         ) : (
           /* ── Desktop: 3-column thumbnail grid ── */
           <div style={{
@@ -353,130 +614,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
             gap: "10px",
             marginTop: "14px",
           }}>
-            {WIDGET_DEFS.map((w) => {
-              const isAdded = activeWidgets.has(w.id);
-              const Thumb = THUMBNAIL_MAP[w.id];
-              const isSoon = false;
-              return (
-                <div key={w.id} style={{
-                  borderRadius: "12px",
-                  overflow: "hidden",
-                  border: isSoon ? "1px solid rgba(255,255,255,0.06)" : isAdded ? `1px solid ${w.color}40` : "1px solid rgba(255,255,255,0.08)",
-                  background: isSoon ? "rgba(255,255,255,0.015)" : isAdded ? `${w.color}0a` : "rgba(255,255,255,0.03)",
-                  transition: "all 0.2s",
-                  display: "flex",
-                  flexDirection: "column",
-                  opacity: isSoon ? 0.6 : 1,
-                }}>
-                  {/* Thumbnail area — drag handle to drop onto canvas */}
-                  <div
-                    onPointerDown={(e) => {
-                      if (isSoon) return;
-                      e.preventDefault();
-                      setDraggingItem(w);
-                      setGhostPos({ x: e.clientX, y: e.clientY });
-                    }}
-                    style={{
-                      width: "100%",
-                      height: "100px",
-                      overflow: "hidden",
-                      position: "relative",
-                      background: `linear-gradient(145deg, ${w.color}0d 0%, rgba(12,18,22,0.5) 100%)`,
-                      borderBottom: "1px solid rgba(255,255,255,0.06)",
-                      cursor: isSoon ? "default" : "grab",
-                    }}
-                  >
-                    {Thumb && <Thumb />}
-                    {/* Coming Soon badge */}
-                    {isSoon && (
-                      <div style={{
-                        position: "absolute",
-                        top: 7,
-                        right: 7,
-                        background: "rgba(255,255,255,0.1)",
-                        borderRadius: "20px",
-                        padding: "2px 7px",
-                        fontSize: "0.58rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        color: "rgba(255,255,255,0.45)",
-                        fontWeight: 600,
-                        letterSpacing: "0.06em",
-                        border: "1px solid rgba(255,255,255,0.12)",
-                      }}>
-                        {t("widgetPicker.soon")}
-                      </div>
-                    )}
-                    {/* Active badge */}
-                    {!isSoon && isAdded && (
-                      <div style={{
-                        position: "absolute",
-                        top: 7,
-                        right: 7,
-                        background: `${w.color}cc`,
-                        borderRadius: "20px",
-                        padding: "2px 7px",
-                        fontSize: "0.58rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        color: "#0c1216",
-                        fontWeight: 600,
-                        letterSpacing: "0.06em",
-                      }}>
-                        {t("widgetPicker.added")}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info + action */}
-                  <div style={{ padding: "10px 11px 11px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-                    <div>
-                      <div style={{
-                        fontSize: "0.8rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        color: "rgba(255,255,255,0.88)",
-                        marginBottom: "2px",
-                      }}>
-                        {w.label}
-                      </div>
-                      <div style={{
-                        fontSize: "0.65rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        color: "rgba(255,255,255,0.32)",
-                        lineHeight: 1.45,
-                      }}>
-                        {isSoon ? t("widgetPicker.comingSoon") : w.desc}
-                      </div>
-                    </div>
-
-                    <button
-                      disabled={isSoon}
-                      onClick={isSoon ? undefined : () => onToggle(w.id)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: 5,
-                        width: "100%",
-                        padding: "6px 0",
-                        borderRadius: "8px",
-                        fontSize: "0.72rem",
-                        fontFamily: "'HarmonyOS Sans', sans-serif",
-                        cursor: isSoon ? "default" : "pointer",
-                        transition: "all 0.18s",
-                        background: isSoon ? "rgba(255,255,255,0.05)" : isAdded ? "rgba(239,68,68,0.12)" : `${w.color}1a`,
-                        color: isSoon ? "rgba(255,255,255,0.22)" : isAdded ? "rgba(239,68,68,0.85)" : w.color,
-                        border: isSoon ? "1px solid rgba(255,255,255,0.08)" : isAdded ? "1px solid rgba(239,68,68,0.28)" : `1px solid ${w.color}38`,
-                      }}
-                    >
-                      {isSoon
-                        ? t("widgetPicker.comingSoon")
-                        : isAdded
-                          ? <><Trash2 size={11} /> {t("widgetPicker.remove")}</>
-                          : <><Plus size={11} /> {t("widgetPicker.addToSpace")}</>}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+            {WIDGET_DEFS.slice(0, 5).map(renderDesktopCard)}
 
             {/* Sticky Notes card — inline in grid */}
             <div style={{
@@ -541,41 +679,218 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
                 </button>
               </div>
             </div>
+
+            {WIDGET_DEFS.slice(5).map(renderDesktopCard)}
+
+            {/* World Clock card — inline in grid, premium, unlimited instances */}
+            {(() => {
+              const wcLocked = !!isFree;
+              return (
+                <div style={{
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  border: wcLocked ? "1px solid rgba(251,191,36,0.18)" : "1px solid rgba(129,140,248,0.22)",
+                  background: wcLocked ? "rgba(251,191,36,0.03)" : "rgba(129,140,248,0.04)",
+                  display: "flex",
+                  flexDirection: "column",
+                  opacity: wcLocked ? 0.85 : 1,
+                }}>
+                  <div
+                    onPointerDown={(e) => {
+                      if (wcLocked) { onLockedClick?.(t("widgetPicker.worldClock")); return; }
+                      e.preventDefault();
+                      setDraggingItem("worldClock");
+                      setGhostPos({ x: e.clientX, y: e.clientY });
+                    }}
+                    style={{
+                      width: "100%",
+                      height: "100px",
+                      overflow: "hidden",
+                      position: "relative",
+                      background: "linear-gradient(145deg, rgba(129,140,248,0.1) 0%, rgba(12,18,22,0.5) 100%)",
+                      borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      cursor: wcLocked ? "pointer" : "grab",
+                    }}
+                  >
+                    <WorldClockThumbnail />
+                    {wcLocked && (
+                      <div style={{
+                        position: "absolute", top: 7, right: 7, display: "flex", alignItems: "center", gap: 3,
+                        background: "rgba(251,191,36,0.16)", borderRadius: "20px", padding: "2px 7px",
+                        fontSize: "0.58rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "#fbbf24",
+                        fontWeight: 600, letterSpacing: "0.06em", border: "1px solid rgba(251,191,36,0.35)",
+                      }}>
+                        <Crown size={9} /> {t("widgetPicker.premium")}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: "10px 11px 11px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                    <div>
+                      <div style={{ fontSize: "0.8rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.88)", marginBottom: "2px" }}>
+                        {t("widgetPicker.worldClock")}
+                      </div>
+                      <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.32)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        {t("widgetPicker.unlimitedInstances")}
+                      </div>
+                    </div>
+                    <button
+                      onClick={wcLocked ? () => onLockedClick?.(t("widgetPicker.worldClock")) : onAddWorldClock}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                        width: "100%", padding: "6px 0", borderRadius: "8px",
+                        fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", cursor: "pointer",
+                        transition: "all 0.18s",
+                        background: wcLocked ? "rgba(251,191,36,0.12)" : "rgba(129,140,248,0.14)",
+                        color: wcLocked ? "#fbbf24" : "#818cf8",
+                        border: wcLocked ? "1px solid rgba(251,191,36,0.3)" : "1px solid rgba(129,140,248,0.35)",
+                      }}
+                    >
+                      {wcLocked ? <><Crown size={11} /> {t("widgetPicker.premium")}</> : <><Plus size={11} /> {t("widgetPicker.addToSpace")}</>}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Deadline / Countdown card — inline in grid, premium, unlimited instances */}
+            {(() => {
+              const dlLocked = !!isFree;
+              return (
+                <div style={{
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  border: dlLocked ? "1px solid rgba(251,191,36,0.18)" : "1px solid rgba(248,113,113,0.22)",
+                  background: dlLocked ? "rgba(251,191,36,0.03)" : "rgba(248,113,113,0.04)",
+                  display: "flex",
+                  flexDirection: "column",
+                  opacity: dlLocked ? 0.85 : 1,
+                }}>
+                  <div
+                    onPointerDown={(e) => {
+                      if (dlLocked) { onLockedClick?.(t("widgetPicker.deadline")); return; }
+                      e.preventDefault();
+                      setDraggingItem("deadline");
+                      setGhostPos({ x: e.clientX, y: e.clientY });
+                    }}
+                    style={{
+                      width: "100%",
+                      height: "100px",
+                      overflow: "hidden",
+                      position: "relative",
+                      background: "linear-gradient(145deg, rgba(248,113,113,0.1) 0%, rgba(12,18,22,0.5) 100%)",
+                      borderBottom: "1px solid rgba(255,255,255,0.06)",
+                      cursor: dlLocked ? "pointer" : "grab",
+                    }}
+                  >
+                    <DeadlineCardThumbnail />
+                    {dlLocked && (
+                      <div style={{
+                        position: "absolute", top: 7, right: 7, display: "flex", alignItems: "center", gap: 3,
+                        background: "rgba(251,191,36,0.16)", borderRadius: "20px", padding: "2px 7px",
+                        fontSize: "0.58rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "#fbbf24",
+                        fontWeight: 600, letterSpacing: "0.06em", border: "1px solid rgba(251,191,36,0.35)",
+                      }}>
+                        <Crown size={9} /> {t("widgetPicker.premium")}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: "10px 11px 11px", display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                    <div>
+                      <div style={{ fontSize: "0.8rem", fontFamily: "'HarmonyOS Sans', sans-serif", color: "rgba(255,255,255,0.88)", marginBottom: "2px" }}>
+                        {t("widgetPicker.deadline")}
+                      </div>
+                      <div style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.32)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                        {t("widgetPicker.unlimitedInstances")}
+                      </div>
+                    </div>
+                    <button
+                      onClick={dlLocked ? () => onLockedClick?.(t("widgetPicker.deadline")) : onAddDeadline}
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                        width: "100%", padding: "6px 0", borderRadius: "8px",
+                        fontSize: "0.72rem", fontFamily: "'HarmonyOS Sans', sans-serif", cursor: "pointer",
+                        transition: "all 0.18s",
+                        background: dlLocked ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.14)",
+                        color: dlLocked ? "#fbbf24" : "#f87171",
+                        border: dlLocked ? "1px solid rgba(251,191,36,0.3)" : "1px solid rgba(248,113,113,0.35)",
+                      }}
+                    >
+                      {dlLocked ? <><Crown size={11} /> {t("widgetPicker.premium")}</> : <><Plus size={11} /> {t("widgetPicker.addToSpace")}</>}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 
-        {/* Mobile sticky list row — appended after WIDGET_DEFS list */}
-        {isMobile && (
-          <Flex align="center" gap={3} px={3} py={3} borderRadius="10px" mt={2} style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}>
-            <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
-              style={{ background: "rgba(254,240,138,0.12)", border: "1px solid rgba(254,240,138,0.25)" }}>
-              <StickyNote size={16} color="#fde047" />
-            </Flex>
-            <Box flex={1} minW={0}>
-              <Text style={{ fontSize: "0.84rem", color: "rgba(255,255,255,0.88)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("widgetPicker.stickyNotes")}</Text>
-              <Flex gap="4px" mt="4px" align="center">
-                {STICKY_COLORS.map(c => (
-                  <Box key={c.id} w="7px" h="7px" borderRadius="50%" style={{ background: c.swatch, flexShrink: 0 }} />
-                ))}
-                <Text style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif", marginLeft: 3 }}>{t("widgetPicker.unlimited")}</Text>
+        {/* Mobile World Clock row */}
+        {isMobile && (() => {
+          const wcLocked = !!isFree;
+          return (
+            <Flex align="center" gap={3} px={3} py={3} borderRadius="10px" mt={2} style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              opacity: wcLocked ? 0.7 : 1,
+            }}>
+              <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
+                style={{ background: "rgba(129,140,248,0.12)", border: "1px solid rgba(129,140,248,0.3)" }}>
+                <Clock size={16} color="#818cf8" />
               </Flex>
-            </Box>
-            <Box as="button" onClick={onAddStickyNote}
-              display="flex" alignItems="center" justifyContent="center" gap={1}
-              border="none" cursor="pointer" flexShrink={0}
-              style={{
-                padding: "4px 10px", borderRadius: "20px",
-                fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif",
-                background: "rgba(254,240,138,0.12)", color: "#fde047",
-                border: "1px solid rgba(254,240,138,0.28)", transition: "all 0.18s",
-              }}>
-              <Plus size={10} /><span style={{ marginLeft: 3 }}>{t("widgetPicker.addNote")}</span>
-            </Box>
-          </Flex>
-        )}
+              <Box flex={1} minW={0}>
+                <Text style={{ fontSize: "0.84rem", color: "rgba(255,255,255,0.88)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("widgetPicker.worldClock")}</Text>
+                <Text style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: "1px" }}>{t("widgetPicker.unlimitedInstances")}</Text>
+              </Box>
+              <Box as="button" onClick={wcLocked ? () => onLockedClick?.(t("widgetPicker.worldClock")) : onAddWorldClock}
+                display="flex" alignItems="center" justifyContent="center" gap={1}
+                border="none" cursor="pointer" flexShrink={0}
+                style={{
+                  padding: "4px 10px", borderRadius: "20px",
+                  fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+                  background: wcLocked ? "rgba(251,191,36,0.12)" : "rgba(129,140,248,0.14)",
+                  color: wcLocked ? "#fbbf24" : "#818cf8",
+                  border: wcLocked ? "1px solid rgba(251,191,36,0.3)" : "1px solid rgba(129,140,248,0.35)",
+                  transition: "all 0.18s",
+                }}>
+                {wcLocked ? <Crown size={10} /> : <Plus size={10} />}<span style={{ marginLeft: 3 }}>{wcLocked ? t("widgetPicker.premium") : t("widgetPicker.addToSpace")}</span>
+              </Box>
+            </Flex>
+          );
+        })()}
+
+        {/* Mobile Deadline row */}
+        {isMobile && (() => {
+          const dlLocked = !!isFree;
+          return (
+            <Flex align="center" gap={3} px={3} py={3} borderRadius="10px" mt={2} style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              opacity: dlLocked ? 0.7 : 1,
+            }}>
+              <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
+                style={{ background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)" }}>
+                <Hourglass size={16} color="#f87171" />
+              </Flex>
+              <Box flex={1} minW={0}>
+                <Text style={{ fontSize: "0.84rem", color: "rgba(255,255,255,0.88)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>{t("widgetPicker.deadline")}</Text>
+                <Text style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.28)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: "1px" }}>{t("widgetPicker.unlimitedInstances")}</Text>
+              </Box>
+              <Box as="button" onClick={dlLocked ? () => onLockedClick?.(t("widgetPicker.deadline")) : onAddDeadline}
+                display="flex" alignItems="center" justifyContent="center" gap={1}
+                border="none" cursor="pointer" flexShrink={0}
+                style={{
+                  padding: "4px 10px", borderRadius: "20px",
+                  fontSize: "0.7rem", fontFamily: "'HarmonyOS Sans', sans-serif",
+                  background: dlLocked ? "rgba(251,191,36,0.12)" : "rgba(248,113,113,0.14)",
+                  color: dlLocked ? "#fbbf24" : "#f87171",
+                  border: dlLocked ? "1px solid rgba(251,191,36,0.3)" : "1px solid rgba(248,113,113,0.35)",
+                  transition: "all 0.18s",
+                }}>
+                {dlLocked ? <Crown size={10} /> : <Plus size={10} />}<span style={{ marginLeft: 3 }}>{dlLocked ? t("widgetPicker.premium") : t("widgetPicker.addToSpace")}</span>
+              </Box>
+            </Flex>
+          );
+        })()}
 
         <Text mt="14px" style={{
           fontSize: "0.62rem",
@@ -589,48 +904,49 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
     </MotionBox>
 
     {/* ── Drag ghost (portal) ── */}
-    {draggingItem && typeof document !== "undefined" && createPortal(
-      <div style={{
-        position: "fixed",
-        left: ghostPos.x - 60,
-        top: ghostPos.y - 28,
-        pointerEvents: "none",
-        zIndex: 9999,
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "8px 14px",
-        borderRadius: "10px",
-        background: "rgba(12,18,22,0.88)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-        border: draggingItem === "sticky" ? "1px solid rgba(254,224,71,0.4)" : `1px solid ${draggingItem.color}40`,
-        boxShadow: draggingItem === "sticky"
-          ? "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(254,224,71,0.2)"
-          : `0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px ${draggingItem.color}20`,
-        transform: "rotate(-2deg) scale(1.04)",
-      }}>
+    {draggingItem && typeof document !== "undefined" && (() => {
+      const ghostColor = draggingItem === "sticky" ? "#fde047" : draggingItem === "worldClock" ? "#818cf8" : draggingItem === "deadline" ? "#f87171" : draggingItem.color;
+      const ghostLabel = draggingItem === "sticky" ? t("widgetPicker.stickyNotes") : draggingItem === "worldClock" ? t("widgetPicker.worldClock") : draggingItem === "deadline" ? t("widgetPicker.deadline") : t(`widgetPicker.${draggingItem.id}`, draggingItem.label);
+      const GhostIcon = draggingItem === "sticky" ? StickyNote : (draggingItem === "worldClock" || draggingItem === "deadline") ? undefined : draggingItem.icon;
+      return createPortal(
         <div style={{
-          width: 28, height: 28, borderRadius: 7, flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: draggingItem === "sticky" ? "rgba(254,240,138,0.12)" : `${draggingItem.color}1a`,
-          border: draggingItem === "sticky" ? "1px solid rgba(254,240,138,0.28)" : `1px solid ${draggingItem.color}35`,
+          position: "fixed",
+          left: ghostPos.x - 60,
+          top: ghostPos.y - 28,
+          pointerEvents: "none",
+          zIndex: 9999,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "8px 14px",
+          borderRadius: "10px",
+          background: "rgba(12,18,22,0.88)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: `1px solid ${ghostColor}40`,
+          boxShadow: `0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px ${ghostColor}20`,
+          transform: "rotate(-2deg) scale(1.04)",
         }}>
-          {draggingItem === "sticky"
-            ? <StickyNote size={14} color="#fde047" />
-            : <draggingItem.icon size={14} color={draggingItem.color} />}
-        </div>
-        <span style={{
-          fontSize: "0.78rem",
-          fontFamily: "'HarmonyOS Sans', sans-serif",
-          color: "rgba(255,255,255,0.88)",
-          whiteSpace: "nowrap",
-        }}>
-          {draggingItem === "sticky" ? t("widgetPicker.stickyNotes") : draggingItem.label}
-        </span>
-      </div>,
-      document.body,
-    )}
+          <div style={{
+            width: 28, height: 28, borderRadius: 7, flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: `${ghostColor}1a`,
+            border: `1px solid ${ghostColor}35`,
+          }}>
+            {GhostIcon ? <GhostIcon size={14} color={ghostColor} /> : <Clock size={14} color={ghostColor} />}
+          </div>
+          <span style={{
+            fontSize: "0.78rem",
+            fontFamily: "'HarmonyOS Sans', sans-serif",
+            color: "rgba(255,255,255,0.88)",
+            whiteSpace: "nowrap",
+          }}>
+            {ghostLabel}
+          </span>
+        </div>,
+        document.body,
+      );
+    })()}
     </>
   );
 }

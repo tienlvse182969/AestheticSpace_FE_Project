@@ -239,6 +239,7 @@
     "clock": "Đồng hồ",
     "quote": "Trích dẫn",
     "soon": "SẮP RA",
+    "premium": "PREMIUM",
     "added": "ĐÃ THÊM",
     "comingSoon": "Sắp ra mắt…",
     "addToSpace": "Thêm vào không gian",
@@ -247,7 +248,17 @@
     "unlimited": "Không giới hạn",
     "addNote": "Thêm ghi chú",
     "unlimitedInstances": "Không giới hạn số lượng",
-    "hint": "Kéo widget đến bất kỳ đâu trên màn hình"
+    "hint": "Kéo widget đến bất kỳ đâu trên màn hình",
+    "wellness": "Chăm sóc bản thân",
+    "wellnessDesc": "Hướng dẫn hít thở & nhắc uống nước/nghỉ mắt",
+    "photoFrame": "Khung ảnh",
+    "photoFrameDesc": "Trình chiếu ảnh cá nhân của bạn",
+    "doodle": "Vẽ nguệch ngoạc",
+    "doodleDesc": "Khung vẽ nhỏ để phác thảo",
+    "googleCalendar": "Google Calendar",
+    "googleCalendarDesc": "Xem nhanh các sự kiện sắp tới",
+    "worldClock": "Đồng hồ thế giới",
+    "deadline": "Đếm ngược Deadline"
   },
   "ambient": {
     "title": "ÂM THANH MÔI TRƯỜNG",
@@ -735,6 +746,7 @@
     "effects": "Hiệu ứng hình ảnh",
     "quest": "Hệ thống nhiệm vụ",
     "store": "Aesthetic Store",
+    "widget": "Widget Premium",
     "upgrade": "Nâng cấp ngay",
     "later": "Để sau"
   },
@@ -837,6 +849,74 @@
     "weatherLocationDenied": "Không lấy được vị trí. Vui lòng cấp quyền định vị cho trình duyệt.",
     "weatherLocationUnavailable": "Không thể xác định vị trí của bạn lúc này.",
     "weatherFetchFailed": "Không thể tải dữ liệu thời tiết. Sẽ thử lại sau."
+  },
+  "wellness": {
+    "breathingTab": "Thở",
+    "remindersTab": "Nhắc nhở",
+    "ready": "Sẵn sàng",
+    "start": "Bắt đầu",
+    "stop": "Dừng",
+    "inhale": "Hít vào",
+    "hold": "Giữ",
+    "exhale": "Thở ra",
+    "settingsTitle": "Hít thở",
+    "patternLabel": "Kiểu thở",
+    "patternBox": "Box (4-4-4-4)",
+    "pattern478": "4-7-8",
+    "pattern462": "4-6-2",
+    "cycles": "Số chu kỳ",
+    "water": "Uống nước",
+    "eyeRest": "Nghỉ mắt",
+    "waterReminderMessage": "Đến giờ uống nước rồi!",
+    "eyeRestReminderMessage": "Nghỉ mắt 20 giây nhé!"
+  },
+  "photoFrame": {
+    "settingsTitle": "Khung ảnh",
+    "uploadPhoto": "Tải ảnh lên",
+    "uploading": "Đang tải lên…",
+    "maxPhotosError": "Tối đa {{count}} ảnh",
+    "uploadFailed": "Tải lên thất bại",
+    "interval": "Thời gian chuyển",
+    "transition": "Hiệu ứng chuyển",
+    "transitionFade": "Mờ dần",
+    "transitionSlide": "Trượt",
+    "transitionNone": "Không",
+    "shuffle": "Xáo trộn",
+    "emptyState": "Thêm ảnh trong phần cài đặt"
+  },
+  "doodle": {
+    "clearCanvas": "Xoá canvas",
+    "canvasFull": "Canvas đã đầy — xoá để vẽ tiếp"
+  },
+  "worldClock": {
+    "settingsTitle": "Múi giờ",
+    "searchPlaceholder": "Tìm thành phố…",
+    "noMatch": "Không tìm thấy thành phố"
+  },
+  "deadline": {
+    "settingsTitle": "Đếm ngược",
+    "titlePlaceholder": "Tiêu đề",
+    "defaultTitle": "Đếm ngược mới",
+    "overdue": "Đã đến hạn",
+    "days": "ngày",
+    "hours": "giờ",
+    "minutes": "phút",
+    "dueMessage": "{{title}} đã đến hạn!"
+  },
+  "googleCalendar": {
+    "label": "Lịch",
+    "refresh": "Làm mới",
+    "connect": "Kết nối Google Calendar",
+    "reconnect": "Kết nối lại",
+    "connectionFailed": "Kết nối thất bại",
+    "sessionExpired": "Phiên đã hết hạn — kết nối lại để tiếp tục",
+    "loadError": "Không tải được sự kiện",
+    "loading": "Đang tải…",
+    "noEvents": "Không có sự kiện sắp tới",
+    "settingsTitle": "Lịch",
+    "maxEvents": "Số sự kiện tối đa",
+    "showAllDay": "Hiện sự kiện cả ngày",
+    "noTitle": "(Không có tiêu đề)"
   },
   "admin": {
     "nav": {

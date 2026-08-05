@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { workspaceService } from "../../../services/workspace.service";
 import { roomService } from "../../../services/room.service";
 
-import type { PlacedSticker, StickyNote, BackgroundItem, TodoItem } from "../../components/StudySpace/types";
+import type { PlacedSticker, StickyNote, BackgroundItem, TodoItem, WorldClockItem, DeadlineItem } from "../../components/StudySpace/types";
 import type { LayoutConfig } from "../../../types/workspace.types";
 
 interface ClockSettings {
@@ -22,6 +22,34 @@ interface PomodoroSettings {
   volume?: number;
 }
 
+interface PhotoFrameSettings {
+  images: string[];
+  intervalSec: number;
+  transition: "fade" | "slide" | "none";
+  shuffle?: boolean;
+}
+
+interface DoodleSettings {
+  strokes: Array<{ color: string; width: number; points: number[] }>;
+  brushColor: string;
+  brushWidth: number;
+}
+
+interface GoogleCalendarSettings {
+  maxEvents: number;
+  showAllDay?: boolean;
+}
+
+interface WellnessSettings {
+  activeTab: "breathing" | "reminders";
+  pattern: "box" | "478" | "462";
+  cycleCount: number;
+  waterEnabled: boolean;
+  waterIntervalMin: number;
+  eyeRestEnabled: boolean;
+  eyeRestIntervalMin: number;
+}
+
 interface WorkspaceSaveParams {
   isLoggedIn: boolean;
   roomId: string | null;
@@ -33,8 +61,14 @@ interface WorkspaceSaveParams {
   widgetPositions: Record<string, { x: number; y: number }>;
   placedStickers: PlacedSticker[];
   stickyNotes: StickyNote[];
+  worldClocks: WorldClockItem[];
+  deadlines: DeadlineItem[];
   clockSettings: ClockSettings;
   pomodoroSettings: PomodoroSettings;
+  photoFrameSettings: PhotoFrameSettings;
+  doodleSettings: DoodleSettings;
+  googleCalendarSettings: GoogleCalendarSettings;
+  wellnessSettings: WellnessSettings;
   todoItems: TodoItem[];
   accentColor?: string;
   musicState?: { source: string; activeUrl: string; ytUrl?: string; scUrl?: string };
@@ -62,8 +96,14 @@ export function useWorkspaceAutoSave({
   widgetPositions,
   placedStickers,
   stickyNotes,
+  worldClocks,
+  deadlines,
   clockSettings,
   pomodoroSettings,
+  photoFrameSettings,
+  doodleSettings,
+  googleCalendarSettings,
+  wellnessSettings,
   todoItems,
   accentColor,
   musicState,
@@ -80,14 +120,14 @@ export function useWorkspaceAutoSave({
   // Always-current refs so saveNow captures latest state at call time
   const stateRef = useRef({
     roomId, roomName, currentBg, activeEffect, weatherSyncEnabled, activeWidgets,
-    widgetPositions, placedStickers, stickyNotes,
-    clockSettings, pomodoroSettings, todoItems, accentColor, musicState,
+    widgetPositions, placedStickers, stickyNotes, worldClocks, deadlines,
+    clockSettings, pomodoroSettings, photoFrameSettings, doodleSettings, googleCalendarSettings, wellnessSettings, todoItems, accentColor, musicState,
   });
   useEffect(() => {
     stateRef.current = {
       roomId, roomName, currentBg, activeEffect, weatherSyncEnabled, activeWidgets,
-      widgetPositions, placedStickers, stickyNotes,
-      clockSettings, pomodoroSettings, todoItems, accentColor, musicState,
+      widgetPositions, placedStickers, stickyNotes, worldClocks, deadlines,
+      clockSettings, pomodoroSettings, photoFrameSettings, doodleSettings, googleCalendarSettings, wellnessSettings, todoItems, accentColor, musicState,
     };
   });
 
@@ -171,8 +211,14 @@ export function useWorkspaceAutoSave({
           widgetPositions: s.widgetPositions,
           placedStickers:  s.placedStickers,
           stickyNotes:     s.stickyNotes,
+          worldClocks:     s.worldClocks,
+          deadlines:       s.deadlines,
           clockSettings:   s.clockSettings,
           pomodoroSettings: s.pomodoroSettings,
+          photoFrameSettings: s.photoFrameSettings,
+          doodleSettings: s.doodleSettings,
+          googleCalendarSettings: s.googleCalendarSettings,
+          wellnessSettings: s.wellnessSettings,
           todoItems:       s.todoItems,
           accentColor:     s.accentColor,
           musicState:      s.musicState,
