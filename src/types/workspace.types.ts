@@ -28,6 +28,21 @@ export interface LayoutConfig {
     w?: number;
     h?: number;
   }>;
+  worldClocks?: Array<{
+    id: string;
+    label: string;
+    timezone: string;
+    x: number;
+    y: number;
+  }>;
+  deadlines?: Array<{
+    id: string;
+    title: string;
+    targetAt: string;
+    color?: string;
+    x: number;
+    y: number;
+  }>;
   clockSettings?: {
     mode: string;
     layout: string;
@@ -44,6 +59,30 @@ export interface LayoutConfig {
     volume?: number;
   };
   todoItems?: Array<{ id: string; text: string; done: boolean }>;
+  photoFrameSettings?: {
+    images: string[];
+    intervalSec: number;
+    transition: "fade" | "slide" | "none";
+    shuffle?: boolean;
+  };
+  doodleSettings?: {
+    strokes: Array<{ color: string; width: number; points: number[] }>;
+    brushColor: string;
+    brushWidth: number;
+  };
+  googleCalendarSettings?: {
+    maxEvents: number;
+    showAllDay?: boolean;
+  };
+  wellnessSettings?: {
+    activeTab: "breathing" | "reminders";
+    pattern: "box" | "478" | "462";
+    cycleCount: number;
+    waterEnabled: boolean;
+    waterIntervalMin: number;
+    eyeRestEnabled: boolean;
+    eyeRestIntervalMin: number;
+  };
   accentColor?: string;
   musicState?: { source: string; activeUrl: string; ytUrl?: string; scUrl?: string };
   ambientSounds?: Array<{ id: string; url: string; volume: number }>;

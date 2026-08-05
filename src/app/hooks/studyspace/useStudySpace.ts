@@ -10,6 +10,10 @@ import { useOnboardingTour }    from "./useOnboardingTour";
 import { roomService }          from "../../../services/room.service";
 import { useClockSettings }    from "./useClockSettings";
 import { usePomodoroSettings, DEFAULT_POMODORO_SOUNDS } from "./usePomodoroSettings";
+import { usePhotoFrameSettings } from "./usePhotoFrameSettings";
+import { useWellnessSettings } from "./useWellnessSettings";
+import { useDoodleSettings } from "./useDoodleSettings";
+import { useGoogleCalendarSettings } from "./useGoogleCalendarSettings";
 import { useSpaceItems }       from "./useSpaceItems";
 import { useAmbientSound }     from "./useAmbientSound";
 import { workspaceService }    from "../../../services/workspace.service";
@@ -63,9 +67,13 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const spaceRef        = useRef<HTMLDivElement>(null);
 
   /* ── Domain hooks ── */
-  const clock    = useClockSettings();
-  const pomodoro = usePomodoroSettings();
-  const space    = useSpaceItems();
+  const clock      = useClockSettings();
+  const pomodoro   = usePomodoroSettings();
+  const photoFrame = usePhotoFrameSettings();
+  const wellness   = useWellnessSettings();
+  const doodle     = useDoodleSettings();
+  const googleCalendar = useGoogleCalendarSettings();
+  const space      = useSpaceItems();
   const ambient  = useAmbientSound();
   const tour     = useOnboardingTour();
 
@@ -79,6 +87,10 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       todo:     { x: w - 260, y: Math.round(h * 0.12) + 390 },
       clock:    { x: 32,      y: Math.round(h * 0.12) },
       quote:    { x: 32,      y: Math.round(h * 0.12) + 210 },
+      photoFrame: { x: 32,    y: Math.round(h * 0.12) + 300 },
+      wellness:   { x: w - 220, y: Math.round(h * 0.12) + 260 },
+      doodle:     { x: w - 260, y: Math.round(h * 0.12) + 420 },
+      googleCalendar: { x: 32, y: Math.round(h * 0.12) + 420 },
     };
   }, []);
 
@@ -110,15 +122,42 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
       if (layout.pomodoroSettings.sounds) pomodoro.setSounds({ ...DEFAULT_POMODORO_SOUNDS, ...layout.pomodoroSettings.sounds });
       if (layout.pomodoroSettings.volume !== undefined) pomodoro.setVolume(layout.pomodoroSettings.volume);
     }
+    if (layout.photoFrameSettings) {
+      photoFrame.setImages(layout.photoFrameSettings.images ?? []);
+      photoFrame.setIntervalSec(layout.photoFrameSettings.intervalSec ?? 8);
+      photoFrame.setTransition(layout.photoFrameSettings.transition ?? "fade");
+      photoFrame.setShuffle(layout.photoFrameSettings.shuffle ?? false);
+    }
+    if (layout.doodleSettings) {
+      doodle.setStrokes(layout.doodleSettings.strokes ?? []);
+      doodle.setBrushColor(layout.doodleSettings.brushColor ?? "#f472b6");
+      doodle.setBrushWidth(layout.doodleSettings.brushWidth ?? 3);
+    }
+    if (layout.googleCalendarSettings) {
+      googleCalendar.setMaxEvents(layout.googleCalendarSettings.maxEvents ?? 5);
+      googleCalendar.setShowAllDay(layout.googleCalendarSettings.showAllDay ?? true);
+    }
+    if (layout.wellnessSettings) {
+      const ws = layout.wellnessSettings;
+      wellness.setActiveTab(ws.activeTab ?? "breathing");
+      wellness.setPattern(ws.pattern ?? "box");
+      wellness.setCycleCount(ws.cycleCount ?? 0);
+      wellness.setWaterEnabled(ws.waterEnabled ?? false);
+      wellness.setWaterIntervalMin(ws.waterIntervalMin ?? 45);
+      wellness.setEyeRestEnabled(ws.eyeRestEnabled ?? false);
+      wellness.setEyeRestIntervalMin(ws.eyeRestIntervalMin ?? 20);
+    }
     space.restoreItems({
       activeWidgets:   layout.activeWidgets,
       placedStickers:  layout.placedStickers,
       stickyNotes:     layout.stickyNotes,
+      worldClocks:     layout.worldClocks,
+      deadlines:       layout.deadlines,
       widgetPositions: layout.widgetPositions,
       todoItems:       layout.todoItems,
     });
     restoreAmbient(layout.ambientSounds ?? []);
-  }, [clock, pomodoro, space, restoreAmbient]);
+  }, [clock, pomodoro, photoFrame, wellness, doodle, googleCalendar, space, restoreAmbient]);
 
   /* ── On-mount workspace restore callback ── */
   const handleRestore = useCallback(({ roomId: rid, roomName: rname, bg, layout }: {
@@ -209,6 +248,8 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     widgetPositions:  space.widgetPositions,
     placedStickers:   space.placedStickers,
     stickyNotes:      space.stickyNotes,
+    worldClocks:      space.worldClocks,
+    deadlines:        space.deadlines,
     clockSettings: {
       mode: clock.mode, layout: clock.layout,
       showSeconds: clock.showSeconds, showLunar: clock.showLunar, showDate: clock.showDate,
@@ -216,6 +257,21 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     pomodoroSettings: {
       focusMin: pomodoro.focusMin, breakMin: pomodoro.breakMin, totalSes: pomodoro.totalSes,
       soundEnabled: pomodoro.soundEnabled, sounds: pomodoro.sounds, volume: pomodoro.volume,
+    },
+    photoFrameSettings: {
+      images: photoFrame.images, intervalSec: photoFrame.intervalSec,
+      transition: photoFrame.transition, shuffle: photoFrame.shuffle,
+    },
+    doodleSettings: {
+      strokes: doodle.strokes, brushColor: doodle.brushColor, brushWidth: doodle.brushWidth,
+    },
+    googleCalendarSettings: {
+      maxEvents: googleCalendar.maxEvents, showAllDay: googleCalendar.showAllDay,
+    },
+    wellnessSettings: {
+      activeTab: wellness.activeTab, pattern: wellness.pattern, cycleCount: wellness.cycleCount,
+      waterEnabled: wellness.waterEnabled, waterIntervalMin: wellness.waterIntervalMin,
+      eyeRestEnabled: wellness.eyeRestEnabled, eyeRestIntervalMin: wellness.eyeRestIntervalMin,
     },
     todoItems: space.todoItems,
     accentColor: accent,
@@ -279,7 +335,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     musicYtUrl, setMusicYtUrl,
     musicScUrl, setMusicScUrl,
     avatarBtnRef, accountPanelRef, spaceRef,
-    clock, pomodoro, space,
+    clock, pomodoro, photoFrame, wellness, doodle, googleCalendar, space,
     WIDGET_POSITIONS,
     applyLayout, handleRestore, handleRoomSelect, captureScreenshot,
     showFirstRoomModal, handleFirstRoomCreate,

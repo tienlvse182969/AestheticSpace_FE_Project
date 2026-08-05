@@ -14,6 +14,7 @@ import { LuckyDrawPanel }        from "../panels/LuckyDrawPanel";
 import { NotificationHistoryPanel } from "../panels/NotificationHistoryPanel";
 import { TrialBanner }           from "../ui/TrialBanner";
 import { TrialExpiredModal }     from "../ui/TrialExpiredModal";
+import { PremiumGateModal }      from "../ui/PremiumGateModal";
 import type { StudySpaceCtx }    from "../../../hooks/studyspace/useStudySpace";
 import type { StoreItem }        from "../../../../services/aestheticStore.service";
 import type { BackgroundItem }   from "../types";
@@ -39,7 +40,11 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance, onLuckyDraw
     roomId, handleRoomSelect,
     space, saveNow,
     ambient, pomodoro,
+    currentUser,
   } = ctx;
+
+  const isFree = !!currentUser && currentUser.accountTier?.toLowerCase() !== "premium";
+  const [lockedWidgetLabel, setLockedWidgetLabel] = useState<string | null>(null);
 
   const [trialItem, setTrialItem]               = useState<StoreItem | null>(null);
   const [trialSecondsLeft, setTrialSecondsLeft] = useState(0);
@@ -176,6 +181,13 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance, onLuckyDraw
 
   return (
     <div className="no-capture" onPointerDown={ambient.tryResumePending}>
+      {/* ── Premium widget gate modal ── */}
+      <PremiumGateModal
+        feature={lockedWidgetLabel ? "widget" : null}
+        widgetLabel={lockedWidgetLabel ?? undefined}
+        onClose={() => setLockedWidgetLabel(null)}
+      />
+
       {/* ── Trial banner (persists when store is closed) ── */}
       <AnimatePresence>
         {trialItem && trialSecondsLeft > 0 && (
@@ -222,6 +234,12 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance, onLuckyDraw
               saveNow();
             }}
             onDropStickyNote={(x, y) => { space.addStickyNoteAt(x, y); saveNow(); }}
+            onAddWorldClock={() => { space.addWorldClock(); saveNow(); }}
+            onDropWorldClock={(x, y) => { space.addWorldClockAt(x, y); saveNow(); }}
+            onAddDeadline={() => { space.addDeadline(); saveNow(); }}
+            onDropDeadline={(x, y) => { space.addDeadlineAt(x, y); saveNow(); }}
+            isFree={isFree}
+            onLockedClick={label => setLockedWidgetLabel(label)}
             onClose={() => setActivePanel(null)}
           />
         )}

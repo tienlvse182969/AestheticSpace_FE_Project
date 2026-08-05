@@ -1,26 +1,28 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "motion/react";
-import { Crown, Zap, Sparkles, AudioWaveform, Wand2, ShoppingBag } from "lucide-react";
+import { Crown, Zap, Sparkles, AudioWaveform, Wand2, ShoppingBag, Layers } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 const MotionBox = motion.create(Box);
 
-export type LockedFeature = "sticker" | "ambient" | "effects" | "store";
+export type LockedFeature = "sticker" | "ambient" | "effects" | "store" | "widget";
 
 const FEATURE_ICONS: Record<LockedFeature, React.ReactNode> = {
   sticker:  <Sparkles size={22} style={{ color: "#a78bfa" }} />,
   ambient:  <AudioWaveform size={22} style={{ color: "#60a5fa" }} />,
   effects:  <Wand2 size={22} style={{ color: "#f472b6" }} />,
   store:    <ShoppingBag size={22} style={{ color: "#34d399" }} />,
+  widget:   <Layers size={22} style={{ color: "#fbbf24" }} />,
 };
 
 interface Props {
   feature: LockedFeature | null;
+  widgetLabel?: string;
   onClose: () => void;
 }
 
-export function PremiumGateModal({ feature, onClose }: Props) {
+export function PremiumGateModal({ feature, widgetLabel, onClose }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -119,7 +121,7 @@ export function PremiumGateModal({ feature, onClose }: Props) {
                   color: "rgba(255,255,255,0.55)",
                 }}
               >
-                {t(`premiumGate.${feature}`)}
+                {feature === "widget" && widgetLabel ? widgetLabel : t(`premiumGate.${feature}`)}
               </Text>
             </Flex>
 

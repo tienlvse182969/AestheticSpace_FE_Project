@@ -239,6 +239,7 @@
     "clock": "Clock",
     "quote": "Quote",
     "soon": "SOON",
+    "premium": "PREMIUM",
     "added": "ADDED",
     "comingSoon": "Coming soon…",
     "addToSpace": "Add to Space",
@@ -247,7 +248,17 @@
     "unlimited": "Unlimited",
     "addNote": "Add Note",
     "unlimitedInstances": "Unlimited instances",
-    "hint": "Drag widgets anywhere on screen"
+    "hint": "Drag widgets anywhere on screen",
+    "wellness": "Wellness",
+    "wellnessDesc": "Guided breathing & water/eye-rest reminders",
+    "photoFrame": "Photo Frame",
+    "photoFrameDesc": "A rotating slideshow of your own photos",
+    "doodle": "Doodle Pad",
+    "doodleDesc": "A tiny canvas to sketch and scribble",
+    "googleCalendar": "Google Calendar",
+    "googleCalendarDesc": "See your upcoming events at a glance",
+    "worldClock": "World Clock",
+    "deadline": "Deadline Countdown"
   },
   "ambient": {
     "title": "AMBIENT SOUNDS",
@@ -736,6 +747,7 @@
     "effects": "Visual Effects",
     "quest": "Quest System",
     "store": "Aesthetic Store",
+    "widget": "Premium Widget",
     "upgrade": "Upgrade Now",
     "later": "Maybe Later"
   },
@@ -838,6 +850,74 @@
     "weatherLocationDenied": "Couldn't get your location. Please allow location access in your browser.",
     "weatherLocationUnavailable": "Unable to determine your location right now.",
     "weatherFetchFailed": "Couldn't load weather data. Will retry shortly."
+  },
+  "wellness": {
+    "breathingTab": "Breathe",
+    "remindersTab": "Reminders",
+    "ready": "Ready",
+    "start": "Start",
+    "stop": "Stop",
+    "inhale": "Inhale",
+    "hold": "Hold",
+    "exhale": "Exhale",
+    "settingsTitle": "Breathing",
+    "patternLabel": "Pattern",
+    "patternBox": "Box (4-4-4-4)",
+    "pattern478": "4-7-8",
+    "pattern462": "4-6-2",
+    "cycles": "Cycles",
+    "water": "Drink water",
+    "eyeRest": "Eye rest",
+    "waterReminderMessage": "Time to drink some water!",
+    "eyeRestReminderMessage": "Rest your eyes for 20 seconds!"
+  },
+  "photoFrame": {
+    "settingsTitle": "Photo Frame",
+    "uploadPhoto": "Upload photo",
+    "uploading": "Uploading…",
+    "maxPhotosError": "Max {{count}} photos",
+    "uploadFailed": "Upload failed",
+    "interval": "Interval",
+    "transition": "Transition",
+    "transitionFade": "Fade",
+    "transitionSlide": "Slide",
+    "transitionNone": "None",
+    "shuffle": "Shuffle",
+    "emptyState": "Add photos in settings"
+  },
+  "doodle": {
+    "clearCanvas": "Clear canvas",
+    "canvasFull": "Canvas full — clear to keep drawing"
+  },
+  "worldClock": {
+    "settingsTitle": "Time Zone",
+    "searchPlaceholder": "Search city…",
+    "noMatch": "No matching city"
+  },
+  "deadline": {
+    "settingsTitle": "Countdown",
+    "titlePlaceholder": "Title",
+    "defaultTitle": "New Countdown",
+    "overdue": "Due now",
+    "days": "days",
+    "hours": "hours",
+    "minutes": "min",
+    "dueMessage": "{{title}} is due now!"
+  },
+  "googleCalendar": {
+    "label": "Calendar",
+    "refresh": "Refresh",
+    "connect": "Connect Google Calendar",
+    "reconnect": "Reconnect",
+    "connectionFailed": "Connection failed",
+    "sessionExpired": "Session expired — reconnect to continue",
+    "loadError": "Couldn't load events",
+    "loading": "Loading…",
+    "noEvents": "No upcoming events",
+    "settingsTitle": "Calendar",
+    "maxEvents": "Max events",
+    "showAllDay": "Show all-day",
+    "noTitle": "(No title)"
   },
   "admin": {
     "nav": {

@@ -33,11 +33,11 @@ export function StudySpacePage() {
         style={{ fontFamily: "'HarmonyOS Sans', sans-serif" }}
       >
         <SpaceBackground ctx={ctx} />
-        <SpaceWidgets    ctx={ctx} />
         <NotificationBannerProvider
           onOpenQuest={() => ctx.setActivePanel("quest")}
           onOpenCreatorStore={() => { ctx.setThemeStoreInitialTab("my-themes"); ctx.setActivePanel("theme"); }}
         >
+          <SpaceWidgets    ctx={ctx} />
           <SpacePanels     ctx={ctx} coinBalance={coinBalance} onCoinBalanceChange={setCoinBalance} luckyDrawRemaining={luckyDrawRemaining} onLuckyDrawRemainingChange={setLuckyDrawRemaining} />
           <SpaceToolbar    ctx={ctx} coinBalance={coinBalance} onCoinBalanceReady={setCoinBalance} luckyDrawRemaining={luckyDrawRemaining} onLuckyDrawRemainingReady={setLuckyDrawRemaining} />
           {ctx.showFirstRoomModal && (
