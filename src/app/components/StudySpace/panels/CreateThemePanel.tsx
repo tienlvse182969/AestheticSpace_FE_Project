@@ -13,6 +13,8 @@ import {
   type SubmitThemeDto,
 } from "../../../../services/userTheme.service";
 import { VIETNAM_BANKS, searchVietnamBanks, type VietnamBank } from "../../../../data/vietnamBanks";
+import { compressImageFile } from "../../../../utils/imageCompression";
+import { cldOptimize } from "../../../../utils/cloudinaryImage";
 
 const MotionBox = motion.create(Box);
 
@@ -33,8 +35,9 @@ interface ExistingItem {
 async function uploadToCloud(file: File, uploadFailedMsg: (status: number) => string): Promise<string> {
   const cloudName    = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string;
   const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
+  const uploadFile = file.type.startsWith("image/") ? await compressImageFile(file) : file;
   const form = new FormData();
-  form.append("file", file);
+  form.append("file", uploadFile);
   form.append("upload_preset", uploadPreset);
   const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
     method: "POST",
@@ -451,9 +454,9 @@ export function CreateThemePanel({ onClose, initialTheme }: Props) {
       <Box position="relative" flexShrink={0}
         w="58px" h="58px" borderRadius="8px" overflow="hidden"
         style={{ border: "2px solid rgba(255,255,255,0.08)" }}>
-        <img src={src} alt=""
+        <img src={cldOptimize(src, { width: 116, height: 116, crop: "fill" })} alt=""
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          draggable={false} />
+          draggable={false} loading="lazy" decoding="async" />
         <Box as="button" border="none" cursor="pointer" borderRadius="full"
           w="15px" h="15px" display="flex" alignItems="center" justifyContent="center"
           position="absolute" top="3px" right="3px"
@@ -552,7 +555,7 @@ export function CreateThemePanel({ onClose, initialTheme }: Props) {
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           {heroBgUrl ? (
             <Box position="absolute" inset={0}
-              style={{ backgroundImage: `url(${heroBgUrl})`, backgroundSize: "cover", backgroundPosition: "center" }} />
+              style={{ backgroundImage: `url(${cldOptimize(heroBgUrl, { width: 860, height: 260, crop: "fill" })})`, backgroundSize: "cover", backgroundPosition: "center" }} />
           ) : (
             <Box position="absolute" inset={0}
               style={{ background: "linear-gradient(135deg, #080d12 0%, #0f1820 60%, #0a1520 100%)" }} />
@@ -563,7 +566,7 @@ export function CreateThemePanel({ onClose, initialTheme }: Props) {
           {heroStickerUrl && (
             <Box position="absolute" bottom="10px" right="14px" w="44px" h="44px"
               style={{
-                backgroundImage: `url(${heroStickerUrl})`,
+                backgroundImage: `url(${cldOptimize(heroStickerUrl, { width: 88, height: 88, crop: "limit" })})`,
                 backgroundSize: "contain", backgroundRepeat: "no-repeat", backgroundPosition: "center",
                 filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.65))",
               }} />

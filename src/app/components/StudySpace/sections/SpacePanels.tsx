@@ -34,7 +34,8 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance, onLuckyDraw
     settingsInitialNav, setSettingsInitialNav,
     themeStoreInitialTab, setThemeStoreInitialTab,
     currentBg, setCurrentBg,
-    activeEffect, setActiveEffect,
+    activeEffect, weatherSyncEnabled, handleSelectEffect, handleToggleWeatherSync,
+    weatherSyncLoading, weatherSyncError, weatherSyncLocation,
     roomId, handleRoomSelect,
     space, saveNow,
     ambient, pomodoro,
@@ -261,8 +262,13 @@ export function SpacePanels({ ctx, onCoinBalanceChange, coinBalance, onLuckyDraw
           <EffectsPanel
             key="effects-panel"
             activeEffect={activeEffect}
-            onSelect={v => { setActiveEffect(v); saveNow(); }}
+            onSelect={v => { handleSelectEffect(v); saveNow(); }}
             onClose={() => setActivePanel(null)}
+            weatherSyncEnabled={weatherSyncEnabled}
+            onToggleWeatherSync={() => { handleToggleWeatherSync(); saveNow(); }}
+            weatherLoading={weatherSyncLoading}
+            weatherError={weatherSyncError}
+            weatherLocation={weatherSyncLocation}
           />
         )}
         {activePanel === "settings" && (

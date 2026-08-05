@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../context/AuthContext";
 import { useAccent } from "../../context/AccentContext";
 import { useWorkspaceAutoSave } from "./useWorkspaceAutoSave";
+import { useWeatherEffect } from "./useWeatherEffect";
 import { useOnboardingTour }    from "./useOnboardingTour";
 import { roomService }          from "../../../services/room.service";
 import { useClockSettings }    from "./useClockSettings";
@@ -47,6 +48,7 @@ export function useStudySpace() {
   const [themeStoreInitialTab, setThemeStoreInitialTab] = useState<ThemeStoreTab | null>(null);
   const [layoutLocked,   setLayoutLocked]   = useState(false);
 const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
+  const [weatherSyncEnabled, setWeatherSyncEnabled] = useState(false);
   const [accountOpen,         setAccountOpen]         = useState(false);
   const [currentBg,           setCurrentBg]           = useState<BackgroundItem>(DEFAULT_BG);
   const [roomId,              setRoomId]              = useState<string | null>(null);
@@ -84,6 +86,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   const { restoreAmbient } = ambient;
   const applyLayout = useCallback((layout: LayoutConfig) => {
     if (layout.activeEffect !== undefined) setActiveEffect(layout.activeEffect as EffectType);
+    setWeatherSyncEnabled(layout.weatherSyncEnabled ?? false);
     if (layout.accentColor) setAccent(layout.accentColor);
     if (layout.musicState) {
       const ms = layout.musicState;
@@ -201,6 +204,7 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     roomName,
     currentBg,
     activeEffect,
+    weatherSyncEnabled,
     activeWidgets:    space.activeWidgets,
     widgetPositions:  space.widgetPositions,
     placedStickers:   space.placedStickers,
@@ -231,6 +235,26 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accent]);
 
+  /* ── Weather-synced effect (premium) ── */
+  const weatherSync = useWeatherEffect({ enabled: weatherSyncEnabled, onResolve: setActiveEffect });
+
+  // Persist whenever weather-sync resolves a new effect (manual picks already call saveNow at the call site)
+  const isFirstEffectRender = useRef(true);
+  useEffect(() => {
+    if (isFirstEffectRender.current) { isFirstEffectRender.current = false; return; }
+    if (weatherSyncEnabled) saveNow();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeEffect]);
+
+  const handleSelectEffect = useCallback((e: EffectType) => {
+    setWeatherSyncEnabled(false);
+    setActiveEffect(e);
+  }, []);
+
+  const handleToggleWeatherSync = useCallback(() => {
+    setWeatherSyncEnabled(v => !v);
+  }, []);
+
   const togglePanel = (panel: ActivePanel) =>
     setActivePanel(p => p === panel ? null : panel);
 
@@ -245,6 +269,9 @@ const [activeEffect,   setActiveEffect]   = useState<EffectType>(null);
     themeStoreInitialTab, setThemeStoreInitialTab,
     layoutLocked, toggleLayoutLock,
     activeEffect, setActiveEffect,
+    weatherSyncEnabled, handleSelectEffect, handleToggleWeatherSync,
+    weatherSyncLoading: weatherSync.loading, weatherSyncError: weatherSync.error,
+    weatherSyncLocation: weatherSync.location,
     accountOpen, setAccountOpen,
     currentBg, setCurrentBg,
     roomId, setRoomId,

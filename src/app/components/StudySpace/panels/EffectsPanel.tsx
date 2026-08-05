@@ -1,13 +1,16 @@
+import { useEffect, useRef } from "react";
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
-  CloudLightning, CloudRain, CloudSnow,
-  Droplets, Flame, Flower2, Leaf,
+  AlertTriangle, Cloud, CloudLightning, CloudRain, CloudSnow,
+  Droplets, Flame, Flower2, Leaf, Loader2, MapPin,
   Sparkle, Sparkles, Star, Wand2, Wind, X,
 } from "lucide-react";
 import { PanelCloseBtn } from "../ui/PanelCloseBtn";
 import { useCenteredPanel } from "../hooks/useCenteredPanel";
+import type { WeatherSyncError } from "../../../hooks/studyspace/useWeatherEffect";
 
 const MotionBox = motion.create(Box);
 
@@ -41,6 +44,11 @@ interface EffectsPanelProps {
   activeEffect: EffectType;
   onSelect: (e: EffectType) => void;
   onClose: () => void;
+  weatherSyncEnabled: boolean;
+  onToggleWeatherSync: () => void;
+  weatherLoading: boolean;
+  weatherError: WeatherSyncError;
+  weatherLocation: string | null;
 }
 
 const LEAF_COLORS_PREVIEW = ["#fb923c", "#ef4444", "#facc15", "#f97316", "#dc2626"];
@@ -241,9 +249,24 @@ function EffectPreview({ effectKey, color, active }: { effectKey: EffectType; co
   );
 }
 
-export function EffectsPanel({ activeEffect, onSelect, onClose }: EffectsPanelProps) {
+export function EffectsPanel({
+  activeEffect, onSelect, onClose,
+  weatherSyncEnabled, onToggleWeatherSync, weatherLoading, weatherError, weatherLocation,
+}: EffectsPanelProps) {
   const { t } = useTranslation();
   const { x, y, ref } = useCenteredPanel(520, 520);
+
+  const lastError = useRef<WeatherSyncError>(null);
+  useEffect(() => {
+    if (weatherError && weatherError !== lastError.current) {
+      toast.error(t(`effects.${weatherError === "location-denied" ? "weatherLocationDenied"
+        : weatherError === "location-unavailable" ? "weatherLocationUnavailable"
+        : "weatherFetchFailed"}`));
+    }
+    lastError.current = weatherError;
+  }, [weatherError, t]);
+
+  const resolvedColor = EFFECTS.find(e => e.key === activeEffect)?.color ?? "#7dd3fc";
 
   return (
     <MotionBox
@@ -282,6 +305,88 @@ export function EffectsPanel({ activeEffect, onSelect, onClose }: EffectsPanelPr
             {t("effects.title")}
           </Text>
         </Flex>
+
+        {/* Weather-synced effect (auto, standalone) */}
+        <Box
+          as="button"
+          onClick={onToggleWeatherSync}
+          w="full"
+          mb={3}
+          borderRadius="12px"
+          p="10px 12px"
+          textAlign="left"
+          style={{
+            background: weatherSyncEnabled
+              ? `linear-gradient(135deg, ${resolvedColor}1f, ${resolvedColor}0a)`
+              : "rgba(255,255,255,0.03)",
+            border: `1px solid ${weatherSyncEnabled ? resolvedColor + "50" : "rgba(255,255,255,0.07)"}`,
+            cursor: "pointer",
+            transition: "all 0.2s",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+          _hover={{ background: weatherSyncEnabled ? undefined : "rgba(255,255,255,0.05)" } as any}
+        >
+          <Flex align="center" justify="center" borderRadius="10px" style={{
+            width: 34, height: 34, flexShrink: 0,
+            background: weatherSyncEnabled ? `${resolvedColor}22` : "rgba(255,255,255,0.05)",
+          }}>
+            {weatherLoading ? (
+              <Loader2 size={17} style={{ color: resolvedColor, animation: "weatherSpin 0.8s linear infinite" }} />
+            ) : weatherError ? (
+              <AlertTriangle size={17} style={{ color: "#f87171" }} />
+            ) : (
+              <Cloud size={17} style={{ color: weatherSyncEnabled ? resolvedColor : "rgba(255,255,255,0.35)" }} />
+            )}
+          </Flex>
+          <Box flex={1} minW={0}>
+            <Text style={{
+              fontSize: "0.74rem",
+              color: weatherSyncEnabled ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.5)",
+              fontFamily: "'HarmonyOS Sans', sans-serif",
+              fontWeight: 500,
+            }}>
+              {t("effects.weather")}
+            </Text>
+            <Flex align="center" gap={1} style={{ marginTop: 2 }}>
+              {weatherSyncEnabled && !weatherError && weatherLocation && (
+                <MapPin size={10} style={{ color: "rgba(255,255,255,0.3)", flexShrink: 0 }} />
+              )}
+              <Text style={{
+                fontSize: "0.66rem",
+                color: weatherError ? "#f87171" : "rgba(255,255,255,0.3)",
+                fontFamily: "'HarmonyOS Sans', sans-serif",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}>
+                {weatherError
+                  ? t(`effects.${weatherError === "location-denied" ? "weatherLocationDenied"
+                      : weatherError === "location-unavailable" ? "weatherLocationUnavailable"
+                      : "weatherFetchFailed"}`)
+                  : weatherSyncEnabled
+                    ? (weatherLocation ?? t("effects.weatherLocating"))
+                    : t("effects.weatherDescription")}
+              </Text>
+            </Flex>
+          </Box>
+
+          {/* Toggle switch */}
+          <Box role="switch" aria-checked={weatherSyncEnabled} borderRadius="full" style={{
+            width: 36, height: 20, flexShrink: 0, position: "relative",
+            background: weatherSyncEnabled ? resolvedColor : "rgba(255,255,255,0.12)",
+            transition: "background 0.2s",
+          }}>
+            <Box borderRadius="full" style={{
+              position: "absolute", top: 2, left: weatherSyncEnabled ? 18 : 2,
+              width: 16, height: 16, background: "#fff",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
+              transition: "left 0.2s",
+            }} />
+          </Box>
+          <style>{`@keyframes weatherSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        </Box>
 
         {/* Effect cards — 4 columns × 3 rows */}
         <Box display="grid" style={{ gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
@@ -329,7 +434,7 @@ export function EffectsPanel({ activeEffect, onSelect, onClose }: EffectsPanelPr
         </Box>
 
         {/* Clear button */}
-        {activeEffect && (
+        {(activeEffect || weatherSyncEnabled) && (
           <Box
             as="button"
             w="full"
@@ -358,10 +463,17 @@ export function EffectsPanel({ activeEffect, onSelect, onClose }: EffectsPanelPr
         )}
 
         {/* Status footer */}
-        <Box mt={activeEffect ? 2 : 3} borderRadius="10px" px={3} py="10px"
+        <Box mt={(activeEffect || weatherSyncEnabled) ? 2 : 3} borderRadius="10px" px={3} py="10px"
           style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}
         >
-          {activeEffect ? (
+          {weatherSyncEnabled ? (
+            <Flex align="center" gap={2}>
+              <Box borderRadius="full" style={{ width: 6, height: 6, background: "#4ade80", boxShadow: "0 0 6px #4ade80", flexShrink: 0 }} />
+              <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.55)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>
+                {t("effects.weather")}: {activeEffect ? t(`effects.${activeEffect.replace(/-/g, "_")}`) : t("effects.noEffect")}
+              </Text>
+            </Flex>
+          ) : activeEffect ? (
             <Flex align="center" gap={2}>
               <Box borderRadius="full" style={{ width: 6, height: 6, background: "#4ade80", boxShadow: "0 0 6px #4ade80", flexShrink: 0 }} />
               <Text style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.55)", fontFamily: "'HarmonyOS Sans', sans-serif" }}>

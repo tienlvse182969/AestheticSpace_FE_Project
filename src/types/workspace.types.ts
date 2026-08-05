@@ -8,6 +8,7 @@ export interface PomodoroSounds {
 
 export interface LayoutConfig {
   activeEffect: string | null;
+  weatherSyncEnabled?: boolean;
   activeWidgets: string[];
   currentBg?: { id: string; url: string; thumb: string; label: string };
   widgetPositions?: Record<string, { x: number; y: number }>;

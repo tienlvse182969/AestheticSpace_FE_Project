@@ -1,3 +1,5 @@
+import { compressImageFile } from "../utils/imageCompression";
+
 const CLOUD_NAME     = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME as string;
 const UPLOAD_PRESET  = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET as string;
 
@@ -27,9 +29,10 @@ export async function uploadToCloudinary(
 ): Promise<CloudinaryUploadResult> {
   const resourceType = resolveResourceType(file);
   const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`;
+  const uploadFile = resourceType === "image" ? await compressImageFile(file) : file;
 
   const body = new FormData();
-  body.append("file", file);
+  body.append("file", uploadFile);
   body.append("upload_preset", UPLOAD_PRESET);
   if (folder) body.append("folder", folder);
 

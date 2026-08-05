@@ -523,7 +523,7 @@
       "popularBadge": "Most popular",
       "currentBadge": "Your plan",
       "desc": "Unlock your full creative potential with exclusive content.",
-      "priceAmount": "130.000₫",
+      "priceAmount": "100.000₫",
       "priceUnit": "/ month",
       "trialHighlight": "5-day free trial for new accounts",
       "currentPlanText": "You are on this plan",
@@ -544,7 +544,7 @@
     "footer": "Pay via PayOS · Cancel anytime · No hidden fees",
     "modal": {
       "title": "Choose payment method",
-      "subtitle": "130.000₫ / month · Auto-renews",
+      "subtitle": "100.000₫ / month · Auto-renews",
       "payosDesc": "ATM, Visa, MasterCard, QR Code",
       "redirect": "Redirect"
     },
@@ -831,7 +831,13 @@
     "confetti": "Confetti",
     "active": "active",
     "noEffect": "No effect — pick one above",
-    "clearEffect": "Clear effect"
+    "clearEffect": "Clear effect",
+    "weather": "Weather-synced",
+    "weatherDescription": "Automatically match the effect to the real weather at your location",
+    "weatherLocating": "Locating…",
+    "weatherLocationDenied": "Couldn't get your location. Please allow location access in your browser.",
+    "weatherLocationUnavailable": "Unable to determine your location right now.",
+    "weatherFetchFailed": "Couldn't load weather data. Will retry shortly."
   },
   "admin": {
     "nav": {
