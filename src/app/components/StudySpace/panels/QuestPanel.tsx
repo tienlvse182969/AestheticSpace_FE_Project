@@ -135,7 +135,7 @@ function QuestCard({
                     textDecoration: "line-through",
                   }}
                 >
-                  {quest.reward.toLocaleString("vi-VN")}₫
+                  {quest.reward.toLocaleString("vi-VN")}
                 </Text>
               )}
               <Flex
@@ -153,7 +153,7 @@ function QuestCard({
                 }}
               >
                 <Coins size={9} />
-                {hasBonus ? bonusReward!.toLocaleString("vi-VN") : quest.reward.toLocaleString("vi-VN")}₫
+                {hasBonus ? bonusReward!.toLocaleString("vi-VN") : quest.reward.toLocaleString("vi-VN")}
               </Flex>
             </Flex>
           </Flex>
