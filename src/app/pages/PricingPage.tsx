@@ -15,7 +15,7 @@ const MotionFlex = motion.create(Flex);
 const BG_IMG =
   "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxhZXN0aGV0aWMlMjBncmFkaWVudCUyMHB1cnBsZSUyMHBpbmt8ZW58MXx8fHwxNzQ4NzQyMjQ2fDA&ixlib=rb-4.1.0&q=80&w=1080";
 
-const PREMIUM_HIGHLIGHTS = [true, true, true, true, false, true, true, true];
+const PREMIUM_HIGHLIGHTS = [true, true, true, true, true, true, true, true];
 
 type PaymentMethod = "payos" | null;
 

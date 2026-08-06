@@ -527,7 +527,9 @@
         "Add widgets to your study space",
         "Music player with YouTube / SoundCloud",
         "Change default theme colors",
-        "Create up to 3 rooms"
+        "Create up to 3 rooms",
+        "Access Aesthetic Store — buy themes with coins",
+        "Daily missions & Lucky Wheel (1 spin/day)"
       ]
     },
     "premium": {
@@ -543,13 +545,13 @@
       "ctaGuest": "Start free trial",
       "features": [
         "All Freemium features",
-        "Access Aesthetic Store — exclusive theme library",
-        "Exclusive backgrounds, stickers & effects per theme",
-        "Special ambient sounds included with each theme",
-        "Premium widget styles (coming soon)",
+        "15% off every item in the Aesthetic Store",
+        "Live visual effects (rain, snow, fog...) that sync with your local weather",
+        "5 exclusive premium widgets: Photo Frame, Doodle Pad, Wellness, World Clock, Deadline Countdown",
         "Unlimited room preset saves",
         "Create & publish your own themes to earn coins",
-        "Coin & daily mission system"
+        "1.5x coin rewards from daily missions",
+        "Lucky Wheel: 2 spins/day (double Freemium)"
       ]
     },
     "footer": "Pay via PayOS · Cancel anytime · No hidden fees",

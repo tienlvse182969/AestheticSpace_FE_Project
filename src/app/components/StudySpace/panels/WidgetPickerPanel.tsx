@@ -348,7 +348,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
         opacity: isLocked ? 0.7 : 1,
       }}>
         <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
-          style={{ background: `${w.color}18`, border: `1px solid ${w.color}30` }}>
+          style={{ background: `${w.color}18`, border: `1px solid ${w.color}30`, filter: isLocked ? "brightness(0.4)" : "none", transition: "filter 0.2s" }}>
           <Icon size={16} color={w.color} />
         </Flex>
         <Box flex={1} minW={0}>
@@ -410,7 +410,9 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
             cursor: isLocked ? "pointer" : "grab",
           }}
         >
-          {Thumb && <Thumb />}
+          <div style={{ width: "100%", height: "100%", filter: isLocked ? "brightness(0.4)" : "none", transition: "filter 0.2s" }}>
+            {Thumb && <Thumb />}
+          </div>
           {/* Premium badge */}
           {isLocked && (
             <div style={{
@@ -712,7 +714,9 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
                       cursor: wcLocked ? "pointer" : "grab",
                     }}
                   >
-                    <WorldClockThumbnail />
+                    <div style={{ width: "100%", height: "100%", filter: wcLocked ? "brightness(0.4)" : "none", transition: "filter 0.2s" }}>
+                      <WorldClockThumbnail />
+                    </div>
                     {wcLocked && (
                       <div style={{
                         position: "absolute", top: 7, right: 7, display: "flex", alignItems: "center", gap: 3,
@@ -782,7 +786,9 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
                       cursor: dlLocked ? "pointer" : "grab",
                     }}
                   >
-                    <DeadlineCardThumbnail />
+                    <div style={{ width: "100%", height: "100%", filter: dlLocked ? "brightness(0.4)" : "none", transition: "filter 0.2s" }}>
+                      <DeadlineCardThumbnail />
+                    </div>
                     {dlLocked && (
                       <div style={{
                         position: "absolute", top: 7, right: 7, display: "flex", alignItems: "center", gap: 3,
@@ -834,7 +840,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
               opacity: wcLocked ? 0.7 : 1,
             }}>
               <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
-                style={{ background: "rgba(129,140,248,0.12)", border: "1px solid rgba(129,140,248,0.3)" }}>
+                style={{ background: "rgba(129,140,248,0.12)", border: "1px solid rgba(129,140,248,0.3)", filter: wcLocked ? "brightness(0.4)" : "none", transition: "filter 0.2s" }}>
                 <Clock size={16} color="#818cf8" />
               </Flex>
               <Box flex={1} minW={0}>
@@ -868,7 +874,7 @@ export function WidgetPickerPanel({ activeWidgets, onToggle, onAddStickyNote, on
               opacity: dlLocked ? 0.7 : 1,
             }}>
               <Flex w="36px" h="36px" borderRadius="9px" align="center" justify="center" flexShrink={0}
-                style={{ background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)" }}>
+                style={{ background: "rgba(248,113,113,0.12)", border: "1px solid rgba(248,113,113,0.3)", filter: dlLocked ? "brightness(0.4)" : "none", transition: "filter 0.2s" }}>
                 <Hourglass size={16} color="#f87171" />
               </Flex>
               <Box flex={1} minW={0}>

@@ -527,7 +527,9 @@
         "Thêm widget vào không gian học",
         "Music player tích hợp YouTube / SoundCloud",
         "Đổi màu theme mặc định",
-        "Tạo tối đa 3 rooms"
+        "Tạo tối đa 3 rooms",
+        "Truy cập Aesthetic Store — mua theme bằng xu",
+        "Nhiệm vụ hằng ngày & Chiếc nón kỳ diệu (1 lượt quay/ngày)"
       ]
     },
     "premium": {
@@ -543,13 +545,13 @@
       "ctaGuest": "Bắt đầu dùng thử miễn phí",
       "features": [
         "Tất cả tính năng của gói Freemium",
-        "Truy cập Aesthetic Store — kho theme độc quyền",
-        "Hình nền, sticker & hiệu ứng độc quyền theo theme",
-        "Ambient sound đặc biệt đi kèm từng theme",
-        "Kiểu widget premium (sắp ra mắt)",
+        "Giảm 15% giá mọi vật phẩm trên Aesthetic Store",
+        "Hiệu ứng hình ảnh (mưa, tuyết, sương mù...) tự động đổi theo thời tiết tại vị trí của bạn",
+        "5 widget premium độc quyền: Khung ảnh, Vẽ nguệch ngoạc, Chăm sóc bản thân, Đồng hồ thế giới, Đếm ngược Deadline",
         "Lưu preset room không giới hạn",
         "Tự sáng tạo & đăng theme lên Store để kiếm xu",
-        "Hệ thống điểm xu & nhiệm vụ hằng ngày"
+        "Nhận x1.5 xu thưởng từ nhiệm vụ hằng ngày",
+        "Quay Chiếc nón kỳ diệu 2 lượt/ngày (gấp đôi Freemium)"
       ]
     },
     "footer": "Thanh toán qua PayOS · Huỷ bất cứ lúc nào · Không tính phí ẩn",
