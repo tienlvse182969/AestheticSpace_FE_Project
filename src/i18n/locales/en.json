@@ -557,7 +557,7 @@
     "footer": "Pay via PayOS · Cancel anytime · No hidden fees",
     "modal": {
       "title": "Choose payment method",
-      "subtitle": "100.000₫ / month · Auto-renews",
+      "subtitle": "100.000₫ / month",
       "payosDesc": "ATM, Visa, MasterCard, QR Code",
       "redirect": "Redirect"
     },
