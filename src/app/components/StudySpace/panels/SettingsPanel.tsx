@@ -292,6 +292,12 @@ export function SettingsPanel({
 
   const [topUpLoading, setTopUpLoading] = useState<number | null>(null);
   const [topUpError, setTopUpError] = useState(false);
+  const [customCoins, setCustomCoins] = useState("");
+
+  const COIN_TO_VND = 1000;
+  const MIN_CUSTOM_COINS = 10;
+  const customCoinsNum = Number(customCoins) || 0;
+  const isCustomCoinsValid = Number.isInteger(customCoinsNum) && customCoinsNum >= MIN_CUSTOM_COINS;
 
   const handleTopUp = async (coins: number, amountVnd: number) => {
     setTopUpLoading(coins);
@@ -620,6 +626,71 @@ export function SettingsPanel({
                   {t("settings.topUpError")}
                 </Text>
               )}
+
+              {/* Custom amount */}
+              <Box mt="14px" pt="14px" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+                <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.35)", letterSpacing: "0.1em", fontFamily: "'HarmonyOS Sans', sans-serif", marginBottom: 8 }}>
+                  {t("settings.topUpCustomLabel").toUpperCase()}
+                </Text>
+                <Flex gap="8px" align="center">
+                  <input
+                    type="number"
+                    min={MIN_CUSTOM_COINS}
+                    step={1}
+                    value={customCoins}
+                    onChange={e => setCustomCoins(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && isCustomCoinsValid && topUpLoading === null && handleTopUp(customCoinsNum, customCoinsNum * COIN_TO_VND)}
+                    placeholder={t("settings.topUpCustomPlaceholder")}
+                    disabled={topUpLoading !== null}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      borderRadius: 8,
+                      padding: "9px 12px",
+                      fontSize: "0.82rem",
+                      color: "rgba(255,255,255,0.85)",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      outline: "none",
+                    }}
+                  />
+                  <Box
+                    as="button"
+                    onClick={(!isCustomCoinsValid || topUpLoading !== null) ? undefined : () => handleTopUp(customCoinsNum, customCoinsNum * COIN_TO_VND)}
+                    style={{
+                      padding: "9px 16px",
+                      borderRadius: 8,
+                      background: "rgba(250,204,21,0.14)",
+                      border: "1px solid rgba(250,204,21,0.3)",
+                      color: "rgba(250,204,21,0.9)",
+                      fontSize: "0.78rem",
+                      fontFamily: "'HarmonyOS Sans', sans-serif",
+                      cursor: (!isCustomCoinsValid || topUpLoading !== null) ? "not-allowed" : "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      opacity: (!isCustomCoinsValid || topUpLoading !== null) ? 0.4 : 1,
+                    }}
+                  >
+                    {topUpLoading !== null && topUpLoading === customCoinsNum
+                      ? <LoadingRing size={13} />
+                      : null}
+                    {t("settings.topUpCustomButton")}
+                  </Box>
+                </Flex>
+                {customCoins !== "" && !isCustomCoinsValid ? (
+                  <Text style={{ fontSize: "0.68rem", color: "rgba(248,113,113,0.75)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 6 }}>
+                    {t("settings.topUpCustomMin", { min: MIN_CUSTOM_COINS })}
+                  </Text>
+                ) : customCoinsNum >= MIN_CUSTOM_COINS ? (
+                  <Text style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.3)", fontFamily: "'HarmonyOS Sans', sans-serif", marginTop: 6 }}>
+                    {(customCoinsNum * COIN_TO_VND).toLocaleString("vi-VN")}{t("settings.vnd")}
+                  </Text>
+                ) : null}
+              </Box>
             </Box>
 
           </Box>
