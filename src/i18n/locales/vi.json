@@ -557,7 +557,7 @@
     "footer": "Thanh toán qua PayOS · Huỷ bất cứ lúc nào · Không tính phí ẩn",
     "modal": {
       "title": "Chọn phương thức thanh toán",
-      "subtitle": "100.000₫ / tháng · Gia hạn tự động",
+      "subtitle": "100.000₫ / tháng",
       "payosDesc": "Thẻ ATM, Visa, MasterCard, QR Code",
       "redirect": "Chuyển hướng"
     },
