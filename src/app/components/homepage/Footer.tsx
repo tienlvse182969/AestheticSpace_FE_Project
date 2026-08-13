@@ -46,17 +46,26 @@ export function Footer() {
             {t("footer.copyright", { year })}
           </Text>
           <Flex gap={6}>
-            {["Instagram", "Facebook"].map((social) => (
+            {[
+              {
+                name: "Instagram",
+                href: "https://www.instagram.com/aestheticspaceprojectexe201/",
+              },
+              {
+                name: "Facebook",
+                href: "https://www.facebook.com/profile.php?id=61590643954157",
+              },
+            ].map((social) => (
               <Link
-                key={social}
-                href="https://www.facebook.com/profile.php?id=61590643954157"
+                key={social.name}
+                href={social.href}
                 color="white/30"
                 fontSize="sm"
                 textDecoration="none"
                 transition="color 0.2s"
                 _hover={{ color: "white/70" }}
               >
-                {social}
+                {social.name}
               </Link>
             ))}
           </Flex>
